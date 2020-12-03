@@ -8,16 +8,47 @@ const filesize = require('filesize');
 const chalk = require('chalk');
 const distsize = require('..');
 
+const compareFiles = sortBy => (a, b) => b[sortBy] - a[sortBy];
+
 const cli = meow(`
 	Usage
 	  $ distsize <pkg-path>
 
+	Options
+	  --sort-by, -s     Sort list by (name, size, gzip, brotli)
+	  --help            Show help
+	  --version         Show version
+
 	Examples
 	  $ distsize
 	  $ distsize ./pkg/path
-`);
+
+	  $ distsize --sort-by=name
+	  $ distsize -s brotli
+`, {
+	flags: {
+		'sort-by': {
+			type: 'string',
+			alias: 's',
+			default: 'brotli',
+		},
+	},
+});
+
+const sortByValues = {
+	gzip: 'sizeGzip',
+	brotli: 'sizeBrotli',
+};
+
+let {sortBy} = cli.flags;
+
+if (sortByValues[sortBy]) {
+	sortBy = sortByValues[sortBy];
+}
 
 distsize(cli.input[0]).then(distData => {
+	distData.files.sort(compareFiles(sortBy));
+
 	const table = new SimpleTable();
 
 	table.header(
