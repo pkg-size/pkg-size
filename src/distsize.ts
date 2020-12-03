@@ -1,14 +1,14 @@
 import path from 'path';
-// @ts-ignore
+// @ts-expect-error
 import pack from 'libnpmpack';
-import tarStream, { Headers } from 'tar-stream';
+import tarStream, {Headers} from 'tar-stream';
 import {Readable} from 'stream';
 import gunzipMaybe from 'gunzip-maybe';
 import gzipSize from 'gzip-size';
-import { stream as brotliSizeStream } from 'brotli-size';
-import { SetRequired } from "type-fest";
+import {stream as brotliSizeStream} from 'brotli-size';
+import {SetRequired} from 'type-fest';
 
-type FileHeaders = SetRequired<Headers, 'mode' | 'size'>
+type FileHeaders = SetRequired<Headers, 'mode' | 'size'>;
 
 type FileEntry = {
 	path: string;
@@ -16,21 +16,20 @@ type FileEntry = {
 	size: number;
 	sizeGzip: number;
 	sizeBrotli: number;
-}
+};
 
 type Distsize = {
 	pkgPath: string;
 	files: FileEntry[];
-}
+};
 
-const getTarFiles = (tarball: Buffer): Promise<FileEntry[]> => new Promise((resolve, reject) => {
+const getTarFiles = async (tarball: Buffer): Promise<FileEntry[]> => new Promise((resolve, reject) => {
 	const files: FileEntry[] = [];
 
 	Readable.from(tarball)
 		.pipe(gunzipMaybe())
 		.pipe(tarStream.extract())
 		.on('entry', (header: FileHeaders, stream, next) => {
-			
 			const file: FileEntry = {
 				/*
 				 * Sanitization from UNPKG:
@@ -39,8 +38,8 @@ const getTarFiles = (tarball: Buffer): Promise<FileEntry[]> => new Promise((reso
 				path: header.name.replace(/^[^/]+\/?/, '/'),
 				mode: header.mode,
 				size: header.size,
-				sizeGzip: NaN,
-				sizeBrotli: NaN,
+				sizeGzip: Number.NaN,
+				sizeBrotli: Number.NaN,
 			};
 
 			files.push(file);
