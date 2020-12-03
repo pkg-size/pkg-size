@@ -6,7 +6,8 @@
 		"cli",
 		"distsize",
 		"distribution size",
-		"package size"
+		"package size",
+		"npm"
 	],
 	"license": "MIT",
 	"repository": "privatenumber/distsize",
