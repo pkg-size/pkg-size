@@ -9,8 +9,13 @@ dependencies:
   meow: 8.0.0
   tar-stream: 2.1.4
 devDependencies:
+  '@types/gunzip-maybe': 1.4.0
+  '@types/tar-stream': 2.1.0
   husky: 4.3.0
   lint-staged: 10.5.2
+  tsup: 3.10.1_typescript@4.1.2
+  type-fest: 0.20.2
+  typescript: 4.1.2
   xo: 0.35.0
 lockfileVersion: 5.2
 packages:
@@ -236,6 +241,12 @@ packages:
     dev: true
     resolution:
       integrity: sha512-SEYeGAIQIQX8NN6LDKprLjbrd5dARM5EXsd8GI/A5l0apYI1fGMWgPHSe4ZKL4eozlAyI+doUE9XbYS4xCkQ1w==
+  /@types/gunzip-maybe/1.4.0:
+    dependencies:
+      '@types/node': 14.14.10
+    dev: true
+    resolution:
+      integrity: sha512-dFP9GrYAR9KhsjTkWJ8q8Gsfql75YIKcg9DuQOj/IrlPzR7W+1zX+cclw1McV82UXAQ+Lpufvgk3e9bC8+HzgA==
   /@types/json-schema/7.0.6:
     dev: true
     resolution:
@@ -262,6 +273,12 @@ packages:
     dev: true
     resolution:
       integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==
+  /@types/tar-stream/2.1.0:
+    dependencies:
+      '@types/node': 14.14.10
+    dev: true
+    resolution:
+      integrity: sha512-s1UQxQUVMHbSkCC0X4qdoiWgHF8DoyY1JjQouFsnk/8ysoTdBaiCHud/exoAZzKDbzAXVc+ah6sczxGVMAohFw==
   /@typescript-eslint/eslint-plugin/4.9.0_512ef60ad8498ffab9c030d01801a819:
     dependencies:
       '@typescript-eslint/experimental-utils': 4.9.0_eslint@7.14.0+typescript@4.1.2
@@ -2244,6 +2261,15 @@ packages:
   /fs.realpath/1.0.0:
     resolution:
       integrity: sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
+  /fsevents/2.1.3:
+    dev: true
+    engines:
+      node: ^8.16.0 || ^10.6.0 || >=11.0.0
+    optional: true
+    os:
+      - darwin
+    resolution:
+      integrity: sha512-Auw9a4AxqWpa9GUfj370BMPzzyncfBABW8Mab7BGWBYDj4Isgq+cDKtx0i6u9jcX9pQDnswsaaOTgTmA5pEjuQ==
   /function-bind/1.1.1:
     resolution:
       integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==
@@ -4717,6 +4743,27 @@ packages:
     dev: true
     resolution:
       integrity: sha512-ii4iagi25WusVoiC4B4lq7pbXfAp3D9v5CwfkY33vffw2+pkDjY1D8GaN7spsxvCSx8dkPqOZCEZyfxcmJG2IA==
+  /rollup-plugin-dts/1.4.14_rollup@2.34.1+typescript@4.1.2:
+    dependencies:
+      rollup: 2.34.1
+      typescript: 4.1.2
+    dev: true
+    optionalDependencies:
+      '@babel/code-frame': 7.10.4
+    peerDependencies:
+      rollup: ^2.33.1
+      typescript: ^4.0.5
+    resolution:
+      integrity: sha512-H33aGCUbp/Lm+tbkG5gZePnuWvvaafkwh7Uh4RYJs0/ChOfWlENCby1wOn+xBVsCzpV/g/+OVYqgzVjT80dNJg==
+  /rollup/2.34.1:
+    dev: true
+    engines:
+      node: '>=10.0.0'
+    hasBin: true
+    optionalDependencies:
+      fsevents: 2.1.3
+    resolution:
+      integrity: sha512-tGveB6NU5x4MS/iXaIsjfUkEv4hxzJJ4o0FRy5LO62Ndx3R2cmE1qsLYlSfRkvHUUPqWiFoxEm8pRftzh1a5HA==
   /run-parallel/1.1.10:
     dev: true
     resolution:
@@ -5340,6 +5387,16 @@ packages:
     dev: true
     resolution:
       integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
+  /tsup/3.10.1_typescript@4.1.2:
+    dependencies:
+      rollup: 2.34.1
+      rollup-plugin-dts: 1.4.14_rollup@2.34.1+typescript@4.1.2
+    dev: true
+    hasBin: true
+    peerDependencies:
+      typescript: '*'
+    resolution:
+      integrity: sha512-UkbzohJlK7kKtjH1DQdujMTEwZt1SArLCR2xujejk6qMmiblQMtoby9WL5QzhUztPTy9aNNGDRSu4PX7PdbceA==
   /tsutils/3.17.1_typescript@4.1.2:
     dependencies:
       tslib: 1.14.1
@@ -5384,6 +5441,12 @@ packages:
       node: '>=10'
     resolution:
       integrity: sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw==
+  /type-fest/0.20.2:
+    dev: true
+    engines:
+      node: '>=10'
+    resolution:
+      integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==
   /type-fest/0.4.1:
     dev: true
     engines:
@@ -5718,6 +5781,8 @@ packages:
     resolution:
       integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
 specifiers:
+  '@types/gunzip-maybe': ^1.4.0
+  '@types/tar-stream': ^2.1.0
   brotli-size: ^4.0.0
   chalk: ^4.1.0
   cli-simple-table: ^1.0.0
@@ -5729,4 +5794,7 @@ specifiers:
   lint-staged: ^10.5.2
   meow: ^8.0.0
   tar-stream: ^2.1.4
+  tsup: ^3.10.1
+  type-fest: ^0.20.2
+  typescript: ^4.1.2
   xo: ^0.35.0

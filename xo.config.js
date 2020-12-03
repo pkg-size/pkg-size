@@ -5,5 +5,6 @@ module.exports = {
 			'always-multiline',
 		],
 		'no-return-await': 'off',
+		'@typescript-eslint/comma-dangle': 'off',
 	},
 };

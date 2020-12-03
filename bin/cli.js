@@ -6,18 +6,49 @@ const meow = require('meow');
 const SimpleTable = require('cli-simple-table');
 const filesize = require('filesize');
 const chalk = require('chalk');
-const distsize = require('..');
+const pkgSize = require('..');
+
+const compareFiles = sortBy => (a, b) => b[sortBy] - a[sortBy];
 
 const cli = meow(`
 	Usage
-	  $ distsize <pkg-path>
+	  $ pkg-size <pkg-path>
+
+	Options
+	  --sort-by, -s     Sort list by (name, size, gzip, brotli)
+	  --help            Show help
+	  --version         Show version
 
 	Examples
-	  $ distsize
-	  $ distsize ./pkg/path
-`);
+	  $ pkg-size
+	  $ pkg-size ./pkg/path
 
-distsize(cli.input[0]).then(distData => {
+	  $ pkg-size --sort-by=name
+	  $ pkg-size -s brotli
+`, {
+	flags: {
+		'sort-by': {
+			type: 'string',
+			alias: 's',
+			default: 'brotli',
+		},
+	},
+});
+
+const sortByValues = {
+	gzip: 'sizeGzip',
+	brotli: 'sizeBrotli',
+};
+
+let {sortBy} = cli.flags;
+
+if (sortByValues[sortBy]) {
+	sortBy = sortByValues[sortBy];
+}
+
+pkgSize(cli.input[0]).then(distData => {
+	distData.files.sort(compareFiles(sortBy));
+
 	const table = new SimpleTable();
 
 	table.header(
