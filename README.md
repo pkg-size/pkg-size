@@ -1,4 +1,6 @@
 <p align="center">
+	<br>
+	<br>
 	<img width="70%" src=".github/screenshot.png">
 	<br>
 	<a href="https://npm.im/distsize"><img src="https://badgen.net/npm/v/distsize"></a>
@@ -9,7 +11,7 @@
 	<i>Measure the size of your npm package distribution</i>
 </p>
 
-⚡️ Try it in your npm package:
+**⚡️ Try it in your npm package**
 
 ```sh
 $ npx distsize
