@@ -1,8 +1,13 @@
-# distsize [![Latest version](https://badgen.net/npm/v/distsize)](https://npm.im/distsize) [![Monthly downloads](https://badgen.net/npm/dm/distsize)](https://npm.im/distsize) [![Install size](https://packagephobia.now.sh/badge?p=distsize)](https://packagephobia.now.sh/result?p=distsize)
-
-Measure the size of your npm package distribution.
-
-<img src=".github/screenshot.png">
+<p align="center">
+	<img width="70%" src=".github/screenshot.png">
+	<br>
+	<a href="https://npm.im/distsize"><img src="https://badgen.net/npm/v/distsize"></a>
+	<a href="https://npm.im/distsize"><img src="https://badgen.net/npm/dm/distsize"></a>
+	<a href="https://packagephobia.now.sh/result?p=distsize"><img src="https://packagephobia.now.sh/badge?p=distsize"></a>
+	<br>
+	<br>
+	<i>Measure the size of your npm package distribution</i>
+</p>
 
 ⚡️ Try it in your npm package:
 
