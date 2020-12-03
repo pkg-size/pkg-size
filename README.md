@@ -53,6 +53,7 @@ type FileEntry = {
 
 type PkgSizeData = {
     pkgPath: string;
+    tarballSize: number;
     files: FileEntry[];
 };
 

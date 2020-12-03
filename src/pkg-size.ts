@@ -20,6 +20,7 @@ type FileEntry = {
 
 type PkgSizeData = {
 	pkgPath: string;
+	tarballSize: number;
 	files: FileEntry[];
 };
 
@@ -66,7 +67,11 @@ async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
 	const tarball = await pack(pkgPath);
 	const files = await getTarFiles(tarball);
-	return {pkgPath, files};
+	return {
+		pkgPath,
+		tarballSize: tarball.length,
+		files,
+	};
 }
 
 export = pkgSize;
