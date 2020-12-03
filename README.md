@@ -35,7 +35,7 @@ const distsizeData = await distsize('/path/to/package');
 ```
 
 ## ⚙️ API
-```
+```ts
 type FileEntry = {
     path: string;
     mode: number;
