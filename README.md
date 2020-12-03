@@ -34,16 +34,20 @@ const distsizeData = await distsize();
 const distsizeData = await distsize('/path/to/package');
 ```
 
-## ⚙️ Options
+## ⚙️ API
 ```
-{
-	pkgPath: string,
-	files: {
-		path: string,
-		mode: number,
-		size: number,
-		sizeGzip: number,
-		sizeBrotli: number,
-	}[]
-}
+type FileEntry = {
+    path: string;
+    mode: number;
+    size: number;
+    sizeGzip: number;
+    sizeBrotli: number;
+};
+
+type Distsize = {
+    pkgPath: string;
+    files: FileEntry[];
+};
+
+function distsize(pkgPath?: string): Promise<Distsize>;
 ```
