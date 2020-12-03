@@ -3,9 +3,9 @@
 	<br>
 	<img width="70%" src=".github/screenshot.png">
 	<br>
-	<a href="https://npm.im/pkg-size"><img src="https://badgen.net/npm/v/pkg-size"></a>
-	<a href="https://npm.im/pkg-size"><img src="https://badgen.net/npm/dm/pkg-size"></a>
-	<a href="https://packagephobia.now.sh/result?p=pkg-size"><img src="https://packagephobia.now.sh/badge?p=pkg-size"></a>
+	<a href="https://npm.im/@pvtnbr/pkg-size"><img src="https://badgen.net/npm/v/@pvtnbr/pkg-size"></a>
+	<a href="https://npm.im/@pvtnbr/pkg-size"><img src="https://badgen.net/npm/dm/@pvtnbr/pkg-size"></a>
+	<a href="https://packagephobia.now.sh/result?p=@pvtnbr/pkg-size"><img src="https://packagephobia.now.sh/badge?p=@pvtnbr/pkg-size"></a>
 	<br>
 	<br>
 	<i>Measure the size of your npm package distribution</i>
@@ -14,7 +14,7 @@
 **⚡️ Try it in your npm package**
 
 ```sh
-$ npx pkg-size
+$ npx @pvtnbr/pkg-size
 ```
 
 <sub>If you like this project, please star it & [follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
@@ -27,12 +27,12 @@ $ npx pkg-size
 
 ## 🚀 Install
 ```sh
-npm i pkg-size
+npm i @pvtnbr/pkg-size
 ```
 
 ## 🚦 Quick Usage
 ```js
-const pkgSize = require('pkg-size');
+const pkgSize = require('@pvtnbr/pkg-size');
 
 // Get package size data from current working directory
 const sizeData = await pkgSize();
