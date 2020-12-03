@@ -1,17 +1,18 @@
 {
-	"name": "distsize",
+	"name": "pkg-size",
 	"version": "0.0.0-semantic-release",
 	"description": "Measure the size of your npm package distribution",
 	"keywords": [
 		"cli",
-		"distsize",
-		"distribution size",
-		"package size",
+		"pkg-size",
+		"package",
+		"distribution",
+		"size",
 		"npm"
 	],
 	"license": "MIT",
-	"repository": "privatenumber/distsize",
-	"funding": "https://github.com/privatenumber/distsize?sponsor=1",
+	"repository": "privatenumber/pkg-size",
+	"funding": "https://github.com/privatenumber/pkg-size?sponsor=1",
 	"author": {
 		"name": "Hiroki Osame",
 		"email": "hiroki.osame@gmail.com"
@@ -20,7 +21,7 @@
 		"bin/cli.js",
 		"dist"
 	],
-	"main": "dist/distsize.js",
+	"main": "dist/pkg-size.js",
 	"bin": "bin/cli.js",
 	"scripts": {
 		"build": "tsc",

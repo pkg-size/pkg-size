@@ -18,7 +18,7 @@ type FileEntry = {
 	sizeBrotli: number;
 };
 
-type Distsize = {
+type PkgSizeData = {
 	pkgPath: string;
 	files: FileEntry[];
 };
@@ -62,11 +62,11 @@ const getTarFiles = async (tarball: Buffer): Promise<FileEntry[]> => new Promise
 		.on('finish', () => resolve(files));
 });
 
-async function distsize(pkgPath = ''): Promise<Distsize> {
+async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
 	const tarball = await pack(pkgPath);
 	const files = await getTarFiles(tarball);
 	return {pkgPath, files};
 }
 
-export = distsize;
+export = pkgSize;

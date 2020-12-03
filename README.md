@@ -3,9 +3,9 @@
 	<br>
 	<img width="70%" src=".github/screenshot.png">
 	<br>
-	<a href="https://npm.im/distsize"><img src="https://badgen.net/npm/v/distsize"></a>
-	<a href="https://npm.im/distsize"><img src="https://badgen.net/npm/dm/distsize"></a>
-	<a href="https://packagephobia.now.sh/result?p=distsize"><img src="https://packagephobia.now.sh/badge?p=distsize"></a>
+	<a href="https://npm.im/pkg-size"><img src="https://badgen.net/npm/v/pkg-size"></a>
+	<a href="https://npm.im/pkg-size"><img src="https://badgen.net/npm/dm/pkg-size"></a>
+	<a href="https://packagephobia.now.sh/result?p=pkg-size"><img src="https://packagephobia.now.sh/badge?p=pkg-size"></a>
 	<br>
 	<br>
 	<i>Measure the size of your npm package distribution</i>
@@ -14,7 +14,7 @@
 **⚡️ Try it in your npm package**
 
 ```sh
-$ npx distsize
+$ npx pkg-size
 ```
 
 <sub>If you like this project, please star it & [follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
@@ -27,18 +27,18 @@ $ npx distsize
 
 ## 🚀 Install
 ```sh
-npm i distsize
+npm i pkg-size
 ```
 
 ## 🚦 Quick Usage
 ```js
-const distsize = require('distsize');
+const pkgSize = require('pkg-size');
 
-// Get distsize data from current working directory
-const distsizeData = await distsize();
+// Get package size data from current working directory
+const sizeData = await pkgSize();
 
-// Get distsize data from a specific package path
-const distsizeData = await distsize('/path/to/package');
+// Get package size data from a specific package path
+const sizeData = await pkgSize('/path/to/package');
 ```
 
 ## ⚙️ API
@@ -51,10 +51,10 @@ type FileEntry = {
     sizeBrotli: number;
 };
 
-type Distsize = {
+type PkgSizeData = {
     pkgPath: string;
     files: FileEntry[];
 };
 
-function distsize(pkgPath?: string): Promise<Distsize>;
+function pkgSize(pkgPath?: string): Promise<PkgSizeData>;
 ```
