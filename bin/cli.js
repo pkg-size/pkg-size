@@ -47,7 +47,15 @@ if (sortByValues[sortBy]) {
 }
 
 pkgSize(cli.input[0]).then(distData => {
-	distData.files.sort(compareFiles(sortBy));
+	const filesizeOptions = {
+		standard: 'iec',
+	};
+
+	console.log('');
+	console.log(chalk.green.bold('Package path'));
+	console.log(distData.pkgPath + '\n');
+	console.log(chalk.green.bold('Tarball size'));
+	console.log(filesize(distData.tarballSize, filesizeOptions) + '\n');
 
 	const table = new SimpleTable();
 
@@ -73,29 +81,29 @@ pkgSize(cli.input[0]).then(distData => {
 		sizeBrotli: 0,
 	};
 
-	distData.files.forEach(file => {
-		table.row(
-			chalk.cyan(file.path),
-			filesize(file.size),
-			filesize(file.sizeGzip),
-			filesize(file.sizeBrotli),
-		);
+	distData.files
+		.sort(compareFiles(sortBy))
+		.forEach(file => {
+			table.row(
+				chalk.cyan(file.path),
+				filesize(file.size, filesizeOptions),
+				filesize(file.sizeGzip, filesizeOptions),
+				filesize(file.sizeBrotli, filesizeOptions),
+			);
 
-		total.size += file.size;
-		total.sizeGzip += file.sizeGzip;
-		total.sizeBrotli += file.sizeBrotli;
-	});
+			total.size += file.size;
+			total.sizeGzip += file.sizeGzip;
+			total.sizeBrotli += file.sizeBrotli;
+		});
 
 	table.row();
 
 	table.row(
 		'',
-		chalk.underline(filesize(total.size)),
-		chalk.underline(filesize(total.sizeGzip)),
-		chalk.underline(filesize(total.sizeBrotli)),
+		chalk.underline(filesize(total.size, filesizeOptions)),
+		chalk.underline(filesize(total.sizeGzip, filesizeOptions)),
+		chalk.underline(filesize(total.sizeBrotli, filesizeOptions)),
 	);
 
-	console.log(chalk.green.bold('\nPackage path'));
-	console.log(distData.pkgPath + '\n');
 	console.log(table.toString() + '\n');
 });

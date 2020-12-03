@@ -20,9 +20,14 @@ type FileEntry = {
 
 type PkgSizeData = {
 	pkgPath: string;
+	tarballSize: number;
 	files: FileEntry[];
 };
 
+/*
+ * Based on npm pack logic
+ * https://github.com/npm/cli/blob/e9a440bcc5bd9a42dbdbf4bf9340d188c910857c/lib/utils/tar.js
+ */
 const getTarFiles = async (tarball: Buffer): Promise<FileEntry[]> => new Promise((resolve, reject) => {
 	const files: FileEntry[] = [];
 
@@ -66,7 +71,11 @@ async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
 	const tarball = await pack(pkgPath);
 	const files = await getTarFiles(tarball);
-	return {pkgPath, files};
+	return {
+		pkgPath,
+		tarballSize: tarball.length,
+		files,
+	};
 }
 
 export = pkgSize;
