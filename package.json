@@ -18,11 +18,12 @@
 	},
 	"files": [
 		"bin/cli.js",
-		"lib"
+		"dist"
 	],
-	"main": "lib/distsize.js",
+	"main": "dist/distsize.js",
 	"bin": "bin/cli.js",
 	"scripts": {
+		"build": "tsc",
 		"lint": "xo"
 	},
 	"husky": {
@@ -45,8 +46,13 @@
 		"tar-stream": "^2.1.4"
 	},
 	"devDependencies": {
+		"@types/gunzip-maybe": "^1.4.0",
+		"@types/tar-stream": "^2.1.0",
 		"husky": "^4.3.0",
 		"lint-staged": "^10.5.2",
+		"tsup": "^3.10.1",
+		"type-fest": "^0.20.2",
+		"typescript": "^4.1.2",
 		"xo": "^0.35.0"
 	}
 }
