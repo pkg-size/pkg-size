@@ -47,7 +47,7 @@ if (sortByValues[sortBy]) {
 }
 
 pkgSize(cli.input[0]).then(distData => {
-	const filesizeOpts = {
+	const filesizeOptions = {
 		standard: 'iec',
 	};
 
@@ -55,7 +55,7 @@ pkgSize(cli.input[0]).then(distData => {
 	console.log(chalk.green.bold('Package path'));
 	console.log(distData.pkgPath + '\n');
 	console.log(chalk.green.bold('Tarball size'));
-	console.log(filesize(distData.tarballSize, filesizeOpts) + '\n');
+	console.log(filesize(distData.tarballSize, filesizeOptions) + '\n');
 
 	const table = new SimpleTable();
 
@@ -86,9 +86,9 @@ pkgSize(cli.input[0]).then(distData => {
 		.forEach(file => {
 			table.row(
 				chalk.cyan(file.path),
-				filesize(file.size, filesizeOpts),
-				filesize(file.sizeGzip, filesizeOpts),
-				filesize(file.sizeBrotli, filesizeOpts),
+				filesize(file.size, filesizeOptions),
+				filesize(file.sizeGzip, filesizeOptions),
+				filesize(file.sizeBrotli, filesizeOptions),
 			);
 
 			total.size += file.size;
@@ -100,9 +100,9 @@ pkgSize(cli.input[0]).then(distData => {
 
 	table.row(
 		'',
-		chalk.underline(filesize(total.size, filesizeOpts)),
-		chalk.underline(filesize(total.sizeGzip, filesizeOpts)),
-		chalk.underline(filesize(total.sizeBrotli, filesizeOpts)),
+		chalk.underline(filesize(total.size, filesizeOptions)),
+		chalk.underline(filesize(total.sizeGzip, filesizeOptions)),
+		chalk.underline(filesize(total.sizeBrotli, filesizeOptions)),
 	);
 
 	console.log(table.toString() + '\n');
