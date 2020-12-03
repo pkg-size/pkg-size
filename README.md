@@ -2,7 +2,7 @@
 
 Measure the size of your npm package distribution.
 
-Screenshot
+<img src=".github/screenshot.png">
 
 ⚡️ Try it in your npm package:
 
