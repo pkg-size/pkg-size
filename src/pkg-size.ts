@@ -3,7 +3,7 @@ import path from 'path';
 import pack from 'libnpmpack';
 import tar, {ReadEntry} from 'tar';
 import gzipSize from 'gzip-size';
-import {stream as brotliSizeStream} from 'brotli-size';
+import brotliSize from 'brotli-size';
 import {SetRequired} from 'type-fest';
 
 type SafeReadEntry = SetRequired<ReadEntry, 'mode' | 'size'>;
@@ -22,8 +22,23 @@ type PkgSizeData = {
 	files: FileEntry[];
 };
 
-const getCompressionSizes = async (readEntry: SafeReadEntry): Promise<FileEntry> => new Promise((resolve, reject) => {
-	const file: FileEntry = {
+async function streamToBuffer(readable: any) {
+	const chunks = [];
+	for await (const chunk of readable) {
+		chunks.push(chunk);
+	}
+
+	return Buffer.concat(chunks);
+}
+
+const getCompressionSizes = async (readEntry: SafeReadEntry): Promise<FileEntry> => {
+	const fileBuffer = await streamToBuffer(readEntry);
+	const [sizeGzip, sizeBrotli] = await Promise.all([
+		gzipSize(fileBuffer),
+		brotliSize(fileBuffer),
+	]);
+
+	return {
 		/*
 		 * Sanitization from UNPKG:
 		 * https://github.com/mjackson/unpkg/blob/4774e61d50f76c518d0628cfdf8beede5017455d/modules/actions/serveFileMetadata.js#L23
@@ -31,22 +46,10 @@ const getCompressionSizes = async (readEntry: SafeReadEntry): Promise<FileEntry>
 		path: readEntry.path.replace(/^[^/]+\/?/, '/'),
 		mode: readEntry.mode,
 		size: readEntry.size,
-		sizeGzip: Number.NaN,
-		sizeBrotli: Number.NaN,
+		sizeGzip,
+		sizeBrotli,
 	};
-
-	readEntry
-		.pipe(brotliSizeStream())
-		.on('brotli-size', sizeBrotli => {
-			file.sizeBrotli = sizeBrotli;
-		})
-		.pipe(gzipSize.stream())
-		.on('gzip-size', sizeGzip => {
-			file.sizeGzip = sizeGzip;
-		})
-
-		.on('end', () => resolve(file));
-});
+};
 
 /*
  * Based on npm pack logic
@@ -55,7 +58,7 @@ const getCompressionSizes = async (readEntry: SafeReadEntry): Promise<FileEntry>
 const getTarFiles = async (tarball: Buffer): Promise<FileEntry[]> => new Promise((resolve, reject) => {
 	const promises: Array<Promise<FileEntry>> = [];
 
-	tar.list({})
+	tar.list({noResume: true})
 		.on('entry', readEntry => {
 			promises.push(getCompressionSizes(readEntry));
 		})
