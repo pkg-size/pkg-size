@@ -2,7 +2,6 @@ import path from 'path';
 // @ts-expect-error
 import pack from 'libnpmpack';
 import tar, {ReadEntry} from 'tar';
-import {Readable} from 'stream';
 import gzipSize from 'gzip-size';
 import {stream as brotliSizeStream} from 'brotli-size';
 import {SetRequired} from 'type-fest';
@@ -56,13 +55,13 @@ const getCompressionSizes = async (readEntry: SafeReadEntry): Promise<FileEntry>
 const getTarFiles = async (tarball: Buffer): Promise<FileEntry[]> => new Promise((resolve, reject) => {
 	const promises: Array<Promise<FileEntry>> = [];
 
-	Readable.from(tarball)
-		.pipe(tar.list({}))
+	tar.list({})
 		.on('entry', readEntry => {
 			promises.push(getCompressionSizes(readEntry));
 		})
 		.on('error', error => reject(error))
-		.on('finish', () => resolve(Promise.all(promises)));
+		.on('finish', () => resolve(Promise.all(promises)))
+		.end(tarball);
 });
 
 async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
