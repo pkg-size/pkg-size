@@ -1,14 +1,13 @@
 import path from 'path';
 // @ts-expect-error
 import pack from 'libnpmpack';
-import tarStream, {Headers} from 'tar-stream';
+import tar, {ReadEntry} from 'tar';
 import {Readable} from 'stream';
-import gunzipMaybe from 'gunzip-maybe';
 import gzipSize from 'gzip-size';
 import {stream as brotliSizeStream} from 'brotli-size';
 import {SetRequired} from 'type-fest';
 
-type FileHeaders = SetRequired<Headers, 'mode' | 'size'>;
+type SafeReadEntry = SetRequired<ReadEntry, 'mode' | 'size'>;
 
 type FileEntry = {
 	path: string;
@@ -24,47 +23,46 @@ type PkgSizeData = {
 	files: FileEntry[];
 };
 
+const getCompressionSizes = async (readEntry: SafeReadEntry): Promise<FileEntry> => new Promise((resolve, reject) => {
+	const file: FileEntry = {
+		/*
+		 * Sanitization from UNPKG:
+		 * https://github.com/mjackson/unpkg/blob/4774e61d50f76c518d0628cfdf8beede5017455d/modules/actions/serveFileMetadata.js#L23
+		 */
+		path: readEntry.path.replace(/^[^/]+\/?/, '/'),
+		mode: readEntry.mode,
+		size: readEntry.size,
+		sizeGzip: Number.NaN,
+		sizeBrotli: Number.NaN,
+	};
+
+	readEntry
+		.pipe(brotliSizeStream())
+		.on('brotli-size', sizeBrotli => {
+			file.sizeBrotli = sizeBrotli;
+		})
+		.pipe(gzipSize.stream())
+		.on('gzip-size', sizeGzip => {
+			file.sizeGzip = sizeGzip;
+		})
+
+		.on('end', () => resolve(file));
+});
+
 /*
  * Based on npm pack logic
  * https://github.com/npm/cli/blob/e9a440bcc5bd9a42dbdbf4bf9340d188c910857c/lib/utils/tar.js
  */
 const getTarFiles = async (tarball: Buffer): Promise<FileEntry[]> => new Promise((resolve, reject) => {
-	const files: FileEntry[] = [];
+	const promises: Array<Promise<FileEntry>> = [];
 
 	Readable.from(tarball)
-		.pipe(gunzipMaybe())
-		.pipe(tarStream.extract())
-		.on('entry', (header: FileHeaders, stream, next) => {
-			const file: FileEntry = {
-				/*
-				 * Sanitization from UNPKG:
-				 * https://github.com/mjackson/unpkg/blob/4774e61d50f76c518d0628cfdf8beede5017455d/modules/actions/serveFileMetadata.js#L23
-				 */
-				path: header.name.replace(/^[^/]+\/?/, '/'),
-				mode: header.mode,
-				size: header.size,
-				sizeGzip: Number.NaN,
-				sizeBrotli: Number.NaN,
-			};
-
-			files.push(file);
-
-			stream = stream
-				.pipe(brotliSizeStream())
-				.on('brotli-size', sizeBrotli => {
-					file.sizeBrotli = sizeBrotli;
-				})
-				.pipe(gzipSize.stream())
-				.on('gzip-size', sizeGzip => {
-					file.sizeGzip = sizeGzip;
-				});
-
-			stream
-				.on('end', next)
-				.resume();
+		.pipe(tar.list({}))
+		.on('entry', readEntry => {
+			promises.push(getCompressionSizes(readEntry));
 		})
 		.on('error', error => reject(error))
-		.on('finish', () => resolve(files));
+		.on('finish', () => resolve(Promise.all(promises)));
 });
 
 async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
