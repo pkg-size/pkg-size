@@ -40,9 +40,9 @@
 	},
 	"dependencies": {
 		"brotli-size": "^4.0.0",
+		"byte-size": "^7.0.0",
 		"chalk": "^4.1.0",
 		"cli-simple-table": "^1.0.0",
-		"filesize": "^6.1.0",
 		"gzip-size": "^6.0.0",
 		"libnpmpack": "^2.0.0",
 		"meow": "^8.0.0",
