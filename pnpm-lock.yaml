@@ -1,8 +1,8 @@
 dependencies:
   brotli-size: 4.0.0
+  byte-size: 7.0.0
   chalk: 4.1.0
   cli-simple-table: 1.0.0
-  filesize: 6.1.0
   gzip-size: 6.0.0
   libnpmpack: 2.0.0
   meow: 8.0.0
@@ -848,6 +848,12 @@ packages:
     dev: false
     resolution:
       integrity: sha1-y5T662HIaWRR2zZTThQi+U8K7og=
+  /byte-size/7.0.0:
+    dev: false
+    engines:
+      node: '>=10'
+    resolution:
+      integrity: sha512-NNiBxKgxybMBtWdmvx7ZITJi4ZG+CYUgwOSZTfqB1qogkRHrhbQE/R2r5Fh94X+InN5MCYz6SvB/ejHMj/HbsQ==
   /cacache/15.0.5:
     dependencies:
       '@npmcli/move-file': 1.0.1
@@ -2087,12 +2093,6 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-bCg29ictuBaKUwwArK4ouCaqDgLZcysCFLmM/Yn/FDoqndh/9vNuQfXRDvTuXKLxfD/JtZQGKFT8MGcJBK644g==
-  /filesize/6.1.0:
-    dev: false
-    engines:
-      node: '>= 0.4.0'
-    resolution:
-      integrity: sha512-LpCHtPQ3sFx67z+uh2HnSyWSLLu5Jxo21795uRDuar/EOuYWXib5EmPaGIBuSnRqH2IODiKA2k5re/K9OnN/Yg==
   /fill-range/4.0.0:
     dependencies:
       extend-shallow: 2.0.1
@@ -5637,9 +5637,9 @@ packages:
 specifiers:
   '@types/tar': ^4.0.4
   brotli-size: ^4.0.0
+  byte-size: ^7.0.0
   chalk: ^4.1.0
   cli-simple-table: ^1.0.0
-  filesize: ^6.1.0
   gzip-size: ^6.0.0
   husky: ^4.3.0
   libnpmpack: ^2.0.0
