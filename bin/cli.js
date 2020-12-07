@@ -4,7 +4,7 @@
 
 const meow = require('meow');
 const SimpleTable = require('cli-simple-table');
-const filesize = require('filesize');
+const byteSize = require('byte-size');
 const chalk = require('chalk');
 const pkgSize = require('..');
 
@@ -15,7 +15,8 @@ const cli = meow(`
 	  $ pkg-size <pkg-path>
 
 	Options
-	  --sort-by, -s     Sort list by (name, size, gzip, brotli)
+	  --sort-by, -s     Sort list by (name, size, gzip, brotli) (Default: brotli)
+	  --unit, -u        Display units (metric, iec, metric_octet, iec_octet) (Default: metric)
 	  --help            Show help
 	  --version         Show version
 
@@ -25,12 +26,20 @@ const cli = meow(`
 
 	  $ pkg-size --sort-by=name
 	  $ pkg-size -s brotli
+
+	  $ pkg-size --unit=iec
+	  $ pkg-size -u metric_octet
 `, {
 	flags: {
 		'sort-by': {
 			type: 'string',
 			alias: 's',
 			default: 'brotli',
+		},
+		unit: {
+			type: 'string',
+			alias: 'u',
+			default: 'metric',
 		},
 	},
 });
@@ -40,22 +49,24 @@ const sortByValues = {
 	brotli: 'sizeBrotli',
 };
 
-let {sortBy} = cli.flags;
+let {sortBy, unit} = cli.flags;
 
 if (sortByValues[sortBy]) {
 	sortBy = sortByValues[sortBy];
 }
 
-pkgSize(cli.input[0]).then(distData => {
-	const filesizeOptions = {
-		standard: 'iec',
-	};
+const byteSizeOptions = {
+	units: unit,
+};
 
+const getSize = bytes => byteSize(bytes, byteSizeOptions);
+
+pkgSize(cli.input[0]).then(distData => {
 	console.log('');
 	console.log(chalk.green.bold('Package path'));
 	console.log(distData.pkgPath + '\n');
 	console.log(chalk.green.bold('Tarball size'));
-	console.log(filesize(distData.tarballSize, filesizeOptions) + '\n');
+	console.log(getSize(distData.tarballSize) + '\n');
 
 	const table = new SimpleTable();
 
@@ -86,9 +97,9 @@ pkgSize(cli.input[0]).then(distData => {
 		.forEach(file => {
 			table.row(
 				chalk.cyan(file.path),
-				filesize(file.size, filesizeOptions),
-				filesize(file.sizeGzip, filesizeOptions),
-				filesize(file.sizeBrotli, filesizeOptions),
+				getSize(file.size),
+				getSize(file.sizeGzip),
+				getSize(file.sizeBrotli),
 			);
 
 			total.size += file.size;
@@ -100,9 +111,9 @@ pkgSize(cli.input[0]).then(distData => {
 
 	table.row(
 		'',
-		chalk.underline(filesize(total.size, filesizeOptions)),
-		chalk.underline(filesize(total.sizeGzip, filesizeOptions)),
-		chalk.underline(filesize(total.sizeBrotli, filesizeOptions)),
+		chalk.underline(getSize(total.size)),
+		chalk.underline(getSize(total.sizeGzip)),
+		chalk.underline(getSize(total.sizeBrotli)),
 	);
 
 	console.log(table.toString() + '\n');
