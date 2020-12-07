@@ -17,6 +17,7 @@ const cli = meow(`
 	Options
 	  --sort-by, -s     Sort list by (name, size, gzip, brotli) (Default: brotli)
 	  --unit, -u        Display units (metric, iec, metric_octet, iec_octet) (Default: metric)
+	  --json            JSON output
 	  --help            Show help
 	  --version         Show version
 
@@ -41,6 +42,10 @@ const cli = meow(`
 			alias: 'u',
 			default: 'metric',
 		},
+		json: {
+			type: 'boolean',
+			default: false,
+		},
 	},
 });
 
@@ -62,6 +67,11 @@ const byteSizeOptions = {
 const getSize = bytes => byteSize(bytes, byteSizeOptions);
 
 pkgSize(cli.input[0]).then(distData => {
+	if (cli.flags.json) {
+		console.log(JSON.stringify(distData));
+		return;
+	}
+
 	console.log('');
 	console.log(chalk.green.bold('Package path'));
 	console.log(distData.pkgPath + '\n');
