@@ -1,5 +1,5 @@
 {
-	"name": "@pvtnbr/pkg-size",
+	"name": "pkg-size",
 	"version": "0.0.0-semantic-release",
 	"description": "Measure the size of your npm package distribution",
 	"keywords": [
