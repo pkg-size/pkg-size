@@ -12,9 +12,6 @@
 	],
 	"license": "MIT",
 	"repository": "privatenumber/pkg-size",
-	"publishConfig": {
-		"access": "public"
-	},
 	"funding": "https://github.com/privatenumber/pkg-size?sponsor=1",
 	"author": {
 		"name": "Hiroki Osame",
