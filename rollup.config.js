@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import commonjs from '@rollup/plugin-commonjs';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
+import json from '@rollup/plugin-json';
 import {terser} from 'rollup-plugin-terser';
 import filesize from 'rollup-plugin-filesize';
 import builtins from 'builtin-modules';
@@ -21,9 +22,10 @@ const rollupConfig = [
 			}),
 			terser(),
 			filesize(),
+			json(),
 		],
 		external: [
-			'libnpmpack',
+			'pacote',
 			...builtins,
 		],
 		output: {

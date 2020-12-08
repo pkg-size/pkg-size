@@ -25,7 +25,7 @@
 	"bin": "bin/cli.js",
 	"scripts": {
 		"tsd": "tsc -d --emitDeclarationOnly --declarationDir dist",
-		"build": "rollup -c && npm run tsd",
+		"build": "rm -rf dist && rollup -c && npm run tsd",
 		"lint": "xo"
 	},
 	"husky": {
@@ -37,10 +37,11 @@
 		"src/*.{js,ts}": "xo"
 	},
 	"dependencies": {
-		"libnpmpack": "^2.0.0"
+		"pacote": "^11.1.4"
 	},
 	"devDependencies": {
 		"@rollup/plugin-commonjs": "^17.0.0",
+		"@rollup/plugin-json": "^4.1.0",
 		"@rollup/plugin-node-resolve": "^11.0.0",
 		"@rollup/plugin-typescript": "^8.0.0",
 		"@types/glob-to-regexp": "^0.4.0",
@@ -54,6 +55,7 @@
 		"glob-to-regexp": "^0.4.1",
 		"gzip-size": "^6.0.0",
 		"husky": "^4.3.0",
+		"libnpmpack": "^2.0.0",
 		"lint-staged": "^10.5.3",
 		"rollup": "^2.34.2",
 		"rollup-plugin-filesize": "^9.1.0",
