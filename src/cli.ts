@@ -3,6 +3,7 @@ import SimpleTable from 'cli-simple-table';
 // @ts-expect-error
 import byteSize from 'byte-size';
 import chalk from 'chalk';
+import globToRegexp from 'glob-to-regexp';
 import pkgSize from './pkg-size';
 import {FileEntry} from './interfaces';
 
@@ -24,6 +25,7 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 type CliOptions = {
 	sortBy?: ('gzip' | 'brotli') & keyof FileEntry;
 	unit?: string;
+	ignoreFiles?: string;
 	json?: boolean;
 };
 
@@ -32,11 +34,12 @@ const cli = meow(`
 	  $ pkg-size <pkg-path>
 
 	Options
-	  --sort-by, -s     Sort list by (name, size, gzip, brotli) (Default: brotli)
-	  --unit, -u        Display units (metric, iec, metric_octet, iec_octet) (Default: metric)
-	  --json            JSON output
-	  --help            Show help
-	  --version         Show version
+	  --sort-by, -s        Sort list by (name, size, gzip, brotli) (Default: brotli)
+	  --unit, -u           Display units (metric, iec, metric_octet, iec_octet) (Default: metric)
+	  --ignore-files, -i   Glob to ignores files from list. Total size will still include them.
+	  --json               JSON output
+	  --help               Show help
+	  --version            Show version
 
 	Examples
 	  $ pkg-size
@@ -58,6 +61,10 @@ const cli = meow(`
 			type: 'string',
 			alias: 'u',
 			default: 'metric',
+		},
+		'ignore-files': {
+			type: 'string',
+			alias: 'i',
 		},
 		json: {
 			type: 'boolean',
@@ -115,7 +122,14 @@ void pkgSize(cli.input[0]).then(distData => {
 		sizeBrotli: 0,
 	};
 
-	distData.files
+	let {files} = distData;
+
+	if (flags.ignoreFiles) {
+		const ignorePattern = globToRegexp(flags.ignoreFiles, {extended: true});
+		files = files.filter(file => !ignorePattern.test(file.path));
+	}
+
+	files
 		.sort(compareFiles(sortBy))
 		.forEach(file => {
 			table.row(
