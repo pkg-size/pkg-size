@@ -22,7 +22,10 @@ const rollupConfig = [
 			terser(),
 			filesize(),
 		],
-		external: ['libnpmpack', ...builtins],
+		external: [
+			'libnpmpack',
+			...builtins,
+		],
 		output: {
 			format: 'cjs',
 			exports: 'default',
