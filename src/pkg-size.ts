@@ -78,4 +78,4 @@ async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
 	};
 }
 
-export = pkgSize;
+export default pkgSize;

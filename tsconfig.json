@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
-    "target": "es2019",
-    "module": "commonjs",
     "lib": ["esnext"],
+    "target": "esnext",
+
+    "module": "esnext",
     "moduleResolution": "node",
-    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+
     "strict": true,
     "strictNullChecks": true,
-    "resolveJsonModule": true,
-    "declaration": true
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   }
 }
