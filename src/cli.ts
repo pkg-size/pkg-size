@@ -87,6 +87,11 @@ const sortByConverter = {
 const sortBy: keyof FileEntry = (flags.sortBy! in sortByConverter) ? sortByConverter[flags.sortBy!] : flags.sortBy!;
 
 void pkgSize(cli.input[0]).then(distData => {
+	if (flags.ignoreFiles) {
+		const ignorePattern = globToRegexp(flags.ignoreFiles, {extended: true});
+		distData.files = distData.files.filter(file => !ignorePattern.test(file.path));
+	}
+
 	if (flags.json) {
 		console.log(JSON.stringify(distData));
 		return;
@@ -122,14 +127,7 @@ void pkgSize(cli.input[0]).then(distData => {
 		sizeBrotli: 0,
 	};
 
-	let {files} = distData;
-
-	if (flags.ignoreFiles) {
-		const ignorePattern = globToRegexp(flags.ignoreFiles, {extended: true});
-		files = files.filter(file => !ignorePattern.test(file.path));
-	}
-
-	files
+	distData.files
 		.sort(compareFiles(sortBy))
 		.forEach(file => {
 			table.row(
