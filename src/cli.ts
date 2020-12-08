@@ -1,4 +1,4 @@
-import meow from 'meow';
+import cac from 'cac';
 import SimpleTable from 'cli-simple-table';
 // @ts-expect-error
 import byteSize from 'byte-size';
@@ -6,6 +6,8 @@ import chalk from 'chalk';
 import globToRegexp from 'glob-to-regexp';
 import pkgSize from './pkg-size';
 import {FileEntry} from './interfaces';
+
+const pkgJsn = require('../package.json'); // eslint-disable-line @typescript-eslint/no-var-requires
 
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
 	const aValue = a[sortBy];
@@ -27,53 +29,38 @@ type CliOptions = {
 	unit?: string;
 	ignoreFiles?: string;
 	json?: boolean;
+	help?: boolean;
+	version?: boolean;
 };
 
-const cli = meow(`
-	Usage
-	  $ pkg-size <pkg-path>
+const cli = cac('pkg-size')
 
-	Options
-	  --sort-by, -s        Sort list by (name, size, gzip, brotli) (Default: brotli)
-	  --unit, -u           Display units (metric, iec, metric_octet, iec_octet) (Default: metric)
-	  --ignore-files, -i   Glob to ignores files from list. Total size will still include them.
-	  --json               JSON output
-	  --help               Show help
-	  --version            Show version
+	.usage('<pkg-path>')
 
-	Examples
-	  $ pkg-size
-	  $ pkg-size ./pkg/path
+	.option('-s, --sort-by [property]', 'Sort list by (name, size, gzip, brotli)', {
+		default: 'brotli',
+	})
+	.option('-u, --unit [unit]', 'Display units (metric, iec, metric_octet, iec_octet)', {
+		default: 'metric',
+	})
+	.option('-i, --ignore-files [glob]', 'Glob to ignores files from list. Total size will still include them.')
+	.option('--json', 'JSON output')
 
-	  $ pkg-size --sort-by=name
-	  $ pkg-size -s brotli
+	.help()
+	.version(pkgJsn.version)
 
-	  $ pkg-size --unit=iec
-	  $ pkg-size -u metric_octet
-`, {
-	flags: {
-		'sort-by': {
-			type: 'string',
-			alias: 's',
-			default: 'brotli',
-		},
-		unit: {
-			type: 'string',
-			alias: 'u',
-			default: 'metric',
-		},
-		'ignore-files': {
-			type: 'string',
-			alias: 'i',
-		},
-		json: {
-			type: 'boolean',
-			default: false,
-		},
-	},
-});
+	.example('$ pkg-size')
+	.example('$ pkg-size ./pkg/path')
+	.example('')
+	.example('$ pkg-size --sort-by=name')
+	.example('$ pkg-size -s brotli')
+	.example('')
+	.example('$ pkg-size --unit=iec')
+	.example('$ pkg-size -u metric_octet')
+	.example('');
 
-const flags: CliOptions = cli.flags;
+const parsed = cli.parse();
+const flags: CliOptions = parsed.options;
 
 const getSize = (bytes: number): string => byteSize(bytes, {
 	units: flags.unit,
@@ -86,7 +73,11 @@ const sortByConverter = {
 
 const sortBy: keyof FileEntry = (flags.sortBy! in sortByConverter) ? sortByConverter[flags.sortBy!] : flags.sortBy!;
 
-void pkgSize(cli.input[0]).then(distData => {
+if (flags.help || flags.version) {
+	process.exit(0); // eslint-disable-line unicorn/no-process-exit
+}
+
+void pkgSize(parsed.args[0]).then(distData => {
 	if (flags.ignoreFiles) {
 		const ignorePattern = globToRegexp(flags.ignoreFiles, {extended: true});
 		distData.files = distData.files.filter(file => !ignorePattern.test(file.path));
