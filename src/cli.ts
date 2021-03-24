@@ -1,6 +1,5 @@
 import cac from 'cac';
 import SimpleTable from 'cli-simple-table';
-// @ts-expect-error
 import byteSize from 'byte-size';
 import chalk from 'chalk';
 import globToRegexp from 'glob-to-regexp';
@@ -71,7 +70,7 @@ const sortByConverter = {
 	gzip: 'sizeGzip',
 };
 
-const sortBy: keyof FileEntry = (flags.sortBy! in sortByConverter) ? sortByConverter[flags.sortBy!] : flags.sortBy!;
+const sortBy: keyof FileEntry = (flags.sortBy in sortByConverter) ? sortByConverter[flags.sortBy] : flags.sortBy;
 
 if (flags.help || flags.version) {
 	process.exit(0); // eslint-disable-line unicorn/no-process-exit

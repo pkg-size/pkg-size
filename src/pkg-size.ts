@@ -1,5 +1,4 @@
 import path from 'path';
-// @ts-expect-error
 import pack from 'libnpmpack';
 import tar, {ReadEntry} from 'tar';
 import gzipSize from 'gzip-size';
