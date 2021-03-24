@@ -6,8 +6,8 @@ devDependencies:
   brotli-size: 4.0.0
   byte-size: 7.0.0
   cac: 6.6.1
-  chalk: 4.1.0
   cli-simple-table: 1.0.1
+  colorette: 1.2.2
   glob-to-regexp: 0.4.1
   gzip-size: 6.0.0
   husky: 4.3.0
@@ -1174,6 +1174,10 @@ packages:
     dev: true
     resolution:
       integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
+  /colorette/1.2.2:
+    dev: true
+    resolution:
+      integrity: sha512-MKGMzyfeuutC/ZJ1cba9NqcNpfeqMUcYmyF1ZFY6/Cn7CNSAKx6a+s48sqLqyAiZuaP2TcqMhoo+dlwFnVxT9w==
   /combined-stream/1.0.8:
     dependencies:
       delayed-stream: 1.0.0
@@ -5997,8 +6001,8 @@ specifiers:
   brotli-size: ^4.0.0
   byte-size: ^7.0.0
   cac: ^6.6.1
-  chalk: ^4.1.0
   cli-simple-table: ^1.0.1
+  colorette: ^1.2.2
   glob-to-regexp: ^0.4.1
   gzip-size: ^6.0.0
   husky: ^4.3.0

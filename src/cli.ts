@@ -1,7 +1,7 @@
 import cac from 'cac';
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
-import chalk from 'chalk';
+import {green, cyan, bold, underline} from 'colorette';
 import globToRegexp from 'glob-to-regexp';
 import pkgSize from './pkg-size';
 import {FileEntry} from './interfaces';
@@ -88,25 +88,25 @@ void pkgSize(parsed.args[0]).then(distData => {
 	}
 
 	console.log('');
-	console.log(chalk.green.bold('Package path'));
+	console.log(green(bold('Package path')));
 	console.log(distData.pkgPath + '\n');
-	console.log(chalk.green.bold('Tarball size'));
+	console.log(green(bold('Tarball size')));
 	console.log(getSize(distData.tarballSize) + '\n');
 
 	const table = new SimpleTable();
 
 	table.header(
-		chalk.green('File'),
+		green('File'),
 		{
-			text: chalk.green('Size'),
+			text: green('Size'),
 			align: 'right',
 		},
 		{
-			text: chalk.green('Gzip'),
+			text: green('Gzip'),
 			align: 'right',
 		},
 		{
-			text: chalk.green('Brotli'),
+			text: green('Brotli'),
 			align: 'right',
 		},
 	);
@@ -121,7 +121,7 @@ void pkgSize(parsed.args[0]).then(distData => {
 		.sort(compareFiles(sortBy))
 		.forEach(file => {
 			table.row(
-				chalk.cyan(file.path),
+				cyan(file.path),
 				getSize(file.size),
 				getSize(file.sizeGzip),
 				getSize(file.sizeBrotli),
@@ -136,9 +136,9 @@ void pkgSize(parsed.args[0]).then(distData => {
 
 	table.row(
 		'',
-		chalk.underline(getSize(total.size)),
-		chalk.underline(getSize(total.sizeGzip)),
-		chalk.underline(getSize(total.sizeBrotli)),
+		underline(getSize(total.size)),
+		underline(getSize(total.sizeGzip)),
+		underline(getSize(total.sizeBrotli)),
 	);
 
 	console.log(table.toString() + '\n');
