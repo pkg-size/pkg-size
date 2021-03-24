@@ -24,7 +24,7 @@
 	"main": "dist/pkg-size.js",
 	"bin": "bin/cli.js",
 	"scripts": {
-		"build": "rm -rf dist && tsup src --dts",
+		"build": "rm -rf dist && tsup src --dts --minify",
 		"lint": "xo"
 	},
 	"husky": {
