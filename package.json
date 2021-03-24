@@ -24,8 +24,7 @@
 	"main": "dist/pkg-size.js",
 	"bin": "bin/cli.js",
 	"scripts": {
-		"tsd": "tsc -d --emitDeclarationOnly --declarationDir dist",
-		"build": "rollup -c && npm run tsd",
+		"build": "rm -rf dist && tsup src --dts",
 		"lint": "xo"
 	},
 	"husky": {
@@ -40,9 +39,6 @@
 		"libnpmpack": "^2.0.0"
 	},
 	"devDependencies": {
-		"@rollup/plugin-commonjs": "^17.0.0",
-		"@rollup/plugin-node-resolve": "^11.0.0",
-		"@rollup/plugin-typescript": "^8.0.0",
 		"@types/glob-to-regexp": "^0.4.0",
 		"@types/tar": "^4.0.4",
 		"brotli-size": "^4.0.0",
@@ -55,13 +51,9 @@
 		"gzip-size": "^6.0.0",
 		"husky": "^4.3.0",
 		"lint-staged": "^10.5.3",
-		"rollup": "^2.34.2",
-		"rollup-plugin-filesize": "^9.1.0",
-		"rollup-plugin-terser": "^7.0.2",
-		"rollup-plugin-typescript2": "^0.29.0",
 		"tar": "^6.0.5",
+		"tsup": "^4.8.19",
 		"type-fest": "^0.20.2",
-		"typescript": "^4.1.2",
 		"xo": "^0.35.0"
 	}
 }
