@@ -42,7 +42,6 @@
 		"@types/glob-to-regexp": "^0.4.0",
 		"@types/tar": "^4.0.4",
 		"brotli-size": "^4.0.0",
-		"builtin-modules": "^3.1.0",
 		"byte-size": "^7.0.0",
 		"cac": "^6.6.1",
 		"chalk": "^4.1.0",
