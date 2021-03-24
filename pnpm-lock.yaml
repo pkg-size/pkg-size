@@ -6137,7 +6137,7 @@ specifiers:
   brotli-size: ^4.0.0
   byte-size: ^7.0.0
   cac: ^6.6.1
-  cli-simple-table: ^1.0.1
+  cli-simple-table: github:privatenumber/cli-simple-table#colorette
   colorette: ^1.2.2
   glob-to-regexp: ^0.4.1
   gzip-size: ^6.0.0
