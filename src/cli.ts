@@ -125,20 +125,20 @@ if (flags.help || flags.version) {
 		sizeBrotli: 0,
 	};
 
-	distData.files
-		.sort(compareFiles(sortBy))
-		.forEach((file) => {
-			table.row(
-				cyan(file.path),
-				getSize(file.size),
-				getSize(file.sizeGzip),
-				getSize(file.sizeBrotli),
-			);
+	distData.files.sort(compareFiles(sortBy));
 
-			total.size += file.size;
-			total.sizeGzip += file.sizeGzip;
-			total.sizeBrotli += file.sizeBrotli;
-		});
+	for (const file of distData.files) {
+		table.row(
+			cyan(file.path),
+			getSize(file.size),
+			getSize(file.sizeGzip),
+			getSize(file.sizeBrotli),
+		);
+
+		total.size += file.size;
+		total.sizeGzip += file.sizeGzip;
+		total.sizeBrotli += file.sizeBrotli;
+	}
 
 	table.row();
 
