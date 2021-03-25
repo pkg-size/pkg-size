@@ -1,11 +1,11 @@
 import path from 'path';
+import zlib from 'zlib';
+import fs from 'fs';
 import packlist from 'npm-packlist';
 import concatStream from 'concat-stream';
 import tarFs from 'tar-fs';
 import gzipSize from 'gzip-size';
 import brotliSize from 'brotli-size';
-import zlib from 'zlib';
-import fs from 'fs';
 
 type FileEntry = {
 	path: string;
@@ -20,7 +20,7 @@ type PkgSizeData = {
 	files: FileEntry[];
 };
 
-async function getFileSizes (pkgPath: string, filePath: string): Promise<FileEntry> {
+async function getFileSizes(pkgPath: string, filePath: string): Promise<FileEntry> {
 	const fileBuffer = await fs.promises.readFile(path.join(pkgPath, filePath));
 	const [stats, sizeGzip, sizeBrotli] = await Promise.all([
 		fs.promises.stat(filePath),
@@ -36,20 +36,21 @@ async function getFileSizes (pkgPath: string, filePath: string): Promise<FileEnt
 	};
 }
 
-async function getTarballSize(pkgPath, entries): Promise<number> {
-	return new Promise((resolve, reject) => {
-		tarFs.pack(pkgPath, {
-			entries,
-		})
-			.pipe(zlib.createGzip())
-			.pipe(concatStream(
-				(tarBuffer) => resolve(Buffer.byteLength(tarBuffer))
-			))
-			.on('error', (error) => {
-				reject(error);
-			});
-	});
-}
+const getTarballSize = (
+	pkgPath: string,
+	entries: string[],
+): Promise<number> => new Promise((resolve, reject) => {
+	tarFs.pack(pkgPath, {
+		entries,
+	})
+		.pipe(zlib.createGzip())
+		.pipe(concatStream(
+			tarBuffer => resolve(Buffer.byteLength(tarBuffer)),
+		))
+		.on('error', (error) => {
+			reject(error);
+		});
+});
 
 async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
@@ -63,7 +64,7 @@ async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
 		...files
 	] = await Promise.all([
 		getTarballSize(pkgPath, filesList),
-		...filesList.map((filePath) => getFileSizes(pkgPath, filePath)),
+		...filesList.map(filePath => getFileSizes(pkgPath, filePath)),
 	]);
 
 	return {
