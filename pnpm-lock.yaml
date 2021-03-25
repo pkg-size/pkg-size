@@ -7,7 +7,6 @@ devDependencies:
   cac: 6.7.2
   cli-simple-table: 1.1.0
   colorette: 1.2.2
-  concat-stream: 2.0.0
   eslint: 7.22.0
   glob-to-regexp: 0.4.1
   gzip-size: 6.0.0
@@ -621,10 +620,6 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-vIyhWmIkULaq04Gt93txdh+j02yX/JzlyhLYbV3YQCn/zvES3JnY7TifHHvvr1w5hTDluNKMkV05cs4vy8Q7sw==
-  /buffer-from/1.1.1:
-    dev: true
-    resolution:
-      integrity: sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==
   /buffer/5.7.1:
     dependencies:
       base64-js: 1.5.1
@@ -795,17 +790,6 @@ packages:
     dev: true
     resolution:
       integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=
-  /concat-stream/2.0.0:
-    dependencies:
-      buffer-from: 1.1.1
-      inherits: 2.0.4
-      readable-stream: 3.6.0
-      typedarray: 0.0.6
-    dev: true
-    engines:
-      '0': node >= 6.0
-    resolution:
-      integrity: sha512-MWufYdFw53ccGjCA+Ol7XJYpAlW6/prSMzuPOTRnJGcGzuhLn4Scrz7qf6o8bROZ514ltazcIFJZevcfbo0x7A==
   /confusing-browser-globals/1.0.10:
     dev: true
     resolution:
@@ -2995,10 +2979,6 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==
-  /typedarray/0.0.6:
-    dev: true
-    resolution:
-      integrity: sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
   /typescript/4.2.3:
     dev: true
     engines:
@@ -3114,7 +3094,6 @@ specifiers:
   cac: ^6.6.1
   cli-simple-table: ^1.1.0
   colorette: ^1.2.2
-  concat-stream: ^2.0.0
   eslint: ^7.22.0
   glob-to-regexp: ^0.4.1
   gzip-size: ^6.0.0
