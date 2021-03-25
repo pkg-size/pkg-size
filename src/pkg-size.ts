@@ -5,19 +5,7 @@ import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
 import gzipSize from 'gzip-size';
 import brotliSize from 'brotli-size';
-
-type FileEntry = {
-	path: string;
-	size: number;
-	sizeGzip: number;
-	sizeBrotli: number;
-};
-
-type PkgSizeData = {
-	pkgPath: string;
-	tarballSize: number;
-	files: FileEntry[];
-};
+import { FileEntry, PkgSizeData } from './interfaces';
 
 async function streamToBuffer(readable) {
 	const chunks = [];
