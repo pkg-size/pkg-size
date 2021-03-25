@@ -1,10 +1,12 @@
 import cac from 'cac';
-import SimpleTable from 'cli-simple-table';
+import SimpleTable from 'cli-simple-table'; // eslint-disable-line import/no-unresolved
 import byteSize from 'byte-size';
-import {green, cyan, bold, underline} from 'colorette';
+import {
+	green, cyan, bold, underline,
+} from 'colorette';
 import globToRegexp from 'glob-to-regexp';
 import pkgSize from './pkg-size';
-import {FileEntry} from './interfaces';
+import { FileEntry } from './interfaces';
 
 const pkgJsn = require('../package.json'); // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -70,15 +72,21 @@ const sortByConverter = {
 	gzip: 'sizeGzip',
 };
 
-const sortBy: keyof FileEntry = (flags.sortBy in sortByConverter) ? sortByConverter[flags.sortBy] : flags.sortBy;
+const sortBy: keyof FileEntry = (
+	flags.sortBy in sortByConverter
+		? sortByConverter[flags.sortBy]
+		: flags.sortBy
+);
 
 if (flags.help || flags.version) {
 	process.exit(0); // eslint-disable-line unicorn/no-process-exit
 }
 
-void pkgSize(parsed.args[0]).then(distData => {
+(async () => {
+	const distData = await pkgSize(parsed.args[0]);
+
 	if (flags.ignoreFiles) {
-		const ignorePattern = globToRegexp(flags.ignoreFiles, {extended: true});
+		const ignorePattern = globToRegexp(flags.ignoreFiles, { extended: true });
 		distData.files = distData.files.filter(file => !ignorePattern.test(file.path));
 	}
 
@@ -89,9 +97,9 @@ void pkgSize(parsed.args[0]).then(distData => {
 
 	console.log('');
 	console.log(green(bold('Package path')));
-	console.log(distData.pkgPath + '\n');
+	console.log(`${distData.pkgPath}\n`);
 	console.log(green(bold('Tarball size')));
-	console.log(getSize(distData.tarballSize) + '\n');
+	console.log(`${getSize(distData.tarballSize)}\n`);
 
 	const table = new SimpleTable();
 
@@ -117,20 +125,20 @@ void pkgSize(parsed.args[0]).then(distData => {
 		sizeBrotli: 0,
 	};
 
-	distData.files
-		.sort(compareFiles(sortBy))
-		.forEach(file => {
-			table.row(
-				cyan(file.path),
-				getSize(file.size),
-				getSize(file.sizeGzip),
-				getSize(file.sizeBrotli),
-			);
+	distData.files.sort(compareFiles(sortBy));
 
-			total.size += file.size;
-			total.sizeGzip += file.sizeGzip;
-			total.sizeBrotli += file.sizeBrotli;
-		});
+	for (const file of distData.files) {
+		table.row(
+			cyan(file.path),
+			getSize(file.size),
+			getSize(file.sizeGzip),
+			getSize(file.sizeBrotli),
+		);
+
+		total.size += file.size;
+		total.sizeGzip += file.sizeGzip;
+		total.sizeBrotli += file.sizeBrotli;
+	}
 
 	table.row();
 
@@ -141,5 +149,5 @@ void pkgSize(parsed.args[0]).then(distData => {
 		underline(getSize(total.sizeBrotli)),
 	);
 
-	console.log(table.toString() + '\n');
-});
+	console.log(`${table.toString()}\n`);
+})();

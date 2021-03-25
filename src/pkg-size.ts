@@ -1,9 +1,9 @@
 import path from 'path';
 import pack from 'libnpmpack';
-import tar, {ReadEntry} from 'tar';
+import tar, { ReadEntry } from 'tar';
 import gzipSize from 'gzip-size';
 import brotliSize from 'brotli-size';
-import {SetRequired} from 'type-fest';
+import { SetRequired } from 'type-fest';
 
 type SafeReadEntry = SetRequired<ReadEntry, 'mode' | 'size'>;
 
@@ -21,7 +21,7 @@ type PkgSizeData = {
 	files: FileEntry[];
 };
 
-async function streamToBuffer(readable: any) {
+async function streamToBuffer(readable) {
 	const chunks = [];
 	for await (const chunk of readable) {
 		chunks.push(chunk);
@@ -54,11 +54,13 @@ const getCompressionSizes = async (readEntry: SafeReadEntry): Promise<FileEntry>
  * Based on npm pack logic
  * https://github.com/npm/cli/blob/e9a440bcc5bd9a42dbdbf4bf9340d188c910857c/lib/utils/tar.js
  */
-const getTarFiles = async (tarball: Buffer): Promise<FileEntry[]> => new Promise((resolve, reject) => {
+const getTarFiles = (
+	tarball: Buffer,
+): Promise<FileEntry[]> => new Promise((resolve, reject) => {
 	const promises: Array<Promise<FileEntry>> = [];
 
-	tar.list({noResume: true})
-		.on('entry', readEntry => {
+	tar.list({ noResume: true })
+		.on('entry', (readEntry) => {
 			promises.push(getCompressionSizes(readEntry));
 		})
 		.on('error', error => reject(error))
