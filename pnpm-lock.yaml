@@ -6,7 +6,7 @@ devDependencies:
   brotli-size: 4.0.0
   byte-size: 7.0.1
   cac: 6.7.2
-  cli-simple-table: 1.0.1
+  cli-simple-table: 1.1.0
   colorette: 1.2.2
   glob-to-regexp: 0.4.1
   gzip-size: 6.0.0
@@ -1196,14 +1196,14 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-I/zHAwsKf9FqGoXM4WWRACob9+SNukZTd94DWF57E4toouRulbCxcUh6RKUEOQlYTHJnzkPMySvPNaaSLNfLZw==
-  /cli-simple-table/1.0.1:
+  /cli-simple-table/1.1.0:
     dependencies:
-      chalk: 4.1.0
       cli-truncate: 2.1.0
+      colorette: 1.2.2
       strip-ansi: 6.0.0
     dev: true
     resolution:
-      integrity: sha512-Aajew3rUqssEDe05W3mAu5T3l/89YBtasLGgVJLhrviHRMz43trqEsYKJE17T9GE7J6JQID+Vmek3XUgYblt0A==
+      integrity: sha512-/LT3KZk+R0I72KtXMplRP19wL/ukTfeYXG2POO+6/LZrkzd7v7E+NAr5YPWHTqd5j1eaEUz1RgJ9R+aXywGVRA==
   /cli-truncate/2.1.0:
     dependencies:
       slice-ansi: 3.0.0
@@ -6137,7 +6137,7 @@ specifiers:
   brotli-size: ^4.0.0
   byte-size: ^7.0.0
   cac: ^6.6.1
-  cli-simple-table: github:privatenumber/cli-simple-table#colorette
+  cli-simple-table: ^1.1.0
   colorette: ^1.2.2
   glob-to-regexp: ^0.4.1
   gzip-size: ^6.0.0
