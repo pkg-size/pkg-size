@@ -21,7 +21,10 @@ const getTarballSize = async (
 	entries: string[],
 ): Promise<number> => {
 	const tarBuffer = await streamToBuffer(
-		tarFs.pack(pkgPath, { entries })
+		tarFs.pack(pkgPath, {
+			// clone array because tar-fs mutates it
+			entries: entries.slice(),
+		})
 			.pipe(zlib.createGzip()),
 	);
 
