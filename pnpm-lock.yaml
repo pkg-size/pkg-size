@@ -15,7 +15,6 @@ devDependencies:
   npm-packlist: 2.1.4
   tar-fs: 2.1.1
   tsup: 4.8.19_typescript@4.2.3
-  type-fest: 0.20.2
   typescript: 4.2.3
 lockfileVersion: 5.2
 packages:
@@ -3102,5 +3101,4 @@ specifiers:
   npm-packlist: ^2.1.4
   tar-fs: ^2.1.1
   tsup: ^4.8.19
-  type-fest: ^0.20.2
   typescript: ^4.2.3
