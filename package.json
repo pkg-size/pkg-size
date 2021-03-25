@@ -67,6 +67,14 @@
 					}
 				}
 			]
-		}
+		},
+		"overrides": [
+			{
+				"files": "src/cli.ts",
+				"rules": {
+					"no-console": "off"
+				}
+			}
+		]
 	}
 }
