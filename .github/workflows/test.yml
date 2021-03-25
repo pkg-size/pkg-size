@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ 10.x, 14.x ]
+        node-version: [ 12.x, 14.x ]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
-        run: npx -p @antfu/ni nci
+        run: npx pnpm i --frozen-lockfile
       - name: Lint
         run: npm run lint
       - name: Test
