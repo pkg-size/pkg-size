@@ -33,39 +33,68 @@ const getTarballSize = async (
 	return Buffer.byteLength(tarBuffer);
 };
 
-async function getFileSizes(pkgPath: string, filePath: string): Promise<FileEntry> {
-	const fileStream = fs.createReadStream(
-		path.join(pkgPath, filePath),
-	);
-
-	const [size, sizeGzip, sizeBrotli] = await Promise.all([
-		new Promise<number>((resolve) => {
-			let totalSize = 0;
-			fileStream
-				.on('data', (chunk) => {
-					totalSize += chunk.length;
-				})
-				.on('end', () => {
-					resolve(totalSize);
-				});
-		}),
-		new Promise<number>((resolve) => {
-			fileStream.pipe(gzipSize.stream()).on('gzip-size', resolve);
-		}),
-		new Promise<number>((resolve) => {
-			fileStream.pipe(brotliStream()).on('brotli-size', resolve);
-		}),
-	]);
-
-	return {
+async function getFileSizes({ sizes, pkgPath, filePath }: {
+	sizes: string[];
+	pkgPath: string;
+	filePath: string;
+}): Promise<FileEntry> {
+	const result = {
 		path: filePath,
-		size,
-		sizeGzip,
-		sizeBrotli,
+		size: undefined,
+		sizeGzip: undefined,
+		sizeBrotli: undefined,
 	};
+
+	if (sizes.length > 0) {
+		const fullFilePath = path.join(pkgPath, filePath);
+		const fileStream = fs.createReadStream(fullFilePath);
+
+		const calculateSizes = [];
+
+		if (sizes.includes('size')) {
+			calculateSizes.push(new Promise<void>((resolve) => {
+				let totalSize = 0;
+				fileStream
+					.on('data', (chunk) => {
+						totalSize += chunk.length;
+					})
+					.on('end', () => {
+						result.size = totalSize;
+						resolve();
+					});
+			}));
+		}
+
+		if (sizes.includes('gzip')) {
+			calculateSizes.push(new Promise<void>((resolve) => {
+				fileStream.pipe(gzipSize.stream()).on('gzip-size', (sizeGzip) => {
+					result.sizeGzip = sizeGzip;
+					resolve();
+				});
+			}));
+		}
+
+		if (sizes.includes('brotli')) {
+			calculateSizes.push(new Promise<void>((resolve) => {
+				fileStream.pipe(brotliStream()).on('brotli-size', (sizeBrotli) => {
+					result.sizeBrotli = sizeBrotli;
+					resolve();
+				});
+			}));
+		}
+
+		await Promise.all(calculateSizes);
+	}
+
+	return result;
 }
 
-async function pkgSize(pkgPath: string, options?: { ignoreFiles?: string }): Promise<PkgSizeData> {
+type PkgSizeOptions = {
+	sizes: string[];
+	ignoreFiles?: string;
+};
+
+async function pkgSize(pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
 
 	let filesList = await packlist({
@@ -83,7 +112,11 @@ async function pkgSize(pkgPath: string, options?: { ignoreFiles?: string }): Pro
 	] = await pMap(
 		[
 			getTarballSize(pkgPath, filesList),
-			...filesList.map(filePath => getFileSizes(pkgPath, filePath)),
+			...filesList.map(filePath => getFileSizes({
+				sizes: options.sizes,
+				pkgPath,
+				filePath,
+			})),
 		],
 		element => element,
 		{ concurrency: 10 }, // To avoid Error: EMFILE, too many open files
