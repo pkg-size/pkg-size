@@ -6,6 +6,7 @@ import tarFs from 'tar-fs';
 import gzipSize from 'gzip-size';
 import { stream as brotliStream } from 'brotli-size';
 import pMap from 'p-map';
+import globToRegexp from 'glob-to-regexp';
 import { FileEntry, PkgSizeData } from './interfaces';
 
 async function streamToBuffer(readable) {
@@ -64,12 +65,17 @@ async function getFileSizes(pkgPath: string, filePath: string): Promise<FileEntr
 	};
 }
 
-async function pkgSize(pkgPath: string): Promise<PkgSizeData> {
+async function pkgSize(pkgPath: string, options?: { ignoreFiles?: string }): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
 
-	const filesList = await packlist({
+	let filesList = await packlist({
 		path: pkgPath,
 	});
+
+	if (options?.ignoreFiles) {
+		const ignorePattern = globToRegexp(options.ignoreFiles, { extended: true });
+		filesList = filesList.filter(filePath => !ignorePattern.test(filePath));
+	}
 
 	const [
 		tarballSize,

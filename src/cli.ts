@@ -4,7 +4,6 @@ import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline,
 } from 'colorette';
-import globToRegexp from 'glob-to-regexp';
 import pkgSize from './pkg-size';
 import { FileEntry } from './interfaces';
 
@@ -84,12 +83,9 @@ if (flags.help || flags.version) {
 
 (async () => {
 	const pkgPath = parsed.args[0] ?? process.cwd();
-	const distData = await pkgSize(pkgPath);
-
-	if (flags.ignoreFiles) {
-		const ignorePattern = globToRegexp(flags.ignoreFiles, { extended: true });
-		distData.files = distData.files.filter(file => !ignorePattern.test(file.path));
-	}
+	const distData = await pkgSize(pkgPath, {
+		ignoreFiles: flags.ignoreFiles,
+	});
 
 	if (flags.json) {
 		console.log(JSON.stringify(distData));
