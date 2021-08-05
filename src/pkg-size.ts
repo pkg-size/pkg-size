@@ -4,7 +4,7 @@ import fs from 'fs';
 import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
 import gzipSize from 'gzip-size';
-import brotliSize from 'brotli-size';
+import { stream as brotliStream } from 'brotli-size';
 import { FileEntry, PkgSizeData } from './interfaces';
 
 async function streamToBuffer(readable) {
@@ -31,17 +31,33 @@ const getTarballSize = async (
 	return Buffer.byteLength(tarBuffer);
 };
 
-async function getFileSizes(pkgPath: string, filePath: string): Promise<FileEntry> {
-	const fileBuffer = await fs.promises.readFile(path.join(pkgPath, filePath));
-	const [stats, sizeGzip, sizeBrotli] = await Promise.all([
-		fs.promises.stat(filePath),
-		gzipSize(fileBuffer),
-		brotliSize(fileBuffer),
+async function getFileSizes(pkgPath: string, filePath: string) {
+	const fileStream = fs.createReadStream(
+		path.join(pkgPath, filePath),
+	);
+
+	const [size, sizeGzip, sizeBrotli] = await Promise.all([
+		new Promise((resolve) => {
+			let totalSize = 0;
+			fileStream
+				.on('data', (chunk) => {
+					totalSize += chunk.length;
+				})
+				.on('end', () => {
+					resolve(totalSize);
+				});
+		}),
+		new Promise((resolve) => {
+			fileStream.pipe(gzipSize.stream()).on('gzip-size', resolve);
+		}),
+		new Promise((resolve) => {
+			fileStream.pipe(brotliStream()).on('brotli-size', resolve);
+		}),
 	]);
 
 	return {
 		path: filePath,
-		size: stats.size,
+		size,
 		sizeGzip,
 		sizeBrotli,
 	};
