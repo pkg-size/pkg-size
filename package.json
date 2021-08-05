@@ -50,6 +50,7 @@
 		"husky": "^4.3.0",
 		"lint-staged": "^10.5.3",
 		"npm-packlist": "^2.1.4",
+		"p-map": "^5.1.0",
 		"tar-fs": "^2.1.1",
 		"tsup": "^4.8.19",
 		"typescript": "^4.2.3"
