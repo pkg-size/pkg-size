@@ -83,7 +83,8 @@ if (flags.help || flags.version) {
 }
 
 (async () => {
-	const distData = await pkgSize(parsed.args[0]);
+	const pkgPath = parsed.args[0] ?? process.cwd();
+	const distData = await pkgSize(pkgPath);
 
 	if (flags.ignoreFiles) {
 		const ignorePattern = globToRegexp(flags.ignoreFiles, { extended: true });

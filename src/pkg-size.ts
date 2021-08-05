@@ -64,7 +64,7 @@ async function getFileSizes(pkgPath: string, filePath: string): Promise<FileEntr
 	};
 }
 
-async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
+async function pkgSize(pkgPath: string): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
 
 	const filesList = await packlist({
