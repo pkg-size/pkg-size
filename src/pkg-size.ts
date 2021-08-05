@@ -9,29 +9,23 @@ import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
 import { FileEntry, PkgSizeData } from './interfaces';
 
-async function streamToBuffer(readable) {
-	const chunks = [];
-	for await (const chunk of readable) {
-		chunks.push(chunk);
-	}
-
-	return Buffer.concat(chunks);
-}
-
-const getTarballSize = async (
+const getTarballSize = (
 	pkgPath: string,
 	entries: string[],
-): Promise<number> => {
-	const tarBuffer = await streamToBuffer(
-		tarFs.pack(pkgPath, {
-			// clone array because tar-fs mutates it
-			entries: entries.slice(),
+) => new Promise<number>((resolve) => {
+	let totalSize = 0;
+	tarFs.pack(pkgPath, {
+		// clone array because tar-fs mutates it
+		entries: entries.slice(),
+	})
+		.pipe(zlib.createGzip())
+		.on('data', (chunk) => {
+			totalSize += chunk.length;
 		})
-			.pipe(zlib.createGzip()),
-	);
-
-	return Buffer.byteLength(tarBuffer);
-};
+		.on('end', () => {
+			resolve(totalSize);
+		});
+});
 
 async function getFileSizes({ sizes, pkgPath, filePath }: {
 	sizes: string[];
@@ -48,7 +42,6 @@ async function getFileSizes({ sizes, pkgPath, filePath }: {
 	if (sizes.length > 0) {
 		const fullFilePath = path.join(pkgPath, filePath);
 		const fileStream = fs.createReadStream(fullFilePath);
-
 		const calculateSizes = [];
 
 		if (sizes.includes('size')) {
