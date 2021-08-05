@@ -5,6 +5,7 @@ import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
 import gzipSize from 'gzip-size';
 import { stream as brotliStream } from 'brotli-size';
+import pMap from 'p-map';
 import { FileEntry, PkgSizeData } from './interfaces';
 
 async function streamToBuffer(readable) {
@@ -31,13 +32,13 @@ const getTarballSize = async (
 	return Buffer.byteLength(tarBuffer);
 };
 
-async function getFileSizes(pkgPath: string, filePath: string) {
+async function getFileSizes(pkgPath: string, filePath: string): Promise<FileEntry> {
 	const fileStream = fs.createReadStream(
 		path.join(pkgPath, filePath),
 	);
 
 	const [size, sizeGzip, sizeBrotli] = await Promise.all([
-		new Promise((resolve) => {
+		new Promise<number>((resolve) => {
 			let totalSize = 0;
 			fileStream
 				.on('data', (chunk) => {
@@ -47,10 +48,10 @@ async function getFileSizes(pkgPath: string, filePath: string) {
 					resolve(totalSize);
 				});
 		}),
-		new Promise((resolve) => {
+		new Promise<number>((resolve) => {
 			fileStream.pipe(gzipSize.stream()).on('gzip-size', resolve);
 		}),
-		new Promise((resolve) => {
+		new Promise<number>((resolve) => {
 			fileStream.pipe(brotliStream()).on('brotli-size', resolve);
 		}),
 	]);
@@ -73,10 +74,14 @@ async function pkgSize(pkgPath = ''): Promise<PkgSizeData> {
 	const [
 		tarballSize,
 		...files
-	] = await Promise.all([
-		getTarballSize(pkgPath, filesList),
-		...filesList.map(filePath => getFileSizes(pkgPath, filePath)),
-	]);
+	] = await pMap(
+		[
+			getTarballSize(pkgPath, filesList),
+			...filesList.map(filePath => getFileSizes(pkgPath, filePath)),
+		],
+		element => element,
+		{ concurrency: 10 }, // To avoid Error: EMFILE, too many open files
+	);
 
 	return {
 		pkgPath,
