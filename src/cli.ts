@@ -54,7 +54,7 @@ const cli = cac('pkg-size')
 	.version(pkgJsn.version)
 
 	.example('$ pkg-size')
-	.example('$ pkg-size ./pkg/path')
+	.example('$ pkg-size ./package/path')
 	.example('')
 	.example('$ pkg-size --sizes=size,gzip,brotli')
 	.example('$ pkg-size -S brotli')

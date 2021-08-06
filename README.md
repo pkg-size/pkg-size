@@ -27,7 +27,7 @@ $ npx pkg-size
 <sub>Support this project by ⭐️ starring and sharing it. [Follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
 
 ## 🙋‍♂️ Why?
-To quickly determine the size of your package and the compressed size before publishing it to npm.
+To quickly determine the uncompressed size, gzip size, and brotli size of your package before publishing it to npm.
 
 
 ## 🚀 Install
@@ -39,7 +39,7 @@ npm i pkg-size
 
 ### Get the package size by package path
 ```sh
-pkg-size ./pkg/path
+pkg-size ./package/path
 ```
 
 ### Skip brotli size calculation
