@@ -36,23 +36,24 @@
 		"src/*.{js,ts}": "eslint"
 	},
 	"devDependencies": {
-		"@pvtnbr/eslint-config-typescript": "^0.1.12",
-		"@types/glob-to-regexp": "^0.4.0",
-		"@types/tar": "^4.0.4",
+		"@pvtnbr/eslint-config-typescript": "^0.1.19",
+		"@types/glob-to-regexp": "^0.4.1",
+		"@types/tar": "^4.0.5",
 		"brotli-size": "^4.0.0",
 		"byte-size": "^7.0.0",
-		"cac": "^6.6.1",
+		"cac": "^6.7.3",
 		"cli-simple-table": "^1.1.0",
 		"colorette": "^1.2.2",
-		"eslint": "^7.22.0",
+		"eslint": "^7.32.0",
 		"glob-to-regexp": "^0.4.1",
 		"gzip-size": "^6.0.0",
 		"husky": "^4.3.0",
-		"lint-staged": "^10.5.3",
-		"npm-packlist": "^2.1.4",
+		"lint-staged": "^11.1.1",
+		"npm-packlist": "^2.2.2",
+		"p-map": "^5.1.0",
 		"tar-fs": "^2.1.1",
-		"tsup": "^4.8.19",
-		"typescript": "^4.2.3"
+		"tsup": "^4.13.1",
+		"typescript": "^4.3.5"
 	},
 	"eslintConfig": {
 		"extends": "@pvtnbr/eslint-config-typescript",
