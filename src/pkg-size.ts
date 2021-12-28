@@ -7,7 +7,11 @@ import gzipSize from 'gzip-size';
 import { stream as brotliStream } from 'brotli-size';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
-import { FileEntry, PkgSizeData } from './interfaces';
+import {
+	Sizes,
+	FileEntry,
+	PkgSizeData
+} from './interfaces';
 
 const getTarballSize = (
 	pkgPath: string,
@@ -28,15 +32,15 @@ const getTarballSize = (
 });
 
 async function getFileSizes({ sizes, pkgPath, filePath }: {
-	sizes: string[];
+	sizes: Sizes[];
 	pkgPath: string;
 	filePath: string;
 }): Promise<FileEntry> {
 	const result = {
 		path: filePath,
-		size: undefined,
-		sizeGzip: undefined,
-		sizeBrotli: undefined,
+		size: NaN,
+		sizeGzip: NaN,
+		sizeBrotli: NaN,
 	};
 
 	if (sizes.length > 0) {
@@ -83,11 +87,14 @@ async function getFileSizes({ sizes, pkgPath, filePath }: {
 }
 
 type PkgSizeOptions = {
-	sizes: string[];
+	sizes?: Sizes[];
 	ignoreFiles?: string;
 };
 
-async function pkgSize(pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData> {
+async function pkgSize(
+	pkgPath: string,
+	options?: PkgSizeOptions,
+): Promise<PkgSizeData> {
 	pkgPath = path.resolve(pkgPath);
 
 	let filesList = await packlist({
@@ -101,19 +108,19 @@ async function pkgSize(pkgPath: string, options?: PkgSizeOptions): Promise<PkgSi
 
 	const [
 		tarballSize,
-		...files
-	] = await pMap(
-		[
-			getTarballSize(pkgPath, filesList),
-			...filesList.map(filePath => getFileSizes({
-				sizes: options.sizes,
+		files,
+	] = await Promise.all([
+		getTarballSize(pkgPath, filesList),
+		pMap(
+			filesList.map(filePath => getFileSizes({
+				sizes: options?.sizes ?? [],
 				pkgPath,
 				filePath,
 			})),
-		],
-		element => element,
-		{ concurrency: 10 }, // To avoid Error: EMFILE, too many open files
-	);
+			element => element,
+			{ concurrency: 10 }, // To avoid Error: EMFILE, too many open files
+		),
+	]);
 
 	return {
 		pkgPath,

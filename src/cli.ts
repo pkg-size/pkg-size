@@ -1,11 +1,16 @@
 import cac from 'cac';
+import assert from 'assert';
 import SimpleTable from 'cli-simple-table'; // eslint-disable-line import/no-unresolved
-import byteSize from 'byte-size';
+import byteSize, { Unit } from 'byte-size';
 import {
 	green, cyan, bold, underline,
 } from 'colorette';
 import pkgSize from './pkg-size';
-import { FileEntry } from './interfaces';
+import {
+	Sizes,
+	SizeMap,
+	FileEntry,
+} from './interfaces';
 
 const pkgJsn = require('../package.json'); // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -66,6 +71,24 @@ const cli = cac('pkg-size')
 	.example('$ pkg-size -u metric_octet')
 	.example('');
 
+
+const isValidSize = (size: string): size is Sizes => SizeMap.hasOwnProperty(size)
+const isValidUnit = (unit: string): unit is Unit => ['metric', 'iec', 'metric_octet', 'iec_octet'].includes(unit);
+
+function validateCliOptions({ sizes, unit }: CliOptions): {
+	sizes: Sizes;
+	unit: Unit;
+} {
+	assert(!unit || isValidUnit(unit), `Invalid unit "${unit}"`);
+
+	// const sizes: Sizes[] = (sizes ?? '').split(',').map(size => size.trim()).filter(isValidSize);
+
+	return {
+		sizes,
+		unit,
+	};
+}
+
 const parsed = cli.parse();
 const flags: CliOptions = parsed.options;
 
@@ -73,21 +96,10 @@ const getSize = (bytes: number): string => byteSize(bytes, {
 	units: flags.unit,
 });
 
-const sizeToProperty = {
-	size: 'size',
-	brotli: 'sizeBrotli',
-	gzip: 'sizeGzip',
-};
-
-const sizeToLabel = {
-	size: 'Size',
-	brotli: 'Brotli',
-	gzip: 'Gzip',
-};
 
 const sortBy: keyof FileEntry = (
-	flags.sortBy in sizeToProperty
-		? sizeToProperty[flags.sortBy]
+	(flags.sortBy in SizeMap)
+		? SizeMap[flags.sortBy!].property
 		: flags.sortBy
 );
 
@@ -119,7 +131,7 @@ if (flags.help || flags.version) {
 	table.header(
 		green('File'),
 		...sizes.map(size => ({
-			text: green(sizeToLabel[size]),
+			text: green(SizeMap[size].label),
 			align: 'right',
 		}) as const),
 	);
@@ -136,7 +148,7 @@ if (flags.help || flags.version) {
 		table.row(
 			cyan(file.path),
 			...sizes.map(
-				size => getSize(file[sizeToProperty[size]]),
+				size => getSize(file[SizeMap[size].property]),
 			),
 		);
 
@@ -150,7 +162,7 @@ if (flags.help || flags.version) {
 	table.row(
 		'',
 		...sizes.map(
-			size => underline(getSize(total[sizeToProperty[size]])),
+			size => underline(getSize(total[SizeMap[size].property])),
 		),
 	);
 

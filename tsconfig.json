@@ -1,6 +1,14 @@
 {
-  "compilerOptions": {
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-  }
+	"compilerOptions": {
+		"moduleResolution": "node",
+		"isolatedModules": true,
+		"esModuleInterop": true,
+
+		// Node 12
+		"module": "commonjs",
+		"target": "ES2019"
+	},
+	"include": [
+		"src",
+	],
 }
