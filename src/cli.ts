@@ -1,13 +1,12 @@
 import cac from 'cac';
-import SimpleTable from 'cli-simple-table'; // eslint-disable-line import/no-unresolved
+import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline,
 } from 'colorette';
+import pkgJsn from '../package.json';
+import type { FileEntry } from './interfaces.js';
 import pkgSize from './index.js';
-import { FileEntry } from './interfaces';
-
-const pkgJsn = require('../package.json'); // eslint-disable-line @typescript-eslint/no-var-requires
 
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
 	const aValue = a[sortBy];
@@ -71,25 +70,26 @@ const flags: CliOptions = parsed.options;
 
 const getSize = (bytes: number): string => byteSize(bytes, {
 	units: flags.unit,
-});
+}).toString();
 
-const sizeToProperty = {
+type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli';
+
+const sizeToProperty: Record<string, NumericFileEntryKey> = {
 	size: 'size',
 	brotli: 'sizeBrotli',
 	gzip: 'sizeGzip',
 };
 
-const sizeToLabel = {
+const sizeToLabel: Record<string, string> = {
 	size: 'Size',
 	brotli: 'Brotli',
 	gzip: 'Gzip',
 };
 
-const sortBy: keyof FileEntry = (
-	flags.sortBy in sizeToProperty
-		? sizeToProperty[flags.sortBy]
-		: flags.sortBy
-);
+const sortByFlag = flags.sortBy ?? 'brotli';
+const sortBy: keyof FileEntry = sortByFlag in sizeToProperty
+	? sizeToProperty[sortByFlag]
+	: sortByFlag as keyof FileEntry;
 
 if (flags.help || flags.version) {
 	process.exit(0);
@@ -97,7 +97,7 @@ if (flags.help || flags.version) {
 
 (async () => {
 	const pkgPath = parsed.args[0] ?? process.cwd();
-	const sizes = flags.sizes.split(',').map(size => size.trim());
+	const sizes = (flags.sizes ?? 'size,gzip,brotli').split(',').map(size => size.trim());
 	const distData = await pkgSize(pkgPath, {
 		sizes,
 		ignoreFiles: flags.ignoreFiles,

@@ -83,31 +83,31 @@ Display version number
 
 ## 👷‍♂️ Node.js API
 ```js
-const pkgSize = require('pkg-size');
+const pkgSize = require('pkg-size')
 
 // Get the package size of the current working directory
-const sizeData = await pkgSize();
+const sizeData = await pkgSize()
 
 // ... Or get the package size of a specific package path
-const sizeData = await pkgSize('/path/to/package');
+const sizeDataForPath = await pkgSize('/path/to/package')
 ```
 
 ### Interface
 ```ts
 type FileEntry = {
-    path: string;
-    size: number;
-    sizeGzip: number;
-    sizeBrotli: number;
-};
+    path: string
+    size: number
+    sizeGzip: number
+    sizeBrotli: number
+}
 
 type PkgSizeData = {
-    pkgPath: string;
-    tarballSize: number;
-    files: FileEntry[];
-};
+    pkgPath: string
+    tarballSize: number
+    files: FileEntry[]
+}
 
-function pkgSize(pkgPath?: string): Promise<PkgSizeData>;
+function pkgSize(pkgPath?: string): Promise<PkgSizeData>
 ```
 
 

@@ -7,7 +7,7 @@ import gzipSize from 'gzip-size';
 import { stream as brotliStream } from 'brotli-size';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
-import { FileEntry, PkgSizeData } from './interfaces';
+import type { FileEntry, PkgSizeData } from './interfaces';
 
 const getTarballSize = (
 	pkgPath: string,
@@ -19,7 +19,7 @@ const getTarballSize = (
 		entries: entries.slice(),
 	})
 		.pipe(zlib.createGzip())
-		.on('data', (chunk) => {
+		.on('data', (chunk: Buffer) => {
 			totalSize += chunk.length;
 		})
 		.on('end', () => {
@@ -27,16 +27,16 @@ const getTarballSize = (
 		});
 });
 
-async function getFileSizes({ sizes, pkgPath, filePath }: {
+const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 	sizes: string[];
 	pkgPath: string;
 	filePath: string;
-}): Promise<FileEntry> {
-	const result = {
+}): Promise<FileEntry> => {
+	const result: FileEntry = {
 		path: filePath,
-		size: undefined,
-		sizeGzip: undefined,
-		sizeBrotli: undefined,
+		size: 0,
+		sizeGzip: 0,
+		sizeBrotli: 0,
 	};
 
 	if (sizes.length > 0) {
@@ -80,14 +80,14 @@ async function getFileSizes({ sizes, pkgPath, filePath }: {
 	}
 
 	return result;
-}
+};
 
 type PkgSizeOptions = {
 	sizes: string[];
 	ignoreFiles?: string;
 };
 
-async function pkgSize(pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData> {
+const pkgSize = async (pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData> => {
 	pkgPath = path.resolve(pkgPath);
 
 	let filesList = await packlist({
@@ -99,27 +99,24 @@ async function pkgSize(pkgPath: string, options?: PkgSizeOptions): Promise<PkgSi
 		filesList = filesList.filter(filePath => !ignorePattern.test(filePath));
 	}
 
-	const [
-		tarballSize,
-		...files
-	] = await pMap(
-		[
-			getTarballSize(pkgPath, filesList),
-			...filesList.map(filePath => getFileSizes({
-				sizes: options.sizes,
+	const [tarballSize, files] = await Promise.all([
+		getTarballSize(pkgPath, filesList),
+		pMap(
+			filesList,
+			filePath => getFileSizes({
+				sizes: options?.sizes ?? [],
 				pkgPath,
 				filePath,
-			})),
-		],
-		element => element,
-		{ concurrency: 10 }, // To avoid Error: EMFILE, too many open files
-	);
+			}),
+			{ concurrency: 10 }, // To avoid Error: EMFILE, too many open files
+		),
+	]);
 
 	return {
 		pkgPath,
 		tarballSize,
 		files,
 	};
-}
+};
 
 export default pkgSize;

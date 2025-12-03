@@ -1,13 +1,13 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "Preserve",
-    "resolveJsonModule": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true
-  }
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "preserve",
+		"resolveJsonModule": true,
+		"strict": true,
+		"noEmit": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+	},
 }

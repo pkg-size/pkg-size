@@ -17,3 +17,6 @@ node_modules
 
 # Distribution
 dist
+
+# ESLint cache
+.eslintcache

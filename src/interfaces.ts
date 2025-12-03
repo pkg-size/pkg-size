@@ -11,7 +11,7 @@ type PkgSizeData = {
 	files: FileEntry[];
 };
 
-export {
+export type {
 	FileEntry,
 	PkgSizeData,
 };
