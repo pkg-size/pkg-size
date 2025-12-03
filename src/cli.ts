@@ -1,10 +1,10 @@
-import cac from 'cac';
+import { cli } from 'cleye';
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline,
-} from 'colorette';
-import pkgJsn from '../package.json';
+} from 'yoctocolors';
+import packageJson from '../package.json';
 import type { FileEntry } from './interfaces.js';
 import pkgSize from './index.js';
 
@@ -17,59 +17,64 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 	}
 
 	if (typeof aValue === 'string' && typeof bValue === 'string') {
-		return aValue.localeCompare(bValue);
+		return aValue < bValue ? -1 : (aValue > bValue ? 1 : 0);
 	}
 
 	return 0;
 };
 
-type CliOptions = {
-	sizes?: string;
-	sortBy?: ('gzip' | 'brotli') & keyof FileEntry;
-	unit?: string;
-	ignoreFiles?: string;
-	json?: boolean;
-	help?: boolean;
-	version?: boolean;
-};
-
-const cli = cac('pkg-size')
-
-	.usage('<pkg-path>')
-
-	.option('-S, --sizes <sizes>', 'Comma separated list of sizes to show (size, gzip, brotli)', {
-		default: 'size,gzip,brotli',
-	})
-	.option('-s, --sort-by <property>', 'Sort list by (name, size, gzip, brotli)', {
-		default: 'brotli',
-	})
-	.option('-u, --unit <unit>', 'Display units (metric, iec, metric_octet, iec_octet)', {
-		default: 'metric',
-	})
-	.option('-i, --ignore-files <glob>', 'Glob to ignores files from list. Total size will still include them.')
-	.option('--json', 'JSON output')
-
-	.help()
-	.version(pkgJsn.version)
-
-	.example('$ pkg-size')
-	.example('$ pkg-size ./package/path')
-	.example('')
-	.example('$ pkg-size --sizes=size,gzip,brotli')
-	.example('$ pkg-size -S brotli')
-	.example('')
-	.example('$ pkg-size --sort-by=name')
-	.example('$ pkg-size -s size')
-	.example('')
-	.example('$ pkg-size --unit=iec')
-	.example('$ pkg-size -u metric_octet')
-	.example('');
-
-const parsed = cli.parse();
-const flags: CliOptions = parsed.options;
+const argv = cli({
+	name: packageJson.name,
+	version: packageJson.version,
+	parameters: ['[pkg-path]'],
+	flags: {
+		sizes: {
+			type: String,
+			alias: 'S',
+			description: 'Comma separated list of sizes to show (size, gzip, brotli)',
+			default: 'size,gzip,brotli',
+		},
+		sortBy: {
+			type: String,
+			alias: 's',
+			description: 'Sort list by (name, size, gzip, brotli)',
+			default: 'brotli',
+		},
+		unit: {
+			type: String,
+			alias: 'u',
+			description: 'Display units (metric, iec, metric_octet, iec_octet)',
+			default: 'metric',
+		},
+		ignoreFiles: {
+			type: String,
+			alias: 'i',
+			description: 'Glob to ignores files from list. Total size will still include them.',
+		},
+		json: {
+			type: Boolean,
+			description: 'JSON output',
+		},
+	},
+	help: {
+		examples: [
+			'pkg-size',
+			'pkg-size ./package/path',
+			'',
+			'pkg-size --sizes=size,gzip,brotli',
+			'pkg-size -S brotli',
+			'',
+			'pkg-size --sort-by=name',
+			'pkg-size -s size',
+			'',
+			'pkg-size --unit=iec',
+			'pkg-size -u metric_octet',
+		],
+	},
+});
 
 const getSize = (bytes: number): string => byteSize(bytes, {
-	units: flags.unit,
+	units: argv.flags.unit,
 }).toString();
 
 type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli';
@@ -86,24 +91,20 @@ const sizeToLabel: Record<string, string> = {
 	gzip: 'Gzip',
 };
 
-const sortByFlag = flags.sortBy ?? 'brotli';
+const sortByFlag = argv.flags.sortBy;
 const sortBy: keyof FileEntry = sortByFlag in sizeToProperty
 	? sizeToProperty[sortByFlag]
 	: sortByFlag as keyof FileEntry;
 
-if (flags.help || flags.version) {
-	process.exit(0);
-}
-
 (async () => {
-	const pkgPath = parsed.args[0] ?? process.cwd();
-	const sizes = (flags.sizes ?? 'size,gzip,brotli').split(',').map(size => size.trim());
+	const pkgPath = argv._.pkgPath ?? process.cwd();
+	const sizes = argv.flags.sizes.split(',').map(size => size.trim());
 	const distData = await pkgSize(pkgPath, {
 		sizes,
-		ignoreFiles: flags.ignoreFiles,
+		ignoreFiles: argv.flags.ignoreFiles,
 	});
 
-	if (flags.json) {
+	if (argv.flags.json) {
 		console.log(JSON.stringify(distData));
 		return;
 	}
