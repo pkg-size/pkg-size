@@ -1,6 +1,7 @@
 import { describe, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
 import pkgSize from '../src/index.js';
+import { detectPackageManager, isLocalPath } from '../src/install-size.js';
 import { pkgSizeCli } from './utils/pkg-size.js';
 
 describe('pkg-size', ({ describe }) => {
@@ -465,6 +466,112 @@ describe('pkg-size', ({ describe }) => {
 			// Output should show totals (underlined values in the table)
 			expect(result.stdout).toContain('a.js');
 			expect(result.stdout).toContain('b.js');
+		});
+
+		test('errors when mixing local paths with package names', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const result = await pkgSizeCli(fixture.path, [fixture.path, 'lodash']);
+
+			expect('exitCode' in result).toBe(true);
+			if ('exitCode' in result) {
+				expect(result.exitCode).toBe(1);
+				expect(result.stderr).toContain('Cannot mix local paths with package names');
+			}
+		});
+
+		test('errors when multiple local paths provided', async () => {
+			await using fixture = await createFixture({
+				dirA: {
+					'package.json': JSON.stringify({
+						name: 'a',
+						version: '1.0.0',
+					}),
+				},
+				dirB: {
+					'package.json': JSON.stringify({
+						name: 'b',
+						version: '1.0.0',
+					}),
+				},
+			});
+
+			const result = await pkgSizeCli(fixture.path, [
+				`${fixture.path}/dirA`,
+				`${fixture.path}/dirB`,
+			]);
+
+			expect('exitCode' in result).toBe(true);
+			if ('exitCode' in result) {
+				expect(result.exitCode).toBe(1);
+				expect(result.stderr).toContain('Can only analyze one local path at a time');
+			}
+		});
+	});
+
+	describe('Install Size', ({ test }) => {
+		test('isLocalPath detects relative paths', () => {
+			expect(isLocalPath('./package')).toBe(true);
+			expect(isLocalPath('../package')).toBe(true);
+			expect(isLocalPath('.')).toBe(true);
+		});
+
+		test('isLocalPath detects absolute paths', () => {
+			expect(isLocalPath('/usr/local/package')).toBe(true);
+			expect(isLocalPath('/tmp/test')).toBe(true);
+		});
+
+		test('isLocalPath detects home paths', () => {
+			expect(isLocalPath('~/projects/package')).toBe(true);
+		});
+
+		test('isLocalPath returns false for package specs', () => {
+			expect(isLocalPath('lodash')).toBe(false);
+			expect(isLocalPath('@babel/core')).toBe(false);
+			expect(isLocalPath('react@18')).toBe(false);
+			expect(isLocalPath('typescript@^5.0.0')).toBe(false);
+		});
+
+		test('detectPackageManager returns npm by default', () => {
+			const originalAgent = process.env.npm_config_user_agent;
+			delete process.env.npm_config_user_agent;
+
+			expect(detectPackageManager()).toBe('npm');
+
+			if (originalAgent !== undefined) {
+				process.env.npm_config_user_agent = originalAgent;
+			}
+		});
+
+		test('detectPackageManager detects pnpm', () => {
+			const originalAgent = process.env.npm_config_user_agent;
+			process.env.npm_config_user_agent = 'pnpm/10.24.0 npm/? node/v22.0.0';
+
+			expect(detectPackageManager()).toBe('pnpm');
+
+			if (originalAgent === undefined) {
+				delete process.env.npm_config_user_agent;
+			} else {
+				process.env.npm_config_user_agent = originalAgent;
+			}
+		});
+
+		test('detectPackageManager detects yarn', () => {
+			const originalAgent = process.env.npm_config_user_agent;
+			process.env.npm_config_user_agent = 'yarn/4.0.0 npm/? node/v22.0.0';
+
+			expect(detectPackageManager()).toBe('yarn');
+
+			if (originalAgent === undefined) {
+				delete process.env.npm_config_user_agent;
+			} else {
+				process.env.npm_config_user_agent = originalAgent;
+			}
 		});
 	});
 });
