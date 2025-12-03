@@ -1,6 +1,7 @@
 import path from 'path';
 import zlib from 'zlib';
 import fs from 'fs';
+import fsp from 'fs/promises';
 import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
 import { gzipSizeStream } from 'gzip-size';
@@ -8,6 +9,8 @@ import { stream as brotliStream } from 'brotli-size';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
 import type { FileEntry, PkgSizeData } from './interfaces';
+
+const edgesOut = new Map();
 
 const getTarballSize = (
 	pkgPath: string,
@@ -90,8 +93,13 @@ type PkgSizeOptions = {
 const pkgSize = async (pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData> => {
 	pkgPath = path.resolve(pkgPath);
 
+	const packageJsonPath = path.join(pkgPath, 'package.json');
+	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, 'utf8'));
+
 	let filesList = await packlist({
 		path: pkgPath,
+		package: packageJson,
+		edgesOut,
 	});
 
 	if (options?.ignoreFiles) {

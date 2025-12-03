@@ -1,4 +1,9 @@
 declare module 'npm-packlist' {
-	const packlist: (options: { path: string }) => Promise<string[]>;
+	type MinimalTree = {
+		path: string;
+		package: Record<string, unknown>;
+		edgesOut: Map<unknown, unknown>;
+	};
+	const packlist: (tree: MinimalTree) => Promise<string[]>;
 	export default packlist;
 }
