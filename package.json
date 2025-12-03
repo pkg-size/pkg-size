@@ -37,7 +37,7 @@
 		"src/*.{js,ts}": "eslint"
 	},
 	"devDependencies": {
-		"@pvtnbr/eslint-config-typescript": "^0.1.19",
+		"@pvtnbr/eslint-config-typescript": "^1.0.1",
 		"@types/glob-to-regexp": "^0.4.1",
 		"@types/tar": "^4.0.5",
 		"brotli-size": "^4.0.0",

@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@pvtnbr/eslint-config-typescript':
-        specifier: ^0.1.19
-        version: 0.1.22(eslint-plugin-import@2.32.0(@typescript-eslint/parser@4.33.0(eslint@7.32.0)(typescript@4.9.5))(eslint@7.32.0))(eslint@7.32.0)(typescript@4.9.5)
+        specifier: ^1.0.1
+        version: 1.0.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@4.33.0(eslint@7.32.0)(typescript@4.9.5))(eslint@7.32.0))(eslint@7.32.0)(typescript@4.9.5)
       '@types/glob-to-regexp':
         specifier: ^0.4.1
         version: 0.4.4
@@ -196,8 +196,8 @@ packages:
     peerDependencies:
       eslint: ^7.15.0
 
-  '@pvtnbr/eslint-config-typescript@0.1.22':
-    resolution: {integrity: sha512-Z7JlJVY2oAJVMN6etFIWvykCWSh29Eo7nd/Uui9hk0u1UzDzyzQWvQp574vTjbmEbU5UgjYec/9XqYfovUxm/g==}
+  '@pvtnbr/eslint-config-typescript@1.0.1':
+    resolution: {integrity: sha512-+x2wA0UvZDflEWwHxsGeHJ0p/XfMzSrOLOekBT6mnbCk9xjhd7v7RekijkpUnjY5EOmPzgWlEuoWjKWAyZbphA==}
     deprecated: Moved to lintroll
     peerDependencies:
       eslint: ^7.15.0
@@ -2157,7 +2157,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  '@pvtnbr/eslint-config-typescript@0.1.22(eslint-plugin-import@2.32.0(@typescript-eslint/parser@4.33.0(eslint@7.32.0)(typescript@4.9.5))(eslint@7.32.0))(eslint@7.32.0)(typescript@4.9.5)':
+  '@pvtnbr/eslint-config-typescript@1.0.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@4.33.0(eslint@7.32.0)(typescript@4.9.5))(eslint@7.32.0))(eslint@7.32.0)(typescript@4.9.5)':
     dependencies:
       '@pvtnbr/eslint-config-base': 0.1.22(@typescript-eslint/parser@4.33.0(eslint@7.32.0)(typescript@4.9.5))(eslint-import-resolver-typescript@2.7.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@4.33.0(eslint@7.32.0)(typescript@4.9.5))(eslint@7.32.0))(eslint@7.32.0))(eslint@7.32.0)
       '@typescript-eslint/eslint-plugin': 4.33.0(@typescript-eslint/parser@4.33.0(eslint@7.32.0)(typescript@4.9.5))(eslint@7.32.0)(typescript@4.9.5)
