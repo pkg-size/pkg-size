@@ -4,7 +4,7 @@ import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline,
 } from 'colorette';
-import pkgSize from './pkg-size';
+import pkgSize from './index.js';
 import { FileEntry } from './interfaces';
 
 const pkgJsn = require('../package.json'); // eslint-disable-line @typescript-eslint/no-var-requires

@@ -19,14 +19,26 @@
 		"email": "hiroki.osame@gmail.com"
 	},
 	"files": [
-		"bin/cli.js",
 		"dist"
 	],
-	"main": "dist/pkg-size.js",
-	"bin": "bin/cli.js",
+	"main": "dist/index.js",
+	"bin": "dist/cli.js",
+	"exports": {
+		".": {
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			},
+			"import": {
+				"types": "./dist/index.d.mts",
+				"default": "./dist/index.mjs"
+			}
+		}
+	},
 	"scripts": {
-		"build": "rm -rf dist && tsup src --dts --minify",
-		"lint": "eslint ."
+		"build": "pkgroll --minify --clean-dist",
+		"lint": "eslint .",
+		"prepack": "pnpm build && clean-pkg-json"
 	},
 	"husky": {
 		"hooks": {
@@ -43,6 +55,7 @@
 		"brotli-size": "^4.0.0",
 		"byte-size": "^7.0.0",
 		"cac": "^6.7.3",
+		"clean-pkg-json": "^1.3.0",
 		"cli-simple-table": "^1.1.0",
 		"colorette": "^1.2.2",
 		"eslint": "^7.32.0",
@@ -52,8 +65,8 @@
 		"lint-staged": "^11.1.1",
 		"npm-packlist": "^2.2.2",
 		"p-map": "^5.1.0",
+		"pkgroll": "^2.21.4",
 		"tar-fs": "^2.1.1",
-		"tsup": "^4.13.1",
 		"typescript": "^4.3.5"
 	},
 	"eslintConfig": {
