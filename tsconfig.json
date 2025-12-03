@@ -1,6 +1,13 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
+    "target": "ESNext",
+    "module": "Preserve",
+    "resolveJsonModule": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
   }
 }
