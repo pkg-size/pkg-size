@@ -13,6 +13,7 @@
 	"license": "MIT",
 	"repository": "privatenumber/pkg-size",
 	"funding": "https://github.com/privatenumber/pkg-size?sponsor=1",
+	"packageManager": "pnpm@10.24.0",
 	"author": {
 		"name": "Hiroki Osame",
 		"email": "hiroki.osame@gmail.com"
