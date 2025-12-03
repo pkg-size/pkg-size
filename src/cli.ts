@@ -8,6 +8,19 @@ import packageJson from '../package.json';
 import type { FileEntry } from './interfaces.js';
 import pkgSize from './index.js';
 
+type Compression = 'gzip' | 'brotli' | false;
+
+const CompressionType = (value: string): Compression => {
+	if (value === 'false') {
+		return false;
+	}
+	const valid = ['gzip', 'brotli'];
+	if (!valid.includes(value)) {
+		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, or false`);
+	}
+	return value as 'gzip' | 'brotli';
+};
+
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
 	const aValue = a[sortBy];
 	const bValue = b[sortBy];
@@ -28,17 +41,17 @@ const argv = cli({
 	version: packageJson.version,
 	parameters: ['[pkg-path]'],
 	flags: {
-		sizes: {
-			type: String,
-			alias: 'S',
-			description: 'Comma separated list of sizes to show (size, gzip, brotli)',
-			default: 'size,gzip,brotli',
+		compression: {
+			type: CompressionType,
+			alias: 'c',
+			description: 'Compression algorithm (gzip, brotli) or false to disable',
+			default: 'gzip',
 		},
 		sortBy: {
 			type: String,
 			alias: 's',
-			description: 'Sort list by (name, size, gzip, brotli)',
-			default: 'brotli',
+			description: 'Sort list by (name, size, compressed)',
+			default: 'compressed',
 		},
 		unit: {
 			type: String,
@@ -61,8 +74,8 @@ const argv = cli({
 			'pkg-size',
 			'pkg-size ./package/path',
 			'',
-			'pkg-size --sizes=size,gzip,brotli',
-			'pkg-size -S brotli',
+			'pkg-size --compression=brotli',
+			'pkg-size --compression=false',
 			'',
 			'pkg-size --sort-by=name',
 			'pkg-size -s size',
@@ -79,26 +92,33 @@ const getSize = (bytes: number): string => byteSize(bytes, {
 
 type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli';
 
-const sizeToProperty: Record<string, NumericFileEntryKey> = {
-	size: 'size',
+const compressionToProperty: Record<string, NumericFileEntryKey> = {
 	brotli: 'sizeBrotli',
 	gzip: 'sizeGzip',
 };
 
-const sizeToLabel: Record<string, string> = {
-	size: 'Size',
+const compressionToLabel: Record<string, string> = {
 	brotli: 'Brotli',
 	gzip: 'Gzip',
 };
 
+const { compression } = argv.flags;
+const sizes: string[] = compression ? ['size', compression] : ['size'];
+
 const sortByFlag = argv.flags.sortBy;
-const sortBy: keyof FileEntry = sortByFlag in sizeToProperty
-	? sizeToProperty[sortByFlag]
-	: sortByFlag as keyof FileEntry;
+const getSortProperty = (): keyof FileEntry => {
+	if (sortByFlag === 'compressed') {
+		return compression ? compressionToProperty[compression] : 'size';
+	}
+	if (sortByFlag === 'size') {
+		return 'size';
+	}
+	return 'path';
+};
+const sortBy = getSortProperty();
 
 (async () => {
 	const pkgPath = argv._.pkgPath ?? process.cwd();
-	const sizes = argv.flags.sizes.split(',').map(size => size.trim());
 	const distData = await pkgSize(pkgPath, {
 		sizes,
 		ignoreFiles: argv.flags.ignoreFiles,
@@ -117,43 +137,51 @@ const sortBy: keyof FileEntry = sortByFlag in sizeToProperty
 
 	const table = new SimpleTable();
 
-	table.header(
-		green('File'),
-		...sizes.map(size => ({
-			text: green(sizeToLabel[size]),
-			align: 'right',
-		}) as const),
-	);
+	const headers = compression
+		? [
+			green('File'),
+			{
+				text: green('Size'),
+				align: 'right' as const,
+			},
+			{
+				text: green(compressionToLabel[compression]),
+				align: 'right' as const,
+			},
+		]
+		: [
+			green('File'),
+			{
+				text: green('Size'),
+				align: 'right' as const,
+			},
+		];
 
-	const total = {
-		size: 0,
-		sizeGzip: 0,
-		sizeBrotli: 0,
-	};
+	table.header(...headers);
+
+	let totalSize = 0;
+	let totalCompressed = 0;
 
 	distData.files.sort(compareFiles(sortBy));
 
 	for (const file of distData.files) {
-		table.row(
-			cyan(file.path),
-			...sizes.map(
-				size => getSize(file[sizeToProperty[size]]),
-			),
-		);
+		const row = compression
+			? [cyan(file.path), getSize(file.size), getSize(file[compressionToProperty[compression]])]
+			: [cyan(file.path), getSize(file.size)];
+		table.row(...row);
 
-		total.size += file.size;
-		total.sizeGzip += file.sizeGzip;
-		total.sizeBrotli += file.sizeBrotli;
+		totalSize += file.size;
+		if (compression) {
+			totalCompressed += file[compressionToProperty[compression]];
+		}
 	}
 
 	table.row();
 
-	table.row(
-		'',
-		...sizes.map(
-			size => underline(getSize(total[sizeToProperty[size]])),
-		),
-	);
+	const totalsRow = compression
+		? ['', underline(getSize(totalSize)), underline(getSize(totalCompressed))]
+		: ['', underline(getSize(totalSize))];
+	table.row(...totalsRow);
 
 	console.log(`${table.toString()}\n`);
 })();

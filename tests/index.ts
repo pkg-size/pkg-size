@@ -179,7 +179,7 @@ describe('pkg-size', ({ describe }) => {
 
 			expect('exitCode' in result).toBe(false);
 			expect(result.stdout).toContain('pkg-size');
-			expect(result.stdout).toContain('--sizes');
+			expect(result.stdout).toContain('--compression');
 			expect(result.stdout).toContain('--sort-by');
 			expect(result.stdout).toContain('--unit');
 			expect(result.stdout).toContain('--json');
@@ -235,7 +235,7 @@ describe('pkg-size', ({ describe }) => {
 			expect(Array.isArray(json.files)).toBe(true);
 		});
 
-		test('supports -S/--sizes flag', async () => {
+		test('supports -c/--compression flag with gzip', async () => {
 			await using fixture = await createFixture({
 				'package.json': JSON.stringify({
 					name: 'test-package',
@@ -244,13 +244,51 @@ describe('pkg-size', ({ describe }) => {
 				'index.js': 'content',
 			});
 
-			const result = await pkgSizeCli(fixture.path, ['--sizes', 'gzip', '--json']);
+			const result = await pkgSizeCli(fixture.path, ['--compression', 'gzip', '--json']);
 
 			expect('exitCode' in result).toBe(false);
 			const json = JSON.parse(result.stdout);
 			const indexFile = json.files.find((file: { path: string }) => file.path === 'index.js');
+			expect(indexFile.size).toBeGreaterThan(0);
 			expect(indexFile.sizeGzip).toBeGreaterThan(0);
-			expect(indexFile.size).toBe(0);
+			expect(indexFile.sizeBrotli).toBe(0);
+		});
+
+		test('supports --compression flag with brotli', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+				'index.js': 'content',
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['--compression', 'brotli', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+			const indexFile = json.files.find((file: { path: string }) => file.path === 'index.js');
+			expect(indexFile.size).toBeGreaterThan(0);
+			expect(indexFile.sizeGzip).toBe(0);
+			expect(indexFile.sizeBrotli).toBeGreaterThan(0);
+		});
+
+		test('supports --compression=false to disable compression', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+				'index.js': 'content',
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['--compression=false', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+			const indexFile = json.files.find((file: { path: string }) => file.path === 'index.js');
+			expect(indexFile.size).toBeGreaterThan(0);
+			expect(indexFile.sizeGzip).toBe(0);
 			expect(indexFile.sizeBrotli).toBe(0);
 		});
 
@@ -329,6 +367,26 @@ describe('pkg-size', ({ describe }) => {
 			// Files should be sorted alphabetically
 			expect(jsFiles[0].path).toBe('alpha.js');
 			expect(jsFiles[1].path).toBe('zebra.js');
+		});
+
+		test('supports --sort-by compressed for compression size sorting', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+				'small.js': 'x',
+				'large.js': 'x'.repeat(100),
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['--sort-by', 'compressed', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+			const jsFiles = json.files.filter((file: { path: string }) => file.path.endsWith('.js'));
+			// Files should be sorted by compressed size descending (large first)
+			expect(jsFiles[0].path).toBe('large.js');
+			expect(jsFiles[1].path).toBe('small.js');
 		});
 
 		test('supports -u/--unit flag for different units', async () => {
