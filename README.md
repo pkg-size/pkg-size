@@ -42,9 +42,14 @@ npm i pkg-size
 pkg-size ./package/path
 ```
 
-### Skip brotli size calculation
+### Use brotli compression instead of gzip
 ```sh
-pkg-size --sizes=size,gzip
+pkg-size --compression=brotli
+```
+
+### Show only uncompressed size
+```sh
+pkg-size --compression=false
 ```
 
 ### Order files by name
@@ -59,17 +64,17 @@ pkg-size --unit=iec
 
 ## ⚙️ CLI Options
 
-### -S, --sizes <sizes>
-Comma separated list of sizes to show (size, gzip, brotli) (default: size,gzip,brotli)
+### -c, --compression \<algorithm\>
+Compression algorithm to display alongside uncompressed size. Options: `gzip`, `brotli`, or `false` to disable. (default: `gzip`)
 
-### -s, --sort-by <property>
-Sort list by (name, size, gzip, brotli) (default: brotli)
+### -s, --sort-by \<property\>
+Sort list by `name`, `size`, or `compressed` (default: `compressed`)
 
-### -u, --unit <unit>
-Display units (metric, iec, metric_octet, iec_octet) (default: metric)
+### -u, --unit \<unit\>
+Display units: `metric`, `iec`, `metric_octet`, `iec_octet` (default: `metric`)
 
-### -i, --ignore-files <glob>
-Glob to ignores files from list. Total size will still include them.
+### -i, --ignore-files \<glob\>
+Glob to ignore files from list. Total size will still include them.
 
 ### --json
 JSON output
@@ -77,19 +82,23 @@ JSON output
 ### -h, --help
 Display this message
 
-### -v, --version
+### --version
 Display version number
 
 
 ## 👷‍♂️ Node.js API
 ```js
-const pkgSize = require('pkg-size')
+import pkgSize from 'pkg-size'
 
 // Get the package size of the current working directory
-const sizeData = await pkgSize()
+const sizeData = await pkgSize(process.cwd(), {
+    sizes: ['size', 'gzip', 'brotli']
+})
 
-// ... Or get the package size of a specific package path
-const sizeDataForPath = await pkgSize('/path/to/package')
+// Get the package size of a specific package path
+const sizeDataForPath = await pkgSize('/path/to/package', {
+    sizes: ['size', 'gzip']
+})
 ```
 
 ### Interface
@@ -107,7 +116,12 @@ type PkgSizeData = {
     files: FileEntry[]
 }
 
-function pkgSize(pkgPath?: string): Promise<PkgSizeData>
+type PkgSizeOptions = {
+    sizes: ('size' | 'gzip' | 'brotli')[]
+    ignoreFiles?: string
+}
+
+function pkgSize(pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData>
 ```
 
 
