@@ -3,6 +3,7 @@ type FileEntry = {
 	size: number;
 	sizeGzip: number;
 	sizeBrotli: number;
+	sizeZstd: number;
 };
 
 type PkgSizeData = {

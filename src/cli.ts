@@ -8,17 +8,17 @@ import packageJson from '../package.json';
 import type { FileEntry } from './interfaces.js';
 import pkgSize from './index.js';
 
-type Compression = 'gzip' | 'brotli' | false;
+type Compression = 'gzip' | 'brotli' | 'zstd' | false;
 
 const CompressionType = (value: string): Compression => {
 	if (value === 'false') {
 		return false;
 	}
-	const valid = ['gzip', 'brotli'];
+	const valid = ['gzip', 'brotli', 'zstd'];
 	if (!valid.includes(value)) {
-		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, or false`);
+		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, zstd, or false`);
 	}
-	return value as 'gzip' | 'brotli';
+	return value as 'gzip' | 'brotli' | 'zstd';
 };
 
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
@@ -44,7 +44,7 @@ const argv = cli({
 		compression: {
 			type: CompressionType,
 			alias: 'c',
-			description: 'Compression algorithm (gzip, brotli) or false to disable',
+			description: 'Compression algorithm (gzip, brotli, zstd) or false to disable',
 			default: 'gzip',
 		},
 		sortBy: {
@@ -90,16 +90,18 @@ const getSize = (bytes: number): string => byteSize(bytes, {
 	units: argv.flags.unit,
 }).toString();
 
-type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli';
+type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli' | 'sizeZstd';
 
 const compressionToProperty: Record<string, NumericFileEntryKey> = {
 	brotli: 'sizeBrotli',
 	gzip: 'sizeGzip',
+	zstd: 'sizeZstd',
 };
 
 const compressionToLabel: Record<string, string> = {
 	brotli: 'Brotli',
 	gzip: 'Gzip',
+	zstd: 'Zstd',
 };
 
 const { compression } = argv.flags;

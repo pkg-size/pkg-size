@@ -21,13 +21,13 @@ $ npx pkg-size
 ### Features
 - **🔍 Size analysis** Quickly determine the total size of what you're publishing to npm!
 - **🔥 Same behavior as npm `pack`/`publish`** Collects publish files as specified in your `package.json`!
-- **🙌 Gzip & Brotli** See how your files compress in addition to normal size!
+- **🙌 Gzip, Brotli & Zstd** See how your files compress in addition to normal size!
 - **🤖 Node.js API** Integrate size checks to your CI via Node.js API
 
 <sub>Support this project by ⭐️ starring and sharing it. [Follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
 
 ## 🙋‍♂️ Why?
-To quickly determine the uncompressed size, gzip size, and brotli size of your package before publishing it to npm.
+To quickly determine the uncompressed size, gzip size, brotli size, and zstd size of your package before publishing it to npm.
 
 
 ## 🚀 Install
@@ -45,6 +45,11 @@ pkg-size ./package/path
 ### Use brotli compression instead of gzip
 ```sh
 pkg-size --compression=brotli
+```
+
+### Use zstd compression
+```sh
+pkg-size --compression=zstd
 ```
 
 ### Show only uncompressed size
@@ -65,7 +70,7 @@ pkg-size --unit=iec
 ## ⚙️ CLI Options
 
 ### -c, --compression \<algorithm\>
-Compression algorithm to display alongside uncompressed size. Options: `gzip`, `brotli`, or `false` to disable. (default: `gzip`)
+Compression algorithm to display alongside uncompressed size. Options: `gzip`, `brotli`, `zstd`, or `false` to disable. (default: `gzip`)
 
 ### -s, --sort-by \<property\>
 Sort list by `name`, `size`, or `compressed` (default: `compressed`)
@@ -92,7 +97,7 @@ import pkgSize from 'pkg-size'
 
 // Get the package size of the current working directory
 const sizeData = await pkgSize(process.cwd(), {
-    sizes: ['size', 'gzip', 'brotli']
+    sizes: ['size', 'gzip', 'brotli', 'zstd']
 })
 
 // Get the package size of a specific package path
@@ -108,6 +113,7 @@ type FileEntry = {
     size: number
     sizeGzip: number
     sizeBrotli: number
+    sizeZstd: number
 }
 
 type PkgSizeData = {
@@ -117,7 +123,7 @@ type PkgSizeData = {
 }
 
 type PkgSizeOptions = {
-    sizes: ('size' | 'gzip' | 'brotli')[]
+    sizes: ('size' | 'gzip' | 'brotli' | 'zstd')[]
     ignoreFiles?: string
 }
 

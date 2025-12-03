@@ -19,7 +19,7 @@ describe('pkg-size', ({ describe }) => {
 			});
 
 			const result = await pkgSize(fixture.path, {
-				sizes: ['size', 'gzip', 'brotli'],
+				sizes: ['size', 'gzip', 'brotli', 'zstd'],
 			});
 
 			expect(result.pkgPath).toBe(fixture.path);
@@ -41,7 +41,7 @@ describe('pkg-size', ({ describe }) => {
 			});
 
 			const result = await pkgSize(fixture.path, {
-				sizes: ['size', 'gzip', 'brotli'],
+				sizes: ['size', 'gzip', 'brotli', 'zstd'],
 			});
 
 			const dataFile = result.files.find(file => file.path === 'data.txt');
@@ -49,6 +49,7 @@ describe('pkg-size', ({ describe }) => {
 			expect(dataFile!.size).toBe(1000);
 			expect(dataFile!.sizeGzip).toBeLessThan(dataFile!.size);
 			expect(dataFile!.sizeBrotli).toBeLessThan(dataFile!.size);
+			expect(dataFile!.sizeZstd).toBeLessThan(dataFile!.size);
 		});
 
 		test('respects .npmignore', async () => {
@@ -127,6 +128,7 @@ describe('pkg-size', ({ describe }) => {
 			expect(indexFile!.size).toBeGreaterThan(0);
 			expect(indexFile!.sizeGzip).toBe(0);
 			expect(indexFile!.sizeBrotli).toBe(0);
+			expect(indexFile!.sizeZstd).toBe(0);
 		});
 
 		test('works without options', async () => {
@@ -252,6 +254,7 @@ describe('pkg-size', ({ describe }) => {
 			expect(indexFile.size).toBeGreaterThan(0);
 			expect(indexFile.sizeGzip).toBeGreaterThan(0);
 			expect(indexFile.sizeBrotli).toBe(0);
+			expect(indexFile.sizeZstd).toBe(0);
 		});
 
 		test('supports --compression flag with brotli', async () => {
@@ -271,6 +274,27 @@ describe('pkg-size', ({ describe }) => {
 			expect(indexFile.size).toBeGreaterThan(0);
 			expect(indexFile.sizeGzip).toBe(0);
 			expect(indexFile.sizeBrotli).toBeGreaterThan(0);
+			expect(indexFile.sizeZstd).toBe(0);
+		});
+
+		test('supports --compression flag with zstd', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+				'index.js': 'content',
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['--compression', 'zstd', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+			const indexFile = json.files.find((file: { path: string }) => file.path === 'index.js');
+			expect(indexFile.size).toBeGreaterThan(0);
+			expect(indexFile.sizeGzip).toBe(0);
+			expect(indexFile.sizeBrotli).toBe(0);
+			expect(indexFile.sizeZstd).toBeGreaterThan(0);
 		});
 
 		test('supports --compression=false to disable compression', async () => {
@@ -290,6 +314,7 @@ describe('pkg-size', ({ describe }) => {
 			expect(indexFile.size).toBeGreaterThan(0);
 			expect(indexFile.sizeGzip).toBe(0);
 			expect(indexFile.sizeBrotli).toBe(0);
+			expect(indexFile.sizeZstd).toBe(0);
 		});
 
 		test('supports -i/--ignore-files flag', async () => {

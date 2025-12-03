@@ -2,10 +2,12 @@ import path from 'path';
 import zlib from 'zlib';
 import fs from 'fs';
 import fsp from 'fs/promises';
+import { PassThrough } from 'stream';
 import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
 import { gzipSizeStream } from 'gzip-size';
 import { stream as brotliStream } from 'brotli-size';
+import { CompressStream as ZstdCompressStream } from 'zstd-napi';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
 import type { FileEntry, PkgSizeData } from './interfaces';
@@ -40,6 +42,7 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 		size: 0,
 		sizeGzip: 0,
 		sizeBrotli: 0,
+		sizeZstd: 0,
 	};
 
 	if (sizes.length > 0) {
@@ -76,6 +79,25 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 					result.sizeBrotli = sizeBrotli;
 					resolve();
 				});
+			}));
+		}
+
+		if (sizes.includes('zstd')) {
+			calculateSizes.push(new Promise<void>((resolve) => {
+				let sizeZstd = 0;
+				const passThrough = new PassThrough();
+				const zstdStream = new ZstdCompressStream();
+
+				fileStream.pipe(passThrough);
+				passThrough
+					.pipe(zstdStream)
+					.on('data', (chunk: Buffer) => {
+						sizeZstd += chunk.length;
+					})
+					.on('end', () => {
+						result.sizeZstd = sizeZstd;
+						resolve();
+					});
 			}));
 		}
 
