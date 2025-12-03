@@ -3,7 +3,7 @@ import zlib from 'zlib';
 import fs from 'fs';
 import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
-import gzipSize from 'gzip-size';
+import { gzipSizeStream } from 'gzip-size';
 import { stream as brotliStream } from 'brotli-size';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
@@ -60,7 +60,7 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 
 		if (sizes.includes('gzip')) {
 			calculateSizes.push(new Promise<void>((resolve) => {
-				fileStream.pipe(gzipSize.stream()).on('gzip-size', (sizeGzip) => {
+				fileStream.pipe(gzipSizeStream()).on('gzip-size', (sizeGzip) => {
 					result.sizeGzip = sizeGzip;
 					resolve();
 				});
