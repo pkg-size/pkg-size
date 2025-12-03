@@ -9,21 +9,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 14.x
-      - name: Install dependencies
-        run: npx pnpm i --frozen-lockfile
+          node-version-file: .nvmrc
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: true
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
       - name: Test
-        run: npm run test --if-present
+        run: pnpm test --if-present
       - name: Build
-        run: npm run build --if-present
-      - name: Lint
-        run: npm run lint
+        run: pnpm build --if-present
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
