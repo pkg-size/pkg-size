@@ -61,6 +61,7 @@
 		"gzip-size": "^6.0.0",
 		"lintroll": "^1.25.0",
 		"manten": "^1.9.0",
+		"nano-spawn": "^2.0.0",
 		"npm-packlist": "^2.2.2",
 		"p-map": "^5.1.0",
 		"pkgroll": "^2.21.4",
