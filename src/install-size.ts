@@ -4,6 +4,38 @@ import path from 'path';
 import os from 'os';
 import spawn from 'nano-spawn';
 
+// Track temp directory for cleanup on process termination
+let activeTempDirectory: string | null = null;
+
+const cleanup = async () => {
+	if (activeTempDirectory) {
+		await fsp.rm(activeTempDirectory, {
+			recursive: true,
+			force: true,
+		}).catch(() => {});
+		activeTempDirectory = null;
+	}
+};
+
+const handleSignal = () => {
+	// Sync cleanup for signal handlers
+	if (activeTempDirectory) {
+		try {
+			fs.rmSync(activeTempDirectory, {
+				recursive: true,
+				force: true,
+			});
+		} catch {
+			// Ignore cleanup errors on exit
+		}
+	}
+	process.exit(1);
+};
+
+// Register signal handlers once
+process.on('SIGINT', handleSignal);
+process.on('SIGTERM', handleSignal);
+
 type PackageEntry = {
 	name: string;
 	size: number;
@@ -29,39 +61,57 @@ const detectPackageManager = (): string => {
 	return 'npm';
 };
 
+// Only explicit path indicators - no fs.existsSync to avoid shadowing
+// (e.g., a folder named "test" shouldn't shadow the npm package "test")
+// Tilde (~) is not checked because shell expands it before we see it
 const isLocalPath = (argument: string): boolean => (
 	argument.startsWith('.')
 	|| argument.startsWith('/')
-	|| argument.startsWith('~')
-	|| fs.existsSync(argument)
 );
 
-const getDirectorySize = async (directory: string): Promise<{ size: number;
-	files: number; }> => {
-	let size = 0;
-	let files = 0;
+type SizeResult = {
+	size: number;
+	files: number;
+};
 
-	const walk = async (currentDirectory: string): Promise<void> => {
+const getDirectorySize = async (directory: string): Promise<SizeResult> => {
+	const walk = async (currentDirectory: string): Promise<SizeResult> => {
 		const entries = await fsp.readdir(currentDirectory, { withFileTypes: true });
 
-		for (const entry of entries) {
-			const fullPath = path.join(currentDirectory, entry.name);
+		const results = await Promise.all(
+			entries.map(async (entry) => {
+				const fullPath = path.join(currentDirectory, entry.name);
 
-			if (entry.isDirectory()) {
-				await walk(fullPath);
-			} else if (entry.isFile()) {
-				const stats = await fsp.stat(fullPath);
-				size += stats.size;
-				files += 1;
-			}
+				if (entry.isDirectory()) {
+					return walk(fullPath);
+				}
+				if (entry.isFile()) {
+					const stats = await fsp.stat(fullPath);
+					return {
+						size: stats.size,
+						files: 1,
+					};
+				}
+				return {
+					size: 0,
+					files: 0,
+				};
+			}),
+		);
+
+		let totalSize = 0;
+		let totalFiles = 0;
+		for (const result of results) {
+			totalSize += result.size;
+			totalFiles += result.files;
 		}
+		return {
+			size: totalSize,
+			files: totalFiles,
+		};
 	};
 
-	await walk(directory);
-	return {
-		size,
-		files,
-	};
+	return walk(directory);
 };
 
 const getNodeModulesPackages = async (
@@ -118,8 +168,9 @@ const getNodeModulesPackages = async (
 const installSize = async (packageSpecs: string[]): Promise<InstallSizeData> => {
 	const packageManager = detectPackageManager();
 
-	// Create temp directory
+	// Create temp directory and track for signal cleanup
 	const tempDirectory = await fsp.mkdtemp(path.join(os.tmpdir(), 'pkg-size-'));
+	activeTempDirectory = tempDirectory;
 
 	try {
 		// Create minimal package.json
@@ -137,10 +188,20 @@ const installSize = async (packageSpecs: string[]): Promise<InstallSizeData> => 
 			? ['add', ...packageSpecs]
 			: ['install', ...packageSpecs];
 
-		const result = await spawn(packageManager, installArgs, {
-			cwd: tempDirectory,
-			stdio: 'inherit',
-		});
+		let result;
+		try {
+			result = await spawn(packageManager, installArgs, {
+				cwd: tempDirectory,
+				stdout: 'ignore',
+				stderr: 'pipe',
+			});
+		} catch (error) {
+			const spawnError = error as { stderr?: string };
+			if (spawnError.stderr) {
+				process.stderr.write(spawnError.stderr);
+			}
+			throw error;
+		}
 		const installTime = result.durationMs;
 
 		// Measure node_modules
@@ -162,10 +223,7 @@ const installSize = async (packageSpecs: string[]): Promise<InstallSizeData> => 
 		};
 	} finally {
 		// Cleanup temp directory
-		await fsp.rm(tempDirectory, {
-			recursive: true,
-			force: true,
-		});
+		await cleanup();
 	}
 };
 

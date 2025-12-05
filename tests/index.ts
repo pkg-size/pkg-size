@@ -526,10 +526,6 @@ describe('pkg-size', ({ describe }) => {
 			expect(isLocalPath('/tmp/test')).toBe(true);
 		});
 
-		test('isLocalPath detects home paths', () => {
-			expect(isLocalPath('~/projects/package')).toBe(true);
-		});
-
 		test('isLocalPath returns false for package specs', () => {
 			expect(isLocalPath('lodash')).toBe(false);
 			expect(isLocalPath('@babel/core')).toBe(false);
