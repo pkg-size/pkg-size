@@ -1,9 +1,8 @@
-import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
-import os from 'os';
 import spawn from 'nano-spawn';
 import pMap from 'p-map';
+import { createDisposableDirectory } from './utils/disposable-directory.js';
 
 type PackageEntry = {
 	name: string;
@@ -204,100 +203,51 @@ const installSize = async (
 ): Promise<InstallSizeData> => {
 	const packageManager = options.packageManager ?? detectPackageManager();
 
-	// Create temp directory
-	const tempDirectory = await fsp.mkdtemp(path.join(os.tmpdir(), 'pkg-size-'));
+	await using tempDirectory = await createDisposableDirectory();
 
-	// Cleanup helper - nulls the path before deletion to prevent race condition
-	let tempPath: string | null = tempDirectory;
+	// Create minimal package.json
+	await fsp.writeFile(
+		path.join(tempDirectory.path, 'package.json'),
+		JSON.stringify({}),
+	);
 
-	const cleanup = async () => {
-		const directoryToRemove = tempPath;
-		tempPath = null;
-		if (directoryToRemove) {
-			await fsp.rm(directoryToRemove, {
-				recursive: true,
-				force: true,
-			}).catch(() => {});
-		}
-	};
+	// Install packages
+	const installCommand = packageManager === 'yarn' ? 'add' : 'install';
 
-	// Signal handler scoped to this invocation
-	const signalHandler = () => {
-		const directoryToRemove = tempPath;
-		tempPath = null;
-		if (directoryToRemove) {
-			try {
-				fs.rmSync(directoryToRemove, {
-					recursive: true,
-					force: true,
-				});
-			} catch {
-				// Ignore cleanup errors on exit
-			}
-		}
-		process.exit(1);
-	};
-
-	// Attach signal handlers for this run only
-	process.on('SIGINT', signalHandler);
-	process.on('SIGTERM', signalHandler);
-
+	let result;
 	try {
-		// Create minimal package.json
-		await fsp.writeFile(
-			path.join(tempDirectory, 'package.json'),
-			JSON.stringify({
-				name: 'pkg-size-temp',
-				version: '0.0.0',
-				private: true,
-			}),
-		);
-
-		// Install packages
-		const installArgs = packageManager === 'yarn'
-			? ['add', ...packageSpecs]
-			: ['install', ...packageSpecs];
-
-		let result;
-		try {
-			result = await spawn(packageManager, installArgs, {
-				cwd: tempDirectory,
-				stdout: 'ignore',
-				stderr: 'pipe',
-			});
-		} catch (error) {
-			const spawnError = error as { stderr?: string };
-			if (spawnError.stderr) {
-				process.stderr.write(spawnError.stderr);
-			}
-			throw error;
+		result = await spawn(packageManager, [installCommand, ...packageSpecs], {
+			cwd: tempDirectory.path,
+			stdout: 'ignore',
+			stderr: 'pipe',
+		});
+	} catch (error) {
+		const spawnError = error as { stderr?: string };
+		if (spawnError.stderr) {
+			process.stderr.write(spawnError.stderr);
 		}
-		const installTime = result.durationMs;
-
-		// Measure node_modules
-		const nodeModulesPath = path.join(tempDirectory, 'node_modules');
-		const packages = await getNodeModulesPackages(nodeModulesPath);
-
-		let totalSize = 0;
-		let totalFiles = 0;
-		for (const pkg of packages) {
-			totalSize += pkg.size;
-			totalFiles += pkg.files;
-		}
-
-		return {
-			packages,
-			totalSize,
-			totalFiles,
-			installTime,
-			packageManager,
-		};
-	} finally {
-		// Detach signal handlers to avoid leaking listeners
-		process.off('SIGINT', signalHandler);
-		process.off('SIGTERM', signalHandler);
-		await cleanup();
+		throw error;
 	}
+	const installTime = result.durationMs;
+
+	// Measure node_modules
+	const nodeModulesPath = path.join(tempDirectory.path, 'node_modules');
+	const packages = await getNodeModulesPackages(nodeModulesPath);
+
+	let totalSize = 0;
+	let totalFiles = 0;
+	for (const pkg of packages) {
+		totalSize += pkg.size;
+		totalFiles += pkg.files;
+	}
+
+	return {
+		packages,
+		totalSize,
+		totalFiles,
+		installTime,
+		packageManager,
+	};
 };
 
 export {
