@@ -42,9 +42,6 @@
 		"type-check": "tsc",
 		"prepack": "pnpm build && clean-pkg-json"
 	},
-	"engines": {
-		"node": ">=20.19.0"
-	},
 	"dependencies": {
 		"cleye": "^2.1.0",
 		"yoctocolors": "^2.1.2",
