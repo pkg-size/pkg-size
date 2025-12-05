@@ -1,6 +1,7 @@
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import pMap from 'p-map';
+import { fsExists } from '../utils/fs-exists.js';
 import type { PackageEntry, SizeResult } from './types.js';
 
 // Concurrency limit to avoid EMFILE (too many open files)
@@ -99,7 +100,7 @@ const getPnpmPackages = async (
 ): Promise<PackageEntry[]> => {
 	const packages: PackageEntry[] = [];
 
-	const exists = await fsp.access(pnpmPath).then(() => true, () => false);
+	const exists = await fsExists(pnpmPath);
 	if (!exists) {
 		return packages;
 	}
@@ -119,7 +120,7 @@ const getPnpmPackages = async (
 		// Read the actual package name from the filesystem
 		// Structure: .pnpm/{hash}/node_modules/{actual-package-name}
 		const innerNodeModules = path.join(pnpmPath, entry.name, 'node_modules');
-		const innerExists = await fsp.access(innerNodeModules).then(() => true, () => false);
+		const innerExists = await fsExists(innerNodeModules);
 		if (innerExists) {
 			await collectPackagesFromDirectory(innerNodeModules, packages);
 		}
@@ -140,14 +141,14 @@ const getFlatPackages = async (
 export const getNodeModulesPackages = async (
 	nodeModulesPath: string,
 ): Promise<PackageEntry[]> => {
-	const exists = await fsp.access(nodeModulesPath).then(() => true, () => false);
+	const exists = await fsExists(nodeModulesPath);
 	if (!exists) {
 		return [];
 	}
 
 	// Check if this is a pnpm install (has .pnpm directory)
 	const pnpmPath = path.join(nodeModulesPath, '.pnpm');
-	const isPnpm = await fsp.access(pnpmPath).then(() => true, () => false);
+	const isPnpm = await fsExists(pnpmPath);
 
 	if (isPnpm) {
 		return getPnpmPackages(pnpmPath);

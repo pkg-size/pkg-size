@@ -40,8 +40,7 @@ export const installSize = async (
 	const installTime = result.durationMs;
 
 	// Measure node_modules
-	const nodeModulesPath = path.join(tempDirectory.path, 'node_modules');
-	const packages = await getNodeModulesPackages(nodeModulesPath);
+	const packages = await getNodeModulesPackages(path.join(tempDirectory.path, 'node_modules'));
 
 	let totalSize = 0;
 	let totalFiles = 0;
