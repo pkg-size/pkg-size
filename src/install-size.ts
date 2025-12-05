@@ -3,38 +3,7 @@ import fsp from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import spawn from 'nano-spawn';
-
-// Track temp directory for cleanup on process termination
-let activeTempDirectory: string | null = null;
-
-const cleanup = async () => {
-	if (activeTempDirectory) {
-		await fsp.rm(activeTempDirectory, {
-			recursive: true,
-			force: true,
-		}).catch(() => {});
-		activeTempDirectory = null;
-	}
-};
-
-const handleSignal = () => {
-	// Sync cleanup for signal handlers
-	if (activeTempDirectory) {
-		try {
-			fs.rmSync(activeTempDirectory, {
-				recursive: true,
-				force: true,
-			});
-		} catch {
-			// Ignore cleanup errors on exit
-		}
-	}
-	process.exit(1);
-};
-
-// Register signal handlers once
-process.on('SIGINT', handleSignal);
-process.on('SIGTERM', handleSignal);
+import pMap from 'p-map';
 
 type PackageEntry = {
 	name: string;
@@ -63,10 +32,8 @@ const detectPackageManager = (): string => {
 
 // Only explicit path indicators - no fs.existsSync to avoid shadowing
 // (e.g., a folder named "test" shouldn't shadow the npm package "test")
-// Tilde (~) is not checked because shell expands it before we see it
 const isLocalPath = (argument: string): boolean => (
-	argument.startsWith('.')
-	|| argument.startsWith('/')
+	argument.startsWith('.') || path.isAbsolute(argument)
 );
 
 type SizeResult = {
@@ -74,44 +41,48 @@ type SizeResult = {
 	files: number;
 };
 
+// Concurrency limit to avoid EMFILE (too many open files)
+const statConcurrency = 100;
+
 const getDirectorySize = async (directory: string): Promise<SizeResult> => {
-	const walk = async (currentDirectory: string): Promise<SizeResult> => {
+	// Collect all file paths first, then stat with limited concurrency
+	const filePaths: string[] = [];
+
+	const collectFiles = async (currentDirectory: string): Promise<void> => {
 		const entries = await fsp.readdir(currentDirectory, { withFileTypes: true });
 
-		const results = await Promise.all(
-			entries.map(async (entry) => {
-				const fullPath = path.join(currentDirectory, entry.name);
+		for (const entry of entries) {
+			const fullPath = path.join(currentDirectory, entry.name);
 
-				if (entry.isDirectory()) {
-					return walk(fullPath);
-				}
-				if (entry.isFile()) {
-					const stats = await fsp.stat(fullPath);
-					return {
-						size: stats.size,
-						files: 1,
-					};
-				}
-				return {
-					size: 0,
-					files: 0,
-				};
-			}),
-		);
-
-		let totalSize = 0;
-		let totalFiles = 0;
-		for (const result of results) {
-			totalSize += result.size;
-			totalFiles += result.files;
+			if (entry.isDirectory()) {
+				await collectFiles(fullPath);
+			} else if (entry.isFile()) {
+				filePaths.push(fullPath);
+			}
 		}
-		return {
-			size: totalSize,
-			files: totalFiles,
-		};
 	};
 
-	return walk(directory);
+	await collectFiles(directory);
+
+	// Stat files with concurrency limit
+	const sizes = await pMap(
+		filePaths,
+		async (filePath) => {
+			const stats = await fsp.stat(filePath);
+			return stats.size;
+		},
+		{ concurrency: statConcurrency },
+	);
+
+	let totalSize = 0;
+	for (const size of sizes) {
+		totalSize += size;
+	}
+
+	return {
+		size: totalSize,
+		files: filePaths.length,
+	};
 };
 
 const getNodeModulesPackages = async (
@@ -168,9 +139,43 @@ const getNodeModulesPackages = async (
 const installSize = async (packageSpecs: string[]): Promise<InstallSizeData> => {
 	const packageManager = detectPackageManager();
 
-	// Create temp directory and track for signal cleanup
+	// Create temp directory
 	const tempDirectory = await fsp.mkdtemp(path.join(os.tmpdir(), 'pkg-size-'));
-	activeTempDirectory = tempDirectory;
+
+	// Cleanup helper - nulls the path before deletion to prevent race condition
+	let tempPath: string | null = tempDirectory;
+
+	const cleanup = async () => {
+		const directoryToRemove = tempPath;
+		tempPath = null;
+		if (directoryToRemove) {
+			await fsp.rm(directoryToRemove, {
+				recursive: true,
+				force: true,
+			}).catch(() => {});
+		}
+	};
+
+	// Signal handler scoped to this invocation
+	const signalHandler = () => {
+		const directoryToRemove = tempPath;
+		tempPath = null;
+		if (directoryToRemove) {
+			try {
+				fs.rmSync(directoryToRemove, {
+					recursive: true,
+					force: true,
+				});
+			} catch {
+				// Ignore cleanup errors on exit
+			}
+		}
+		process.exit(1);
+	};
+
+	// Attach signal handlers for this run only
+	process.on('SIGINT', signalHandler);
+	process.on('SIGTERM', signalHandler);
 
 	try {
 		// Create minimal package.json
@@ -211,8 +216,12 @@ const installSize = async (packageSpecs: string[]): Promise<InstallSizeData> => 
 		// Sort by size descending
 		packages.sort((a, b) => b.size - a.size);
 
-		const totalSize = packages.reduce((sum, pkg) => sum + pkg.size, 0);
-		const totalFiles = packages.reduce((sum, pkg) => sum + pkg.files, 0);
+		let totalSize = 0;
+		let totalFiles = 0;
+		for (const pkg of packages) {
+			totalSize += pkg.size;
+			totalFiles += pkg.files;
+		}
 
 		return {
 			packages,
@@ -222,7 +231,9 @@ const installSize = async (packageSpecs: string[]): Promise<InstallSizeData> => 
 			packageManager,
 		};
 	} finally {
-		// Cleanup temp directory
+		// Detach signal handlers to avoid leaking listeners
+		process.off('SIGINT', signalHandler);
+		process.off('SIGTERM', signalHandler);
 		await cleanup();
 	}
 };
