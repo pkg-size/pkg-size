@@ -152,7 +152,7 @@ const comparePackages = (sortByProperty: string) => (a: PackageEntry, b: Package
 
 const formatTime = (ms: number): string => {
 	if (ms < 1000) {
-		return `${ms}ms`;
+		return `${Math.round(ms)}ms`;
 	}
 	return `${(ms / 1000).toFixed(1)}s`;
 };
@@ -230,8 +230,7 @@ const runInstallMode = async (packageSpecs: string[]) => {
 
 	if (!argv.flags.json) {
 		console.log('');
-		console.log(dim(`Installing ${packageSpecs.length} package${packageSpecs.length > 1 ? 's' : ''}...`));
-		console.log('');
+		console.log(dim(`Installing with ${packageManager}...`));
 	}
 
 	const data: InstallSizeData = await installSize(packageSpecs, { packageManager });
@@ -241,16 +240,15 @@ const runInstallMode = async (packageSpecs: string[]) => {
 		return;
 	}
 
+	console.log(dim(`Completed in ${formatTime(data.installTime)}`));
+	console.log('');
+
 	const table = new SimpleTable();
 
 	table.header(
 		green('Package'),
 		{
 			text: green('Size'),
-			align: 'right' as const,
-		},
-		{
-			text: green('Files'),
 			align: 'right' as const,
 		},
 	);
@@ -262,20 +260,16 @@ const runInstallMode = async (packageSpecs: string[]) => {
 		table.row(
 			cyan(pkg.name),
 			getSize(pkg.size),
-			String(pkg.files),
 		);
 	}
 
 	table.row();
 	table.row(
-		'',
+		bold('Total'),
 		underline(getSize(data.totalSize)),
-		underline(String(data.totalFiles)),
 	);
 
 	console.log(`${table.toString()}\n`);
-	console.log(dim(`Installed in ${formatTime(data.installTime)} with ${data.packageManager}`));
-	console.log('');
 };
 
 (async () => {
