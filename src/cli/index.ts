@@ -100,21 +100,13 @@ const argv = cli({
 		compression, sortBy, unit, ignoreFiles, json, packageManager,
 	} = argv.flags;
 
-	// No args: analyze cwd
-	if (packages.length === 0) {
-		await runLocalMode(process.cwd(), {
-			compression,
-			sortBy,
-			unit,
-			ignoreFiles,
-			json,
-		});
-		return;
-	}
+	// Local mode: no args or single local path
+	const localPath = packages.length === 0
+		? process.cwd()
+		: (packages.length === 1 && isLocalPath(packages[0]) ? packages[0] : null);
 
-	// Single arg that's a local path: analyze that path
-	if (packages.length === 1 && isLocalPath(packages[0])) {
-		await runLocalMode(packages[0], {
+	if (localPath) {
+		await runLocalMode(localPath, {
 			compression,
 			sortBy,
 			unit,
