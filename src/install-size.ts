@@ -1,16 +1,16 @@
-import fsp from 'fs/promises';
-import path from 'path';
+import fsp from 'node:fs/promises';
+import path from 'node:path';
 import spawn from 'nano-spawn';
 import pMap from 'p-map';
 import { createDisposableDirectory } from './utils/disposable-directory.js';
 
-type PackageEntry = {
+export type PackageEntry = {
 	name: string;
 	size: number;
 	files: number;
 };
 
-type InstallSizeData = {
+export type InstallSizeData = {
 	packages: PackageEntry[];
 	totalSize: number;
 	totalFiles: number;
@@ -35,7 +35,7 @@ const isLocalPath = (argument: string): boolean => (
 	argument.startsWith('.') || path.isAbsolute(argument)
 );
 
-type SizeResult = {
+export type SizeResult = {
 	size: number;
 	files: number;
 };
@@ -193,7 +193,7 @@ const getNodeModulesPackages = async (
 	return getFlatPackages(nodeModulesPath);
 };
 
-type InstallSizeOptions = {
+export type InstallSizeOptions = {
 	packageManager?: string;
 };
 
@@ -254,10 +254,4 @@ export {
 	installSize,
 	isLocalPath,
 	detectPackageManager,
-};
-
-export type {
-	PackageEntry,
-	InstallSizeData,
-	InstallSizeOptions,
 };

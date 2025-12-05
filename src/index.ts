@@ -1,8 +1,8 @@
-import path from 'path';
-import zlib from 'zlib';
-import fs from 'fs';
-import fsp from 'fs/promises';
-import { PassThrough } from 'stream';
+import path from 'node:path';
+import zlib from 'node:zlib';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import { PassThrough } from 'node:stream';
 import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
 import { gzipSizeStream } from 'gzip-size';

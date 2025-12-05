@@ -1,4 +1,4 @@
-type FileEntry = {
+export type FileEntry = {
 	path: string;
 	size: number;
 	sizeGzip: number;
@@ -6,13 +6,8 @@ type FileEntry = {
 	sizeZstd: number;
 };
 
-type PkgSizeData = {
+export type PkgSizeData = {
 	pkgPath: string;
 	tarballSize: number;
 	files: FileEntry[];
-};
-
-export type {
-	FileEntry,
-	PkgSizeData,
 };
