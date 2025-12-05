@@ -86,24 +86,49 @@ const getDirectorySize = async (directory: string): Promise<SizeResult> => {
 	};
 };
 
-// Parse pnpm store directory name to extract package name
-// Format: {package-name}@{version} or @{scope}+{name}@{version}
-const parsePnpmPackageName = (directoryName: string): string | null => {
-	// Find the last @ which separates name from version
-	const lastAtIndex = directoryName.lastIndexOf('@');
-	if (lastAtIndex <= 0) {
-		return null;
+// Collect packages from a directory, handling scoped packages (@org/pkg)
+const collectPackagesFromDirectory = async (
+	directory: string,
+	packages: PackageEntry[],
+	skipHidden = false,
+): Promise<void> => {
+	const entries = await fsp.readdir(directory, { withFileTypes: true });
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) {
+			continue;
+		}
+
+		// Skip hidden folders when requested (for npm/yarn flat node_modules)
+		if (skipHidden && entry.name.startsWith('.')) {
+			continue;
+		}
+
+		const fullPath = path.join(directory, entry.name);
+
+		// Handle scoped packages (@org/pkg)
+		if (entry.name.startsWith('@')) {
+			const scopedEntries = await fsp.readdir(fullPath, { withFileTypes: true });
+			for (const scopedEntry of scopedEntries) {
+				if (scopedEntry.isDirectory()) {
+					const scopedPath = path.join(fullPath, scopedEntry.name);
+					const { size, files } = await getDirectorySize(scopedPath);
+					packages.push({
+						name: `${entry.name}/${scopedEntry.name}`,
+						size,
+						files,
+					});
+				}
+			}
+		} else {
+			const { size, files } = await getDirectorySize(fullPath);
+			packages.push({
+				name: entry.name,
+				size,
+				files,
+			});
+		}
 	}
-
-	const namePart = directoryName.slice(0, lastAtIndex);
-
-	// Scoped packages use + instead of / in pnpm store
-	// e.g., @babel+core@7.0.0 -> @babel/core
-	if (namePart.startsWith('@') && namePart.includes('+')) {
-		return namePart.replace('+', '/');
-	}
-
-	return namePart;
 };
 
 // Get packages from pnpm's .pnpm directory (content-addressable store)
@@ -129,22 +154,12 @@ const getPnpmPackages = async (
 			continue;
 		}
 
-		const packageName = parsePnpmPackageName(entry.name);
-		if (!packageName) {
-			continue;
-		}
-
-		// The actual package content is at .pnpm/{name}@{version}/node_modules/{name}
-		const packagePath = path.join(pnpmPath, entry.name, 'node_modules', packageName);
-		const packageExists = await fsp.access(packagePath).then(() => true, () => false);
-
-		if (packageExists) {
-			const { size, files } = await getDirectorySize(packagePath);
-			packages.push({
-				name: packageName,
-				size,
-				files,
-			});
+		// Read the actual package name from the filesystem
+		// Structure: .pnpm/{hash}/node_modules/{actual-package-name}
+		const innerNodeModules = path.join(pnpmPath, entry.name, 'node_modules');
+		const innerExists = await fsp.access(innerNodeModules).then(() => true, () => false);
+		if (innerExists) {
+			await collectPackagesFromDirectory(innerNodeModules, packages);
 		}
 	}
 
@@ -156,45 +171,7 @@ const getFlatPackages = async (
 	nodeModulesPath: string,
 ): Promise<PackageEntry[]> => {
 	const packages: PackageEntry[] = [];
-
-	const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
-
-	for (const entry of entries) {
-		// Skip hidden folders and files
-		if (entry.name.startsWith('.')) {
-			continue;
-		}
-
-		if (!entry.isDirectory()) {
-			continue;
-		}
-
-		const fullPath = path.join(nodeModulesPath, entry.name);
-
-		// Handle scoped packages (@org/pkg)
-		if (entry.name.startsWith('@')) {
-			const scopedEntries = await fsp.readdir(fullPath, { withFileTypes: true });
-			for (const scopedEntry of scopedEntries) {
-				if (scopedEntry.isDirectory()) {
-					const scopedPath = path.join(fullPath, scopedEntry.name);
-					const { size, files } = await getDirectorySize(scopedPath);
-					packages.push({
-						name: `${entry.name}/${scopedEntry.name}`,
-						size,
-						files,
-					});
-				}
-			}
-		} else {
-			const { size, files } = await getDirectorySize(fullPath);
-			packages.push({
-				name: entry.name,
-				size,
-				files,
-			});
-		}
-	}
-
+	await collectPackagesFromDirectory(nodeModulesPath, packages, true);
 	return packages;
 };
 
@@ -300,9 +277,6 @@ const installSize = async (
 		// Measure node_modules
 		const nodeModulesPath = path.join(tempDirectory, 'node_modules');
 		const packages = await getNodeModulesPackages(nodeModulesPath);
-
-		// Sort by size descending
-		packages.sort((a, b) => b.size - a.size);
 
 		let totalSize = 0;
 		let totalFiles = 0;
