@@ -1,3 +1,4 @@
+import path from 'path';
 import { describe, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
 import pkgSize from '../src/index.js';
@@ -522,8 +523,8 @@ describe('pkg-size', ({ describe }) => {
 		});
 
 		test('isLocalPath detects absolute paths', () => {
-			expect(isLocalPath('/usr/local/package')).toBe(true);
-			expect(isLocalPath('/tmp/test')).toBe(true);
+			expect(isLocalPath(path.resolve('/tmp/test'))).toBe(true);
+			expect(isLocalPath(path.resolve('/usr/local/package'))).toBe(true);
 		});
 
 		test('isLocalPath returns false for package specs', () => {
