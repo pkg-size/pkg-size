@@ -20,7 +20,7 @@
 	"files": [
 		"dist"
 	],
-	"bin": "dist/cli.js",
+	"bin": "dist/cli/index.js",
 	"main": "dist/index.js",
 	"exports": {
 		".": {
