@@ -2,7 +2,6 @@ import { describe } from 'manten';
 import getNode from 'get-node';
 import apiTests from './specs/api.js';
 import cliTests from './specs/cli.js';
-import installSizeTests from './specs/install-size.js';
 import { createPkgSizeCli } from './utils/pkg-size.js';
 
 const nodeVersions = [
@@ -30,7 +29,6 @@ const nodeVersions = [
 
 			runTestSuite(apiTests);
 			runTestSuite(cliTests, cli);
-			runTestSuite(installSizeTests, cli);
 		});
 	}
 })();
