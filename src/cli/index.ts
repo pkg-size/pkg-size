@@ -10,17 +10,18 @@ const isLocalPath = (argument: string): boolean => (
 	argument.startsWith('.') || path.isAbsolute(argument)
 );
 
-type Compression = 'gzip' | 'brotli' | 'zstd' | false;
+const compressions = ['gzip', 'brotli', 'zstd'] as const;
+
+type Compression = typeof compressions[number] | false;
 
 const CompressionType = (value: string): Compression => {
 	if (value === 'false') {
 		return false;
 	}
-	const valid = ['gzip', 'brotli', 'zstd'];
-	if (!valid.includes(value)) {
+	if (!compressions.includes(value as typeof compressions[number])) {
 		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, zstd, or false`);
 	}
-	return value as 'gzip' | 'brotli' | 'zstd';
+	return value as typeof compressions[number];
 };
 
 const packageManagers = ['npm', 'pnpm', 'yarn'] as const;
