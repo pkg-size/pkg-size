@@ -2,12 +2,8 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
-import { PassThrough } from 'node:stream';
 import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
-import { gzipSizeStream } from 'gzip-size';
-import { stream as brotliStream } from 'brotli-size';
-import { CompressStream as ZstdCompressStream } from 'zstd-napi';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
 import type { FileEntry, PkgSizeData, PkgSizeOptions } from './types.js';
@@ -65,40 +61,24 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 		}
 
 		if (sizes.includes('gzip')) {
-			calculateSizes.push(new Promise<void>((resolve) => {
-				fileStream.pipe(gzipSizeStream()).on('gzip-size', (sizeGzip) => {
-					result.sizeGzip = sizeGzip;
-					resolve();
-				});
-			}));
+			calculateSizes.push((async () => {
+				const { getGzipSize } = await import('./compressions/gzip.js');
+				result.sizeGzip = await getGzipSize(fileStream);
+			})());
 		}
 
 		if (sizes.includes('brotli')) {
-			calculateSizes.push(new Promise<void>((resolve) => {
-				fileStream.pipe(brotliStream()).on('brotli-size', (sizeBrotli) => {
-					result.sizeBrotli = sizeBrotli;
-					resolve();
-				});
-			}));
+			calculateSizes.push((async () => {
+				const { getBrotliSize } = await import('./compressions/brotli.js');
+				result.sizeBrotli = await getBrotliSize(fileStream);
+			})());
 		}
 
 		if (sizes.includes('zstd')) {
-			calculateSizes.push(new Promise<void>((resolve) => {
-				let sizeZstd = 0;
-				const passThrough = new PassThrough();
-				const zstdStream = new ZstdCompressStream();
-
-				fileStream.pipe(passThrough);
-				passThrough
-					.pipe(zstdStream)
-					.on('data', (chunk: Buffer) => {
-						sizeZstd += chunk.length;
-					})
-					.on('end', () => {
-						result.sizeZstd = sizeZstd;
-						resolve();
-					});
-			}));
+			calculateSizes.push((async () => {
+				const { getZstdSize } = await import('./compressions/zstd.js');
+				result.sizeZstd = await getZstdSize(fileStream);
+			})());
 		}
 
 		await Promise.all(calculateSizes);
