@@ -2,10 +2,13 @@ import { cli } from 'cleye';
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
-	green, cyan, bold, underline,
+	green, cyan, bold, underline, dim,
 } from 'yoctocolors';
 import packageJson from '../package.json';
 import type { FileEntry } from './interfaces.js';
+import {
+	installSize, isLocalPath, detectPackageManager, type InstallSizeData, type PackageEntry,
+} from './install-size.js';
 import pkgSize from './index.js';
 
 type Compression = 'gzip' | 'brotli' | 'zstd' | false;
@@ -19,6 +22,17 @@ const CompressionType = (value: string): Compression => {
 		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, zstd, or false`);
 	}
 	return value as 'gzip' | 'brotli' | 'zstd';
+};
+
+const packageManagers = ['npm', 'pnpm', 'yarn'] as const;
+
+type PackageManager = typeof packageManagers[number];
+
+const PackageManagerType = (value: string): PackageManager => {
+	if (!packageManagers.includes(value as PackageManager)) {
+		throw new Error(`Invalid package manager: "${value}". Must be: npm, pnpm, or yarn`);
+	}
+	return value as PackageManager;
 };
 
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
@@ -39,7 +53,7 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 const argv = cli({
 	name: packageJson.name,
 	version: packageJson.version,
-	parameters: ['[pkg-path]'],
+	parameters: ['[packages...]'],
 	flags: {
 		compression: {
 			type: CompressionType,
@@ -68,20 +82,29 @@ const argv = cli({
 			type: Boolean,
 			description: 'JSON output',
 		},
+		packageManager: {
+			type: PackageManagerType,
+			alias: 'p',
+			description: 'Package manager to use for install mode (npm, pnpm, yarn). Auto-detected by default.',
+		},
 	},
 	help: {
 		examples: [
+			'# Analyze local package',
 			'pkg-size',
 			'pkg-size ./package/path',
 			'',
+			'# Measure install size of npm packages',
+			'pkg-size lodash react vue',
+			'pkg-size @babel/core typescript',
+			'',
+			'# Compression options (local mode only)',
 			'pkg-size --compression=brotli',
 			'pkg-size --compression=false',
 			'',
+			'# Sorting and display',
 			'pkg-size --sort-by=name',
-			'pkg-size -s size',
-			'',
 			'pkg-size --unit=iec',
-			'pkg-size -u metric_octet',
 		],
 	},
 });
@@ -119,8 +142,22 @@ const getSortProperty = (): keyof FileEntry => {
 };
 const sortBy = getSortProperty();
 
-(async () => {
-	const pkgPath = argv._.pkgPath ?? process.cwd();
+const comparePackages = (sortByProperty: string) => (a: PackageEntry, b: PackageEntry) => {
+	if (sortByProperty === 'name') {
+		return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
+	}
+	// Default: sort by size descending
+	return b.size - a.size;
+};
+
+const formatTime = (ms: number): string => {
+	if (ms < 1000) {
+		return `${Math.round(ms)}ms`;
+	}
+	return `${(ms / 1000).toFixed(1)}s`;
+};
+
+const runLocalMode = async (pkgPath: string) => {
 	const distData = await pkgSize(pkgPath, {
 		sizes,
 		ignoreFiles: argv.flags.ignoreFiles,
@@ -186,4 +223,82 @@ const sortBy = getSortProperty();
 	table.row(...totalsRow);
 
 	console.log(`${table.toString()}\n`);
+};
+
+const runInstallMode = async (packageSpecs: string[]) => {
+	const packageManager = argv.flags.packageManager ?? detectPackageManager();
+
+	if (!argv.flags.json) {
+		console.log('');
+		console.log(dim(`Installing with ${packageManager}...`));
+	}
+
+	const data: InstallSizeData = await installSize(packageSpecs, { packageManager });
+
+	if (argv.flags.json) {
+		console.log(JSON.stringify(data));
+		return;
+	}
+
+	console.log(dim(`Completed in ${formatTime(data.installTime)}`));
+	console.log('');
+
+	const table = new SimpleTable();
+
+	table.header(
+		green('Package'),
+		{
+			text: green('Size'),
+			align: 'right' as const,
+		},
+	);
+
+	const sortProperty = argv.flags.sortBy === 'name' ? 'name' : 'size';
+	data.packages.sort(comparePackages(sortProperty));
+
+	for (const pkg of data.packages) {
+		table.row(
+			cyan(pkg.name),
+			getSize(pkg.size),
+		);
+	}
+
+	table.row();
+	table.row(
+		bold('Total'),
+		underline(getSize(data.totalSize)),
+	);
+
+	console.log(`${table.toString()}\n`);
+};
+
+(async () => {
+	const packages = argv._.packages ?? [];
+
+	// No args: analyze cwd
+	if (packages.length === 0) {
+		await runLocalMode(process.cwd());
+		return;
+	}
+
+	// Single arg that's a local path: analyze that path
+	if (packages.length === 1 && isLocalPath(packages[0])) {
+		await runLocalMode(packages[0]);
+		return;
+	}
+
+	// Check if all args are local paths (error - can only do one local path at a time)
+	const localPaths = packages.filter(p => isLocalPath(p));
+	if (localPaths.length > 0 && localPaths.length < packages.length) {
+		console.error('Error: Cannot mix local paths with package names');
+		process.exit(1);
+	}
+
+	if (localPaths.length > 1) {
+		console.error('Error: Can only analyze one local path at a time');
+		process.exit(1);
+	}
+
+	// All args are package specs: install mode
+	await runInstallMode(packages);
 })();

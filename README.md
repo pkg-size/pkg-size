@@ -22,6 +22,7 @@ $ npx pkg-size
 - **🔍 Size analysis** Quickly determine the total size of what you're publishing to npm!
 - **🔥 Same behavior as npm `pack`/`publish`** Collects publish files as specified in your `package.json`!
 - **🙌 Gzip, Brotli & Zstd** See how your files compress in addition to normal size!
+- **📦 Install size** Measure the install size of any npm package (including all dependencies)!
 - **🤖 Node.js API** Integrate size checks to your CI via Node.js API
 
 <sub>Support this project by ⭐️ starring and sharing it. [Follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
@@ -67,6 +68,26 @@ pkg-size --sort-by=name
 pkg-size --unit=iec
 ```
 
+## 📦 Install Size Mode
+
+Measure the install size of npm packages (including all transitive dependencies):
+
+```sh
+# Measure install size of packages
+pkg-size lodash react vue
+
+# Measure scoped packages
+pkg-size @babel/core typescript
+
+# Use a specific package manager
+pkg-size react --package-manager=pnpm
+
+# JSON output
+pkg-size lodash --json
+```
+
+This mode installs the specified packages in a temporary directory and measures the total `node_modules` size.
+
 ## ⚙️ CLI Options
 
 ### -c, --compression \<algorithm\>
@@ -83,6 +104,9 @@ Glob to ignore files from list. Total size will still include them.
 
 ### --json
 JSON output
+
+### -p, --package-manager \<manager\>
+Package manager to use for install size mode. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_config_user_agent` by default.
 
 ### -h, --help
 Display this message
