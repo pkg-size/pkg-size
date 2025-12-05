@@ -3,7 +3,8 @@ import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline, dim,
 } from 'yoctocolors';
-import { installSize, detectPackageManager } from '../install/index.js';
+import { installSize } from '../install/index.js';
+import { detectPackageManager } from '../utils/package-manager.js';
 import type { PackageEntry } from '../install/types.js';
 
 const comparePackages = (sortByProperty: string) => (a: PackageEntry, b: PackageEntry) => {

@@ -148,4 +148,3 @@ const pkgSize = async (
 };
 
 export default pkgSize;
-export type { FileEntry, PkgSizeData, PkgSizeOptions };

@@ -2,7 +2,8 @@ import path from 'node:path';
 import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
 import pkgSize from '../../src/index.js';
-import { detectPackageManager, isLocalPath } from '../../src/install/index.js';
+import { detectPackageManager } from '../../src/utils/package-manager.js';
+import { isLocalPath } from '../../src/utils/is-local-path.js';
 
 export default testSuite(({ describe }) => {
 	describe('API', ({ describe }) => {
