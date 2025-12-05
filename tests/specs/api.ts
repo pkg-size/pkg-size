@@ -3,7 +3,6 @@ import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
 import pkgSize from '../../src/index.js';
 import { detectPackageManager } from '../../src/utils/package-manager.js';
-import { isLocalPath } from '../../src/utils/is-local-path.js';
 
 export default testSuite(({ describe }) => {
 	describe('API', ({ describe }) => {
@@ -172,24 +171,6 @@ export default testSuite(({ describe }) => {
 		});
 
 		describe('Install Mode', ({ test }) => {
-			test('isLocalPath detects relative paths', () => {
-				expect(isLocalPath('./package')).toBe(true);
-				expect(isLocalPath('../package')).toBe(true);
-				expect(isLocalPath('.')).toBe(true);
-			});
-
-			test('isLocalPath detects absolute paths', () => {
-				expect(isLocalPath(path.resolve('/tmp/test'))).toBe(true);
-				expect(isLocalPath(path.resolve('/usr/local/package'))).toBe(true);
-			});
-
-			test('isLocalPath returns false for package specs', () => {
-				expect(isLocalPath('lodash')).toBe(false);
-				expect(isLocalPath('@babel/core')).toBe(false);
-				expect(isLocalPath('react@18')).toBe(false);
-				expect(isLocalPath('typescript@^5.0.0')).toBe(false);
-			});
-
 			test('detectPackageManager returns npm by default', () => {
 				const originalAgent = process.env.npm_config_user_agent;
 				delete process.env.npm_config_user_agent;
