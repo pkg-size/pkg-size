@@ -3,6 +3,9 @@ import fsp from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
+// TODO: Replace with fsPromises.mkdtempDisposable() when Node.js 24.4.0+ is minimum version
+// https://nodejs.org/api/fs.html#fspromisesmkdtempdisposableprefix-options
+
 export type DisposableDirectory = {
 	path: string;
 	[Symbol.asyncDispose]: () => Promise<void>;

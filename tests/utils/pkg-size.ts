@@ -1,12 +1,19 @@
 import path from 'node:path';
-import spawn, { type SubprocessError } from 'nano-spawn';
+import spawn, { type SubprocessError, type Result } from 'nano-spawn';
 
 const cliPath = path.resolve('./dist/cli.js');
 
-export const pkgSizeCli = (
+export type PkgSizeCli = (
+	cwd: string,
+	args?: string[],
+) => Promise<Result | SubprocessError>;
+
+export const createPkgSizeCli = (
+	nodePath: string,
+): PkgSizeCli => (
 	cwd: string,
 	args: string[] = [],
-) => spawn(process.execPath, [cliPath, ...args], {
+) => spawn(nodePath, [cliPath, ...args], {
 	cwd,
 	env: {
 		PATH: process.env.PATH,
