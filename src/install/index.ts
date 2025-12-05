@@ -58,5 +58,6 @@ export const installSize = async (
 	};
 };
 
-export { detectPackageManager, isLocalPath } from './package-manager.js';
+export { detectPackageManager } from './package-manager.js';
+export { isLocalPath } from '../utils/is-local-path.js';
 export type { PackageEntry, InstallSizeData, InstallSizeOptions } from './types.js';

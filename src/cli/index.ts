@@ -1,6 +1,6 @@
 import { cli } from 'cleye';
 import packageJson from '../../package.json';
-import { isLocalPath } from '../install/index.js';
+import { isLocalPath } from '../utils/is-local-path.js';
 import { runLocalMode } from './local.js';
 import { runInstallMode } from './install.js';
 
