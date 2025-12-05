@@ -571,4 +571,79 @@ describe('pkg-size', ({ describe }) => {
 			}
 		});
 	});
+
+	describe('Install Mode CLI', ({ test }) => {
+		test('supports --package-manager flag with npm', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['is-odd', '--package-manager', 'npm', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+			expect(json.packageManager).toBe('npm');
+			expect(json.packages.length).toBeGreaterThan(0);
+			expect(json.totalSize).toBeGreaterThan(0);
+		}, 30_000);
+
+		test('supports --package-manager flag with pnpm', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['is-odd', '--package-manager', 'pnpm', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+			expect(json.packageManager).toBe('pnpm');
+			// pnpm uses symlinks - verify we still measure sizes correctly
+			expect(json.packages.length).toBeGreaterThan(0);
+			expect(json.totalSize).toBeGreaterThan(0);
+			// is-odd depends on is-number, so we should see both
+			const isOdd = json.packages.find((p: { name: string }) => p.name === 'is-odd');
+			expect(isOdd).toBeDefined();
+			expect(isOdd.size).toBeGreaterThan(0);
+			expect(isOdd.files).toBeGreaterThan(0);
+		}, 30_000);
+
+		test('pnpm shows only direct dependencies (not transitive)', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const npmResult = await pkgSizeCli(fixture.path, ['is-odd', '--package-manager', 'npm', '--json']);
+			const pnpmResult = await pkgSizeCli(fixture.path, ['is-odd', '--package-manager', 'pnpm', '--json']);
+
+			expect('exitCode' in npmResult).toBe(false);
+			expect('exitCode' in pnpmResult).toBe(false);
+
+			const npmJson = JSON.parse(npmResult.stdout);
+			const pnpmJson = JSON.parse(pnpmResult.stdout);
+
+			// npm hoists all deps to node_modules root (is-odd + is-number)
+			expect(npmJson.packages.length).toBe(2);
+			expect(npmJson.packages.some((p: { name: string }) => p.name === 'is-odd')).toBe(true);
+			expect(npmJson.packages.some((p: { name: string }) => p.name === 'is-number')).toBe(true);
+
+			// pnpm only shows direct dependencies at node_modules root (is-odd only)
+			// Transitive deps are in .pnpm/ which is skipped
+			expect(pnpmJson.packages.length).toBe(1);
+			expect(pnpmJson.packages[0].name).toBe('is-odd');
+
+			// pnpm's is-odd should have similar size to npm's is-odd
+			const npmIsOdd = npmJson.packages.find((p: { name: string }) => p.name === 'is-odd');
+			const pnpmIsOdd = pnpmJson.packages[0];
+			expect(pnpmIsOdd.size).toBe(npmIsOdd.size);
+		}, 60_000);
+	});
 });

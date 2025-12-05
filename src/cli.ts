@@ -7,7 +7,7 @@ import {
 import packageJson from '../package.json';
 import type { FileEntry } from './interfaces.js';
 import {
-	installSize, isLocalPath, type InstallSizeData, type PackageEntry,
+	installSize, isLocalPath, detectPackageManager, type InstallSizeData, type PackageEntry,
 } from './install-size.js';
 import pkgSize from './index.js';
 
@@ -22,6 +22,17 @@ const CompressionType = (value: string): Compression => {
 		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, zstd, or false`);
 	}
 	return value as 'gzip' | 'brotli' | 'zstd';
+};
+
+const packageManagers = ['npm', 'pnpm', 'yarn'] as const;
+
+type PackageManager = typeof packageManagers[number];
+
+const PackageManagerType = (value: string): PackageManager => {
+	if (!packageManagers.includes(value as PackageManager)) {
+		throw new Error(`Invalid package manager: "${value}". Must be: npm, pnpm, or yarn`);
+	}
+	return value as PackageManager;
 };
 
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
@@ -70,6 +81,11 @@ const argv = cli({
 		json: {
 			type: Boolean,
 			description: 'JSON output',
+		},
+		packageManager: {
+			type: PackageManagerType,
+			alias: 'p',
+			description: 'Package manager to use for install mode (npm, pnpm, yarn). Auto-detected by default.',
 		},
 	},
 	help: {
@@ -210,11 +226,15 @@ const runLocalMode = async (pkgPath: string) => {
 };
 
 const runInstallMode = async (packageSpecs: string[]) => {
-	console.log('');
-	console.log(dim(`Installing ${packageSpecs.length} package${packageSpecs.length > 1 ? 's' : ''}...`));
-	console.log('');
+	const packageManager = argv.flags.packageManager ?? detectPackageManager();
 
-	const data: InstallSizeData = await installSize(packageSpecs);
+	if (!argv.flags.json) {
+		console.log('');
+		console.log(dim(`Installing ${packageSpecs.length} package${packageSpecs.length > 1 ? 's' : ''}...`));
+		console.log('');
+	}
+
+	const data: InstallSizeData = await installSize(packageSpecs, { packageManager });
 
 	if (argv.flags.json) {
 		console.log(JSON.stringify(data));

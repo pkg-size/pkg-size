@@ -163,8 +163,15 @@ const getNodeModulesPackages = async (
 	return packages;
 };
 
-const installSize = async (packageSpecs: string[]): Promise<InstallSizeData> => {
-	const packageManager = detectPackageManager();
+type InstallSizeOptions = {
+	packageManager?: string;
+};
+
+const installSize = async (
+	packageSpecs: string[],
+	options: InstallSizeOptions = {},
+): Promise<InstallSizeData> => {
+	const packageManager = options.packageManager ?? detectPackageManager();
 
 	// Create temp directory
 	const tempDirectory = await fsp.mkdtemp(path.join(os.tmpdir(), 'pkg-size-'));
@@ -274,4 +281,5 @@ export {
 export type {
 	PackageEntry,
 	InstallSizeData,
+	InstallSizeOptions,
 };
