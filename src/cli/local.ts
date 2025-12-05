@@ -36,16 +36,16 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 };
 
 export type LocalModeOptions = {
-	compression: 'gzip' | 'brotli' | 'zstd' | false;
+	compression: string | false;
 	sortBy: string;
 	unit: string;
 	ignoreFiles?: string;
-	json: boolean;
+	json?: boolean;
 };
 
 export const getSortProperty = (
 	sortBy: string,
-	compression: 'gzip' | 'brotli' | 'zstd' | false,
+	compression: string | false,
 ): keyof FileEntry => {
 	if (sortBy === 'compressed') {
 		return compression ? compressionToProperty[compression] : 'size';

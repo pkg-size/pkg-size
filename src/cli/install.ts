@@ -25,7 +25,7 @@ export type InstallModeOptions = {
 	packageManager?: string;
 	sortBy: string;
 	unit: string;
-	json: boolean;
+	json?: boolean;
 };
 
 export const runInstallMode = async (packageSpecs: string[], options: InstallModeOptions) => {
