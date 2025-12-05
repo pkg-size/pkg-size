@@ -11,3 +11,8 @@ export type PkgSizeData = {
 	tarballSize: number;
 	files: FileEntry[];
 };
+
+export type PkgSizeOptions = {
+	sizes: string[];
+	ignoreFiles?: string;
+};
