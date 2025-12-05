@@ -2,13 +2,11 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
-import packlist from 'npm-packlist';
 import tarFs from 'tar-fs';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
+import { getPacklist } from '../utils/get-packlist.js';
 import type { FileEntry, PkgSizeData, PkgSizeOptions } from './types.js';
-
-const edgesOut = new Map();
 
 const getTarballSize = (
 	pkgPath: string,
@@ -96,11 +94,7 @@ const pkgSize = async (
 	const packageJsonPath = path.join(pkgPath, 'package.json');
 	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, 'utf8'));
 
-	let filesList = await packlist({
-		path: pkgPath,
-		package: packageJson,
-		edgesOut,
-	});
+	let filesList = await getPacklist(pkgPath, packageJson);
 
 	if (options?.ignoreFiles) {
 		const ignorePattern = globToRegexp(options.ignoreFiles, { extended: true });
