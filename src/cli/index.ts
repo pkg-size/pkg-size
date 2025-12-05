@@ -1,8 +1,14 @@
+import path from 'node:path';
 import { cli } from 'cleye';
 import packageJson from '../../package.json';
-import { isLocalPath } from '../utils/is-local-path.js';
 import { runLocalMode } from './local.js';
 import { runInstallMode } from './install.js';
+
+// Only explicit path indicators - no fs.existsSync to avoid shadowing
+// (e.g., a folder named "test" shouldn't shadow the npm package "test")
+const isLocalPath = (argument: string): boolean => (
+	argument.startsWith('.') || path.isAbsolute(argument)
+);
 
 type Compression = 'gzip' | 'brotli' | 'zstd' | false;
 

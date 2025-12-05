@@ -57,4 +57,3 @@ export const installSize = async (
 		packageManager,
 	};
 };
-
