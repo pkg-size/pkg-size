@@ -1,7 +1,7 @@
 import path from 'node:path';
 import spawn, { type SubprocessError, type Result } from 'nano-spawn';
 
-const cliPath = path.resolve('./dist/cli.js');
+const cliPath = path.resolve('./dist/cli/index.js');
 
 export type PkgSizeCli = (
 	cwd: string,
