@@ -54,18 +54,12 @@ const getDirectorySize = async (directory: string): Promise<SizeResult> => {
 		for (const entry of entries) {
 			const fullPath = path.join(currentDirectory, entry.name);
 
-			// Follow symlinks (pnpm uses symlinks to .pnpm store)
-			if (entry.isDirectory() || entry.isSymbolicLink()) {
-				// Use stat (follows symlinks) to check if target is a directory
-				const stats = await fsp.stat(fullPath);
-				if (stats.isDirectory()) {
-					await collectFiles(fullPath);
-				} else if (stats.isFile()) {
-					filePaths.push(fullPath);
-				}
+			if (entry.isDirectory()) {
+				await collectFiles(fullPath);
 			} else if (entry.isFile()) {
 				filePaths.push(fullPath);
 			}
+			// Skip symlinks - we read from actual package directories
 		}
 	};
 
@@ -92,56 +86,97 @@ const getDirectorySize = async (directory: string): Promise<SizeResult> => {
 	};
 };
 
-// Check if entry is a directory (follows symlinks for pnpm compatibility)
-const isDirectoryEntry = async (
-	entry: {
-		isDirectory: () => boolean;
-		isSymbolicLink: () => boolean;
-	},
-	fullPath: string,
-): Promise<boolean> => {
-	if (entry.isDirectory()) {
-		return true;
+// Parse pnpm store directory name to extract package name
+// Format: {package-name}@{version} or @{scope}+{name}@{version}
+const parsePnpmPackageName = (directoryName: string): string | null => {
+	// Find the last @ which separates name from version
+	const lastAtIndex = directoryName.lastIndexOf('@');
+	if (lastAtIndex <= 0) {
+		return null;
 	}
-	if (entry.isSymbolicLink()) {
-		const stats = await fsp.stat(fullPath);
-		return stats.isDirectory();
+
+	const namePart = directoryName.slice(0, lastAtIndex);
+
+	// Scoped packages use + instead of / in pnpm store
+	// e.g., @babel+core@7.0.0 -> @babel/core
+	if (namePart.startsWith('@') && namePart.includes('+')) {
+		return namePart.replace('+', '/');
 	}
-	return false;
+
+	return namePart;
 };
 
-const getNodeModulesPackages = async (
-	nodeModulesPath: string,
+// Get packages from pnpm's .pnpm directory (content-addressable store)
+const getPnpmPackages = async (
+	pnpmPath: string,
 ): Promise<PackageEntry[]> => {
 	const packages: PackageEntry[] = [];
 
-	const exists = await fsp.access(nodeModulesPath).then(() => true, () => false);
+	const exists = await fsp.access(pnpmPath).then(() => true, () => false);
 	if (!exists) {
 		return packages;
 	}
 
+	const entries = await fsp.readdir(pnpmPath, { withFileTypes: true });
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) {
+			continue;
+		}
+
+		// Skip special directories
+		if (entry.name === 'node_modules' || entry.name === 'lock.yaml') {
+			continue;
+		}
+
+		const packageName = parsePnpmPackageName(entry.name);
+		if (!packageName) {
+			continue;
+		}
+
+		// The actual package content is at .pnpm/{name}@{version}/node_modules/{name}
+		const packagePath = path.join(pnpmPath, entry.name, 'node_modules', packageName);
+		const packageExists = await fsp.access(packagePath).then(() => true, () => false);
+
+		if (packageExists) {
+			const { size, files } = await getDirectorySize(packagePath);
+			packages.push({
+				name: packageName,
+				size,
+				files,
+			});
+		}
+	}
+
+	return packages;
+};
+
+// Get packages from flat node_modules (npm/yarn)
+const getFlatPackages = async (
+	nodeModulesPath: string,
+): Promise<PackageEntry[]> => {
+	const packages: PackageEntry[] = [];
+
 	const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
 
 	for (const entry of entries) {
-		const fullPath = path.join(nodeModulesPath, entry.name);
-
-		// Skip hidden folders like .pnpm, .cache
+		// Skip hidden folders and files
 		if (entry.name.startsWith('.')) {
 			continue;
 		}
 
-		const isDirectory = await isDirectoryEntry(entry, fullPath);
-		if (!isDirectory) {
+		if (!entry.isDirectory()) {
 			continue;
 		}
+
+		const fullPath = path.join(nodeModulesPath, entry.name);
 
 		// Handle scoped packages (@org/pkg)
 		if (entry.name.startsWith('@')) {
 			const scopedEntries = await fsp.readdir(fullPath, { withFileTypes: true });
 			for (const scopedEntry of scopedEntries) {
-				const scopedPath = path.join(fullPath, scopedEntry.name);
-				const isScopedDirectory = await isDirectoryEntry(scopedEntry, scopedPath);
-				if (isScopedDirectory) {
+				if (scopedEntry.isDirectory()) {
+					const scopedPath = path.join(fullPath, scopedEntry.name);
 					const { size, files } = await getDirectorySize(scopedPath);
 					packages.push({
 						name: `${entry.name}/${scopedEntry.name}`,
@@ -161,6 +196,25 @@ const getNodeModulesPackages = async (
 	}
 
 	return packages;
+};
+
+const getNodeModulesPackages = async (
+	nodeModulesPath: string,
+): Promise<PackageEntry[]> => {
+	const exists = await fsp.access(nodeModulesPath).then(() => true, () => false);
+	if (!exists) {
+		return [];
+	}
+
+	// Check if this is a pnpm install (has .pnpm directory)
+	const pnpmPath = path.join(nodeModulesPath, '.pnpm');
+	const isPnpm = await fsp.access(pnpmPath).then(() => true, () => false);
+
+	if (isPnpm) {
+		return getPnpmPackages(pnpmPath);
+	}
+
+	return getFlatPackages(nodeModulesPath);
 };
 
 type InstallSizeOptions = {

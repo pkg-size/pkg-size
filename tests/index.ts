@@ -613,7 +613,7 @@ describe('pkg-size', ({ describe }) => {
 			expect(isOdd.files).toBeGreaterThan(0);
 		}, 30_000);
 
-		test('pnpm shows only direct dependencies (not transitive)', async () => {
+		test('npm and pnpm report same packages and similar sizes', async () => {
 			await using fixture = await createFixture({
 				'package.json': JSON.stringify({
 					name: 'test-package',
@@ -630,20 +630,22 @@ describe('pkg-size', ({ describe }) => {
 			const npmJson = JSON.parse(npmResult.stdout);
 			const pnpmJson = JSON.parse(pnpmResult.stdout);
 
-			// npm hoists all deps to node_modules root (is-odd + is-number)
+			// Both should report the same packages (is-odd + is-number)
 			expect(npmJson.packages.length).toBe(2);
+			expect(pnpmJson.packages.length).toBe(2);
+
 			expect(npmJson.packages.some((p: { name: string }) => p.name === 'is-odd')).toBe(true);
 			expect(npmJson.packages.some((p: { name: string }) => p.name === 'is-number')).toBe(true);
+			expect(pnpmJson.packages.some((p: { name: string }) => p.name === 'is-odd')).toBe(true);
+			expect(pnpmJson.packages.some((p: { name: string }) => p.name === 'is-number')).toBe(true);
 
-			// pnpm only shows direct dependencies at node_modules root (is-odd only)
-			// Transitive deps are in .pnpm/ which is skipped
-			expect(pnpmJson.packages.length).toBe(1);
-			expect(pnpmJson.packages[0].name).toBe('is-odd');
-
-			// pnpm's is-odd should have similar size to npm's is-odd
+			// Sizes should be identical
 			const npmIsOdd = npmJson.packages.find((p: { name: string }) => p.name === 'is-odd');
-			const pnpmIsOdd = pnpmJson.packages[0];
+			const pnpmIsOdd = pnpmJson.packages.find((p: { name: string }) => p.name === 'is-odd');
 			expect(pnpmIsOdd.size).toBe(npmIsOdd.size);
+
+			// Total sizes should be identical
+			expect(pnpmJson.totalSize).toBe(npmJson.totalSize);
 		}, 60_000);
 	});
 });
