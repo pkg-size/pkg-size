@@ -54,8 +54,15 @@ const getDirectorySize = async (directory: string): Promise<SizeResult> => {
 		for (const entry of entries) {
 			const fullPath = path.join(currentDirectory, entry.name);
 
-			if (entry.isDirectory()) {
-				await collectFiles(fullPath);
+			// Follow symlinks (pnpm uses symlinks to .pnpm store)
+			if (entry.isDirectory() || entry.isSymbolicLink()) {
+				// Use stat (follows symlinks) to check if target is a directory
+				const stats = await fsp.stat(fullPath);
+				if (stats.isDirectory()) {
+					await collectFiles(fullPath);
+				} else if (stats.isFile()) {
+					filePaths.push(fullPath);
+				}
 			} else if (entry.isFile()) {
 				filePaths.push(fullPath);
 			}
@@ -85,6 +92,24 @@ const getDirectorySize = async (directory: string): Promise<SizeResult> => {
 	};
 };
 
+// Check if entry is a directory (follows symlinks for pnpm compatibility)
+const isDirectoryEntry = async (
+	entry: {
+		isDirectory: () => boolean;
+		isSymbolicLink: () => boolean;
+	},
+	fullPath: string,
+): Promise<boolean> => {
+	if (entry.isDirectory()) {
+		return true;
+	}
+	if (entry.isSymbolicLink()) {
+		const stats = await fsp.stat(fullPath);
+		return stats.isDirectory();
+	}
+	return false;
+};
+
 const getNodeModulesPackages = async (
 	nodeModulesPath: string,
 ): Promise<PackageEntry[]> => {
@@ -98,23 +123,25 @@ const getNodeModulesPackages = async (
 	const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
 
 	for (const entry of entries) {
-		if (!entry.isDirectory()) {
-			continue;
-		}
+		const fullPath = path.join(nodeModulesPath, entry.name);
 
 		// Skip hidden folders like .pnpm, .cache
 		if (entry.name.startsWith('.')) {
 			continue;
 		}
 
-		const fullPath = path.join(nodeModulesPath, entry.name);
+		const isDirectory = await isDirectoryEntry(entry, fullPath);
+		if (!isDirectory) {
+			continue;
+		}
 
 		// Handle scoped packages (@org/pkg)
 		if (entry.name.startsWith('@')) {
 			const scopedEntries = await fsp.readdir(fullPath, { withFileTypes: true });
 			for (const scopedEntry of scopedEntries) {
-				if (scopedEntry.isDirectory()) {
-					const scopedPath = path.join(fullPath, scopedEntry.name);
+				const scopedPath = path.join(fullPath, scopedEntry.name);
+				const isScopedDirectory = await isDirectoryEntry(scopedEntry, scopedPath);
+				if (isScopedDirectory) {
 					const { size, files } = await getDirectorySize(scopedPath);
 					packages.push({
 						name: `${entry.name}/${scopedEntry.name}`,
