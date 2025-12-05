@@ -3,7 +3,7 @@ import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline, dim,
 } from 'yoctocolors';
-import { installSize } from '../install/index.js';
+import { getInstallSize } from '../install/index.js';
 import { detectPackageManager } from '../utils/package-manager.js';
 import type { PackageEntry } from '../install/types.js';
 
@@ -38,7 +38,7 @@ export const runInstallMode = async (packageSpecs: string[], options: InstallMod
 		console.log(dim(`Installing with ${packageManager}...`));
 	}
 
-	const data = await installSize(packageSpecs, { packageManager });
+	const data = await getInstallSize(packageSpecs, { packageManager });
 
 	if (json) {
 		console.log(JSON.stringify(data));

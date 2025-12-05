@@ -1,12 +1,12 @@
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import spawn from 'nano-spawn';
-import { createDisposableDirectory } from '../utils/disposable-directory.js';
+import { createDisposableDirectory } from './disposable-directory.js';
 import { detectPackageManager } from '../utils/package-manager.js';
 import { getNodeModulesPackages } from './node-modules.js';
 import type { InstallSizeData, InstallSizeOptions } from './types.js';
 
-export const installSize = async (
+export const getInstallSize = async (
 	packageSpecs: string[],
 	options: InstallSizeOptions = {},
 ): Promise<InstallSizeData> => {
