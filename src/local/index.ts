@@ -107,7 +107,10 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 	return result;
 };
 
-const pkgSize = async (pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData> => {
+const pkgSize = async (
+	pkgPath: string,
+	options?: PkgSizeOptions,
+): Promise<PkgSizeData> => {
 	pkgPath = path.resolve(pkgPath);
 
 	const packageJsonPath = path.join(pkgPath, 'package.json');

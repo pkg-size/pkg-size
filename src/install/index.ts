@@ -17,7 +17,7 @@ export const installSize = async (
 	// Create minimal package.json
 	await fsp.writeFile(
 		path.join(tempDirectory.path, 'package.json'),
-		JSON.stringify({}),
+		'{}',
 	);
 
 	// Install packages
