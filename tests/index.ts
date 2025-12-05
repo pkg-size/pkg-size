@@ -613,6 +613,99 @@ describe('pkg-size', ({ describe }) => {
 			expect(isOdd.files).toBeGreaterThan(0);
 		}, 30_000);
 
+		test('validates package manager flag', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['is-odd', '--package-manager', 'invalid-pm']);
+
+			expect('exitCode' in result).toBe(true);
+			if ('exitCode' in result) {
+				expect(result.exitCode).toBe(1);
+				expect(result.stderr).toContain('Invalid package manager: "invalid-pm"');
+			}
+		});
+
+		test('supports --package-manager flag with yarn', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['is-odd', '--package-manager', 'yarn', '--json']);
+
+			// Skip test if yarn is not installed in the environment
+			if ('exitCode' in result && (result.stderr.includes('Command failed') || result.stderr.includes('spawn yarn ENOENT'))) {
+				return;
+			}
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+			expect(json.packageManager).toBe('yarn');
+			expect(json.packages.length).toBeGreaterThan(0);
+		}, 60_000);
+
+		test('handles scoped packages correctly', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			// @sindresorhus/is is a small scoped package
+			const result = await pkgSizeCli(fixture.path, ['@sindresorhus/is', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+
+			// Verify we found the scoped package
+			const scopedPkg = json.packages.find((p: { name: string }) => p.name === '@sindresorhus/is');
+			expect(scopedPkg).toBeDefined();
+			expect(scopedPkg.size).toBeGreaterThan(0);
+		}, 30_000);
+
+		test('sorts packages by name', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['is-odd', '--sort-by', 'name', '--json']);
+
+			expect('exitCode' in result).toBe(false);
+			const json = JSON.parse(result.stdout);
+
+			const names = json.packages.map((p: { name: string }) => p.name);
+			// is-number comes before is-odd alphabetically
+			expect(names).toEqual(['is-number', 'is-odd']);
+		}, 30_000);
+
+		test('renders human readable table', async () => {
+			await using fixture = await createFixture({
+				'package.json': JSON.stringify({
+					name: 'test-package',
+					version: '1.0.0',
+				}),
+			});
+
+			const result = await pkgSizeCli(fixture.path, ['is-odd']);
+
+			expect('exitCode' in result).toBe(false);
+			expect(result.stdout).not.toContain('{');
+			expect(result.stdout).toContain('Package');
+			expect(result.stdout).toContain('is-odd');
+			expect(result.stdout).toContain('Total');
+		}, 30_000);
+
 		test('npm and pnpm report same packages and similar sizes', async () => {
 			await using fixture = await createFixture({
 				'package.json': JSON.stringify({
