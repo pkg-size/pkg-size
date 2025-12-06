@@ -4,7 +4,7 @@ export type PackageEntry = {
 	files: number;
 };
 
-export type InstallSizeData = {
+export type InstallSizeResult = {
 	packages: PackageEntry[];
 	totalSize: number;
 	totalFiles: number;
@@ -13,9 +13,15 @@ export type InstallSizeData = {
 };
 
 export type InstallSizeOptions = {
+
+	/**
+	 * Package manager to use. Auto-detected from npm_config_user_agent by default.
+	 * Available: 'npm', 'pnpm', 'yarn'
+	 */
 	packageManager?: string;
 };
 
+// Internal type
 export type SizeResult = {
 	size: number;
 	files: number;

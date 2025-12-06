@@ -3,7 +3,7 @@ import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline,
 } from 'yoctocolors';
-import pkgSize from '../local/index.js';
+import { getPackageSize } from '../local/index.js';
 import type { FileEntry } from '../local/types.js';
 
 type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli' | 'sizeZstd';
@@ -62,7 +62,7 @@ export const runLocalMode = async (pkgPath: string, options: LocalModeOptions) =
 	} = options;
 	const sizes: string[] = compression ? ['size', compression] : ['size'];
 
-	const distData = await pkgSize(pkgPath, {
+	const distData = await getPackageSize(pkgPath, {
 		sizes,
 		ignoreFiles,
 	});

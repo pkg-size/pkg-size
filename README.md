@@ -116,21 +116,25 @@ Display version number
 
 
 ## 👷‍♂️ Node.js API
+
+### getPackageSize
+
+Analyze the publish size of a local package:
+
 ```js
-import pkgSize from 'pkg-size'
+import { getPackageSize } from 'pkg-size'
 
 // Get the package size of the current working directory
-const sizeData = await pkgSize(process.cwd(), {
-    sizes: ['size', 'gzip', 'brotli', 'zstd']
-})
+const result = await getPackageSize(process.cwd())
 
-// Get the package size of a specific package path
-const sizeDataForPath = await pkgSize('/path/to/package', {
-    sizes: ['size', 'gzip']
+// With options
+const resultWithOptions = await getPackageSize('/path/to/package', {
+    sizes: ['size', 'gzip', 'brotli', 'zstd'],
+    ignoreFiles: '*.map'
 })
 ```
 
-### Interface
+#### Types
 ```ts
 type FileEntry = {
     path: string
@@ -140,18 +144,62 @@ type FileEntry = {
     sizeZstd: number
 }
 
-type PkgSizeData = {
+type PackageSizeResult = {
     pkgPath: string
     tarballSize: number
     files: FileEntry[]
 }
 
-type PkgSizeOptions = {
-    sizes: ('size' | 'gzip' | 'brotli' | 'zstd')[]
+type PackageSizeOptions = {
+    // default: ['size', 'gzip']
+    sizes?: ('size' | 'gzip' | 'brotli' | 'zstd')[]
     ignoreFiles?: string
 }
 
-function pkgSize(pkgPath: string, options?: PkgSizeOptions): Promise<PkgSizeData>
+function getPackageSize(pkgPath: string, options?: PackageSizeOptions): Promise<PackageSizeResult>
+```
+
+### getInstallSize
+
+Measure the install size of npm packages (including all dependencies):
+
+```js
+import { getInstallSize } from 'pkg-size'
+
+// Single package
+const result = await getInstallSize('lodash')
+
+// Multiple packages (space-delimited)
+const multiResult = await getInstallSize('lodash react @babel/core')
+
+// With options
+const resultWithPnpm = await getInstallSize('lodash', {
+    packageManager: 'pnpm'
+})
+```
+
+#### Types
+```ts
+type PackageEntry = {
+    name: string
+    size: number
+    files: number
+}
+
+type InstallSizeResult = {
+    packages: PackageEntry[]
+    totalSize: number
+    totalFiles: number
+    installTime: number
+    packageManager: string
+}
+
+type InstallSizeOptions = {
+    // auto-detected by default
+    packageManager?: 'npm' | 'pnpm' | 'yarn'
+}
+
+function getInstallSize(packages: string, options?: InstallSizeOptions): Promise<InstallSizeResult>
 ```
 
 

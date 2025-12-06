@@ -1,15 +1,11 @@
 import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
-import pkgSize from '../../src/index.js';
+import { getPackageSize, getInstallSize } from '../../src/index.js';
 import { detectPackageManager } from '../../src/utils/package-manager.js';
 
 export default testSuite(({ describe }) => {
 	describe('API', ({ describe }) => {
 		describe('Local Mode', ({ test }) => {
-			test('exports a function', () => {
-				expect(typeof pkgSize).toBe('function');
-			});
-
 			test('returns package size data', async () => {
 				await using fixture = await createFixture({
 					'package.json': JSON.stringify({
@@ -19,7 +15,7 @@ export default testSuite(({ describe }) => {
 					'index.js': 'module.exports = "hello";',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size', 'gzip', 'brotli', 'zstd'],
 				});
 
@@ -41,7 +37,7 @@ export default testSuite(({ describe }) => {
 					'data.txt': content,
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size', 'gzip', 'brotli', 'zstd'],
 				});
 
@@ -64,7 +60,7 @@ export default testSuite(({ describe }) => {
 					'.npmignore': 'ignored.js',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
@@ -83,7 +79,7 @@ export default testSuite(({ describe }) => {
 					'dist/index.js': 'built',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
@@ -103,7 +99,7 @@ export default testSuite(({ describe }) => {
 					'types.d.ts': 'types',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 					ignoreFiles: '*.d.ts',
 				});
@@ -121,7 +117,7 @@ export default testSuite(({ describe }) => {
 					'index.js': 'content',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
@@ -141,7 +137,7 @@ export default testSuite(({ describe }) => {
 					'index.js': 'content',
 				});
 
-				const result = await pkgSize(fixture.path);
+				const result = await getPackageSize(fixture.path);
 
 				expect(result.pkgPath).toBe(fixture.path);
 				expect(result.tarballSize).toBeGreaterThan(0);
@@ -159,7 +155,7 @@ export default testSuite(({ describe }) => {
 					'large.txt': largeContent,
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
@@ -170,6 +166,36 @@ export default testSuite(({ describe }) => {
 		});
 
 		describe('Install Mode', ({ test }) => {
+			test('returns install size data', async () => {
+				const result = await getInstallSize('is-odd', {
+					packageManager: 'pnpm',
+				});
+
+				expect(Array.isArray(result.packages)).toBe(true);
+				expect(result.packages.length).toBeGreaterThan(0);
+				expect(typeof result.totalSize).toBe('number');
+				expect(result.totalSize).toBeGreaterThan(0);
+				expect(typeof result.totalFiles).toBe('number');
+				expect(result.totalFiles).toBeGreaterThan(0);
+				expect(typeof result.installTime).toBe('number');
+				expect(result.packageManager).toBe('pnpm');
+
+				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
+				expect(isOdd).toBeDefined();
+				expect(isOdd!.size).toBeGreaterThan(0);
+				expect(isOdd!.files).toBeGreaterThan(0);
+			});
+
+			test('accepts space-delimited packages', async () => {
+				const result = await getInstallSize('is-odd is-even', {
+					packageManager: 'pnpm',
+				});
+
+				const packageNames = result.packages.map(pkg => pkg.name);
+				expect(packageNames).toContain('is-odd');
+				expect(packageNames).toContain('is-even');
+			});
+
 			test('detectPackageManager returns npm by default', () => {
 				const originalAgent = process.env.npm_config_user_agent;
 				delete process.env.npm_config_user_agent;
