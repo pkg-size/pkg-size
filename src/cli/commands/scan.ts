@@ -1,11 +1,11 @@
+import { command } from 'cleye';
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
-	green, cyan, bold, underline, dim,
+	green, cyan, bold, underline,
 } from 'yoctocolors';
-import { getInstallSize } from '../install/index.js';
-import { detectPackageManager } from '../utils/package-manager.js';
-import type { InstalledPackage } from '../install/types.js';
+import { analyzeNodeModules } from '../../install/analyze-node-modules.js';
+import type { InstalledPackage } from '../../install/types.js';
 
 const comparePackages = (sortByProperty: string) => (a: InstalledPackage, b: InstalledPackage) => {
 	if (sortByProperty === 'name') {
@@ -15,29 +15,35 @@ const comparePackages = (sortByProperty: string) => (a: InstalledPackage, b: Ins
 	return b.size - a.size;
 };
 
-const formatTime = (ms: number): string => {
-	if (ms < 1000) {
-		return `${Math.round(ms)}ms`;
-	}
-	return `${(ms / 1000).toFixed(1)}s`;
-};
+export const scanCommand = command({
+	name: 'scan',
+	parameters: ['[path]'],
+	flags: {
+		sortBy: {
+			type: String,
+			alias: 's',
+			description: 'Sort list by (name, size)',
+			default: 'size',
+		},
+		json: {
+			type: Boolean,
+			description: 'JSON output',
+		},
+	},
+	help: {
+		description: 'Analyze the existing node_modules directory',
+		examples: [
+			'pkg-size scan',
+			'pkg-size scan ./path/to/project',
+			'pkg-size scan --sort-by=name',
+			'pkg-size scan --json',
+		],
+	},
+}, async (argv) => {
+	const projectPath = argv._.path ?? process.cwd();
+	const { sortBy, json } = argv.flags;
 
-export type InstallModeOptions = {
-	packageManager?: string;
-	sortBy: string;
-	json?: boolean;
-};
-
-export const runInstallMode = async (packageSpecs: string[], options: InstallModeOptions) => {
-	const { sortBy, json } = options;
-	const packageManager = options.packageManager ?? detectPackageManager();
-
-	if (!json) {
-		console.log('');
-		console.log(dim(`Installing with ${packageManager}...`));
-	}
-
-	const data = await getInstallSize(packageSpecs, { packageManager });
+	const data = await analyzeNodeModules(projectPath);
 
 	if (json) {
 		console.log(JSON.stringify(data));
@@ -46,7 +52,6 @@ export const runInstallMode = async (packageSpecs: string[], options: InstallMod
 
 	const getSize = (bytes: number): string => byteSize(bytes).toString();
 
-	console.log(dim(`Completed in ${formatTime(data.installTime)}`));
 	console.log('');
 
 	const table = new SimpleTable();
@@ -76,4 +81,4 @@ export const runInstallMode = async (packageSpecs: string[], options: InstallMod
 	);
 
 	console.log(`${table.toString()}\n`);
-};
+});
