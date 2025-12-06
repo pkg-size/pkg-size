@@ -179,7 +179,7 @@ export default testSuite(({ describe }) => {
 				expect(result.privatePackage).toBe(true);
 			});
 
-			test('does not include privatePackage for public packages', async () => {
+			test('returns privatePackage: false for public packages', async () => {
 				await using fixture = await createFixture({
 					'package.json': JSON.stringify({
 						name: 'test-package',
@@ -192,7 +192,72 @@ export default testSuite(({ describe }) => {
 					sizes: ['size'],
 				});
 
-				expect(result.privatePackage).toBeUndefined();
+				expect(result.privatePackage).toBe(false);
+			});
+
+			test('handles package with only package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await getPackageSize(fixture.path, {
+					sizes: ['size'],
+				});
+
+				expect(result.files.length).toBe(1);
+				expect(result.files[0].path).toBe('package.json');
+			});
+
+			test('handles empty files array in package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+						files: [],
+					}),
+					'index.js': 'should be excluded',
+				});
+
+				const result = await getPackageSize(fixture.path, {
+					sizes: ['size'],
+				});
+
+				// package.json is always included by npm
+				expect(result.files.length).toBe(1);
+				expect(result.files[0].path).toBe('package.json');
+			});
+
+			test('handles .npmignore that excludes all files', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					'index.js': 'content',
+					'.npmignore': '*\n!package.json',
+				});
+
+				const result = await getPackageSize(fixture.path, {
+					sizes: ['size'],
+				});
+
+				// package.json is always included
+				expect(result.files.length).toBe(1);
+				expect(result.files[0].path).toBe('package.json');
+			});
+
+			test('throws on corrupt package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': '{ invalid json }',
+				});
+
+				const packageJsonPath = fixture.getPath('package.json');
+				await expect(getPackageSize(fixture.path)).rejects.toThrow(
+					`Failed to parse ${packageJsonPath}:`,
+				);
 			});
 		});
 

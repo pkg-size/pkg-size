@@ -87,7 +87,13 @@ export const getPackageSize = async (
 	pkgPath = path.resolve(pkgPath);
 
 	const packageJsonPath = path.join(pkgPath, 'package.json');
-	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, 'utf8')) as PackageJson;
+	let packageJson: PackageJson;
+	try {
+		packageJson = JSON.parse(await fsp.readFile(packageJsonPath, 'utf8')) as PackageJson;
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to parse ${packageJsonPath}: ${message}`, { cause: error });
+	}
 
 	let filesList = await getPacklist(pkgPath, packageJson);
 

@@ -9,7 +9,7 @@ export type PackageSizeResult = {
 	pkgPath: string;
 	tarballSize: number;
 	files: FileEntry[];
-	privatePackage?: boolean;
+	privatePackage: boolean;
 };
 
 export type PackageSizeOptions = {

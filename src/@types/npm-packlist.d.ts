@@ -1,5 +1,6 @@
 declare module 'npm-packlist' {
-	import { PackageJson } from 'type-fest';
+	import type { PackageJson } from 'type-fest';
+
 	type MinimalTree = {
 		path: string;
 		package: PackageJson;

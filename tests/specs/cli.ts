@@ -309,6 +309,73 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const json = JSON.parse(result.stdout);
 				expect(json.privatePackage).toBe(true);
 			});
+
+			test('handles package with only package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+				expect(json.files.length).toBe(1);
+				expect(json.files[0].path).toBe('package.json');
+			});
+
+			test('handles empty files array in package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+						files: [],
+					}),
+					'index.js': 'should be excluded',
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+				expect(json.files.length).toBe(1);
+				expect(json.files[0].path).toBe('package.json');
+			});
+
+			test('handles .npmignore that excludes all files', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					'index.js': 'content',
+					'.npmignore': '*\n!package.json',
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+				expect(json.files.length).toBe(1);
+				expect(json.files[0].path).toBe('package.json');
+			});
+
+			test('errors on corrupt package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': '{ invalid json }',
+				});
+
+				const result = await pkgSizeCli(fixture.path);
+				const packageJsonPath = `${fixture.path}/package.json`;
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toContain(`Failed to parse ${packageJsonPath}:`);
+				}
+			});
 		});
 
 		describe('Install Mode', ({ test }) => {
