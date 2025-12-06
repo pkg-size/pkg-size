@@ -16,7 +16,7 @@ export default testSuite(({ describe }) => {
 				});
 
 				const result = await getPackageSize(fixture.path, {
-					sizes: ['size', 'gzip', 'brotli', 'zstd'],
+					sizes: ['size', 'gzip', 'brotli'],
 				});
 
 				expect(result.pkgPath).toBe(fixture.path);
@@ -38,7 +38,7 @@ export default testSuite(({ describe }) => {
 				});
 
 				const result = await getPackageSize(fixture.path, {
-					sizes: ['size', 'gzip', 'brotli', 'zstd'],
+					sizes: ['size', 'gzip', 'brotli'],
 				});
 
 				const dataFile = result.files.find(file => file.path === 'data.txt');
@@ -46,7 +46,6 @@ export default testSuite(({ describe }) => {
 				expect(dataFile!.size).toBe(1000);
 				expect(dataFile!.sizeGzip).toBeLessThan(dataFile!.size);
 				expect(dataFile!.sizeBrotli).toBeLessThan(dataFile!.size);
-				expect(dataFile!.sizeZstd).toBeLessThan(dataFile!.size);
 			});
 
 			test('respects .npmignore', async () => {
@@ -125,7 +124,6 @@ export default testSuite(({ describe }) => {
 				expect(indexFile!.size).toBeGreaterThan(0);
 				expect(indexFile!.sizeGzip).toBe(0);
 				expect(indexFile!.sizeBrotli).toBe(0);
-				expect(indexFile!.sizeZstd).toBe(0);
 			});
 
 			test('works without options', async () => {

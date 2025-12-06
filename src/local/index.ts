@@ -36,7 +36,6 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 		size: 0,
 		sizeGzip: 0,
 		sizeBrotli: 0,
-		sizeZstd: 0,
 	};
 
 	if (sizes.length > 0) {
@@ -69,13 +68,6 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 			calculateSizes.push((async () => {
 				const { getBrotliSize } = await import('./compressions/brotli.js');
 				result.sizeBrotli = await getBrotliSize(fileStream);
-			})());
-		}
-
-		if (sizes.includes('zstd')) {
-			calculateSizes.push((async () => {
-				const { getZstdSize } = await import('./compressions/zstd.js');
-				result.sizeZstd = await getZstdSize(fileStream);
 			})());
 		}
 

@@ -10,7 +10,7 @@ const isLocalPath = (argument: string): boolean => (
 	argument.startsWith('.') || path.isAbsolute(argument)
 );
 
-const compressions = ['gzip', 'brotli', 'zstd'] as const;
+const compressions = ['gzip', 'brotli'] as const;
 
 type Compression = typeof compressions[number] | false;
 
@@ -19,7 +19,7 @@ const CompressionType = (value: string): Compression => {
 		return false;
 	}
 	if (!compressions.includes(value as typeof compressions[number])) {
-		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, zstd, or false`);
+		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, or false`);
 	}
 	return value as typeof compressions[number];
 };
@@ -43,7 +43,7 @@ const argv = cli({
 		compression: {
 			type: CompressionType,
 			alias: 'c',
-			description: 'Compression algorithm (gzip, brotli, zstd) or false to disable',
+			description: 'Compression algorithm (gzip, brotli) or false to disable',
 			default: 'gzip',
 		},
 		sortBy: {

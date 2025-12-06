@@ -6,18 +6,16 @@ import {
 import { getPackageSize } from '../local/index.js';
 import type { FileEntry } from '../local/types.js';
 
-type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli' | 'sizeZstd';
+type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli';
 
 const compressionToProperty: Record<string, NumericFileEntryKey> = {
 	brotli: 'sizeBrotli',
 	gzip: 'sizeGzip',
-	zstd: 'sizeZstd',
 };
 
 const compressionToLabel: Record<string, string> = {
 	brotli: 'Brotli',
 	gzip: 'Gzip',
-	zstd: 'Zstd',
 };
 
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {

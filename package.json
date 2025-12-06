@@ -47,8 +47,7 @@
 	},
 	"dependencies": {
 		"cleye": "^2.1.0",
-		"yoctocolors": "^2.1.2",
-		"zstd-napi": "^0.0.12"
+		"yoctocolors": "^2.1.2"
 	},
 	"devDependencies": {
 		"@types/byte-size": "^8.1.2",

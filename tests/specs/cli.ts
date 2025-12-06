@@ -92,7 +92,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(indexFile.size).toBeGreaterThan(0);
 				expect(indexFile.sizeGzip).toBeGreaterThan(0);
 				expect(indexFile.sizeBrotli).toBe(0);
-				expect(indexFile.sizeZstd).toBe(0);
 			});
 
 			test('supports --compression flag with brotli', async () => {
@@ -112,27 +111,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(indexFile.size).toBeGreaterThan(0);
 				expect(indexFile.sizeGzip).toBe(0);
 				expect(indexFile.sizeBrotli).toBeGreaterThan(0);
-				expect(indexFile.sizeZstd).toBe(0);
-			});
-
-			test('supports --compression flag with zstd', async () => {
-				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
-						name: 'test-package',
-						version: '1.0.0',
-					}),
-					'index.js': 'content',
-				});
-
-				const result = await pkgSizeCli(fixture.path, ['--compression', 'zstd', '--json']);
-
-				expect('exitCode' in result).toBe(false);
-				const json = JSON.parse(result.stdout);
-				const indexFile = json.files.find((file: { path: string }) => file.path === 'index.js');
-				expect(indexFile.size).toBeGreaterThan(0);
-				expect(indexFile.sizeGzip).toBe(0);
-				expect(indexFile.sizeBrotli).toBe(0);
-				expect(indexFile.sizeZstd).toBeGreaterThan(0);
 			});
 
 			test('supports --compression=false to disable compression', async () => {
@@ -152,7 +130,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(indexFile.size).toBeGreaterThan(0);
 				expect(indexFile.sizeGzip).toBe(0);
 				expect(indexFile.sizeBrotli).toBe(0);
-				expect(indexFile.sizeZstd).toBe(0);
 			});
 
 			test('supports -i/--ignore-files flag', async () => {

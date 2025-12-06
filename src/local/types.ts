@@ -3,7 +3,6 @@ export type FileEntry = {
 	size: number;
 	sizeGzip: number;
 	sizeBrotli: number;
-	sizeZstd: number;
 };
 
 export type PackageSizeResult = {
@@ -16,7 +15,7 @@ export type PackageSizeOptions = {
 
 	/**
 	 * Which sizes to calculate. Defaults to ['size', 'gzip'].
-	 * Available: 'size', 'gzip', 'brotli', 'zstd'
+	 * Available: 'size', 'gzip', 'brotli'
 	 */
 	sizes?: string[];
 
