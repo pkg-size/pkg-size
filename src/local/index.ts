@@ -114,5 +114,6 @@ export const getPackageSize = async (
 		pkgPath,
 		tarballSize,
 		files,
+		privatePackage: Boolean(packageJson.private),
 	};
 };

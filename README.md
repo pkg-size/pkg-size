@@ -134,6 +134,7 @@ type PackageSizeResult = {
     pkgPath: string
     tarballSize: number
     files: FileEntry[]
+    privatePackage: boolean
 }
 
 type PackageSizeOptions = {

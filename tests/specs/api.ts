@@ -161,6 +161,39 @@ export default testSuite(({ describe }) => {
 				// Tarball should be smaller than uncompressed file due to gzip
 				expect(result.tarballSize).toBeLessThan(largeFile!.size);
 			});
+
+			test('returns privatePackage: true for private packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+						private: true,
+					}),
+					'index.js': 'content',
+				});
+
+				const result = await getPackageSize(fixture.path, {
+					sizes: ['size'],
+				});
+
+				expect(result.privatePackage).toBe(true);
+			});
+
+			test('does not include privatePackage for public packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					'index.js': 'content',
+				});
+
+				const result = await getPackageSize(fixture.path, {
+					sizes: ['size'],
+				});
+
+				expect(result.privatePackage).toBeUndefined();
+			});
 		});
 
 		describe('Install Mode', ({ test }) => {

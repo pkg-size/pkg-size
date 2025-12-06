@@ -1,7 +1,7 @@
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
-	green, cyan, bold, underline,
+	green, cyan, bold, underline, yellow,
 } from 'yoctocolors';
 import { getPackageSize } from '../local/index.js';
 import type { FileEntry } from '../local/types.js';
@@ -67,6 +67,10 @@ export const runLocalMode = async (pkgPath: string, options: LocalModeOptions) =
 	if (json) {
 		console.log(JSON.stringify(distData));
 		return;
+	}
+
+	if (distData.privatePackage) {
+		console.log(yellow('Warning: This package is marked private in package.json.'));
 	}
 
 	const getSize = (bytes: number): string => byteSize(bytes).toString();

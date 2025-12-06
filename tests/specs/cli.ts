@@ -261,6 +261,54 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('a.js');
 				expect(result.stdout).toContain('b.js');
 			});
+
+			test('shows warning for private packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+						private: true,
+					}),
+					'index.js': 'content',
+				});
+
+				const result = await pkgSizeCli(fixture.path);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).toContain('Warning: This package is marked private in package.json.');
+			});
+
+			test('does not show warning for public packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					'index.js': 'content',
+				});
+
+				const result = await pkgSizeCli(fixture.path);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).not.toContain('Warning: This package is marked private in package.json.');
+			});
+
+			test('includes privatePackage in JSON output for private packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+						private: true,
+					}),
+					'index.js': 'content',
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+				expect(json.privatePackage).toBe(true);
+			});
 		});
 
 		describe('Install Mode', ({ test }) => {
