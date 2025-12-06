@@ -1,2 +1,15 @@
-export { default } from './local/index.js';
-export type { FileEntry, PkgSizeData, PkgSizeOptions } from './local/types.js';
+// Local package size analysis
+export { getPackageSize } from './local/index.js';
+export type {
+	FileEntry,
+	PackageSizeResult,
+	PackageSizeOptions,
+} from './local/types.js';
+
+// Install size analysis
+export { getInstallSize } from './install/index.js';
+export type {
+	PackageEntry,
+	InstallSizeResult,
+	InstallSizeOptions,
+} from './install/types.js';

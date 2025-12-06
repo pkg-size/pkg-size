@@ -6,13 +6,23 @@ export type FileEntry = {
 	sizeZstd: number;
 };
 
-export type PkgSizeData = {
+export type PackageSizeResult = {
 	pkgPath: string;
 	tarballSize: number;
 	files: FileEntry[];
 };
 
-export type PkgSizeOptions = {
-	sizes: string[];
+export type PackageSizeOptions = {
+
+	/**
+	 * Which sizes to calculate. Defaults to ['size', 'gzip'].
+	 * Available: 'size', 'gzip', 'brotli', 'zstd'
+	 */
+	sizes?: string[];
+
+	/**
+	 * Glob pattern to exclude files from the result.
+	 * Files are still included in tarballSize calculation.
+	 */
 	ignoreFiles?: string;
 };

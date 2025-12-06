@@ -6,7 +6,7 @@ import tarFs from 'tar-fs';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
 import { getPacklist } from '../utils/get-packlist.js';
-import type { FileEntry, PkgSizeData, PkgSizeOptions } from './types.js';
+import type { FileEntry, PackageSizeResult, PackageSizeOptions } from './types.js';
 
 const getTarballSize = (
 	pkgPath: string,
@@ -85,10 +85,12 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 	return result;
 };
 
-const pkgSize = async (
+const defaultSizes = ['size', 'gzip'];
+
+export const getPackageSize = async (
 	pkgPath: string,
-	options?: PkgSizeOptions,
-): Promise<PkgSizeData> => {
+	options?: PackageSizeOptions,
+): Promise<PackageSizeResult> => {
 	pkgPath = path.resolve(pkgPath);
 
 	const packageJsonPath = path.join(pkgPath, 'package.json');
@@ -101,12 +103,14 @@ const pkgSize = async (
 		filesList = filesList.filter(filePath => !ignorePattern.test(filePath));
 	}
 
+	const sizes = options?.sizes ?? defaultSizes;
+
 	const [tarballSize, files] = await Promise.all([
 		getTarballSize(pkgPath, filesList),
 		pMap(
 			filesList,
 			filePath => getFileSizes({
-				sizes: options?.sizes ?? [],
+				sizes,
 				pkgPath,
 				filePath,
 			}),
@@ -120,5 +124,3 @@ const pkgSize = async (
 		files,
 	};
 };
-
-export default pkgSize;

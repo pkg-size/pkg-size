@@ -1,15 +1,16 @@
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import spawn from 'nano-spawn';
-import { createDisposableDirectory } from './disposable-directory.js';
 import { detectPackageManager } from '../utils/package-manager.js';
+import { createDisposableDirectory } from './disposable-directory.js';
 import { getNodeModulesPackages } from './node-modules.js';
-import type { InstallSizeData, InstallSizeOptions } from './types.js';
+import type { InstallSizeResult, InstallSizeOptions } from './types.js';
 
 export const getInstallSize = async (
-	packageSpecs: string[],
+	packages: string,
 	options: InstallSizeOptions = {},
-): Promise<InstallSizeData> => {
+): Promise<InstallSizeResult> => {
+	const packageSpecs = packages.trim().split(/\s+/);
 	const packageManager = options.packageManager ?? detectPackageManager();
 
 	await using tempDirectory = await createDisposableDirectory();
@@ -40,17 +41,17 @@ export const getInstallSize = async (
 	const installTime = result.durationMs;
 
 	// Measure node_modules
-	const packages = await getNodeModulesPackages(path.join(tempDirectory.path, 'node_modules'));
+	const installedPackages = await getNodeModulesPackages(path.join(tempDirectory.path, 'node_modules'));
 
 	let totalSize = 0;
 	let totalFiles = 0;
-	for (const pkg of packages) {
+	for (const pkg of installedPackages) {
 		totalSize += pkg.size;
 		totalFiles += pkg.files;
 	}
 
 	return {
-		packages,
+		packages: installedPackages,
 		totalSize,
 		totalFiles,
 		installTime,

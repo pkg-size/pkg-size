@@ -1,13 +1,13 @@
 import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
-import pkgSize from '../../src/index.js';
+import { getPackageSize } from '../../src/index.js';
 import { detectPackageManager } from '../../src/utils/package-manager.js';
 
 export default testSuite(({ describe }) => {
 	describe('API', ({ describe }) => {
 		describe('Local Mode', ({ test }) => {
-			test('exports a function', () => {
-				expect(typeof pkgSize).toBe('function');
+			test('getPackageSize is a function', () => {
+				expect(typeof getPackageSize).toBe('function');
 			});
 
 			test('returns package size data', async () => {
@@ -19,7 +19,7 @@ export default testSuite(({ describe }) => {
 					'index.js': 'module.exports = "hello";',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size', 'gzip', 'brotli', 'zstd'],
 				});
 
@@ -41,7 +41,7 @@ export default testSuite(({ describe }) => {
 					'data.txt': content,
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size', 'gzip', 'brotli', 'zstd'],
 				});
 
@@ -64,7 +64,7 @@ export default testSuite(({ describe }) => {
 					'.npmignore': 'ignored.js',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
@@ -83,7 +83,7 @@ export default testSuite(({ describe }) => {
 					'dist/index.js': 'built',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
@@ -103,7 +103,7 @@ export default testSuite(({ describe }) => {
 					'types.d.ts': 'types',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 					ignoreFiles: '*.d.ts',
 				});
@@ -121,7 +121,7 @@ export default testSuite(({ describe }) => {
 					'index.js': 'content',
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
@@ -141,7 +141,7 @@ export default testSuite(({ describe }) => {
 					'index.js': 'content',
 				});
 
-				const result = await pkgSize(fixture.path);
+				const result = await getPackageSize(fixture.path);
 
 				expect(result.pkgPath).toBe(fixture.path);
 				expect(result.tarballSize).toBeGreaterThan(0);
@@ -159,7 +159,7 @@ export default testSuite(({ describe }) => {
 					'large.txt': largeContent,
 				});
 
-				const result = await pkgSize(fixture.path, {
+				const result = await getPackageSize(fixture.path, {
 					sizes: ['size'],
 				});
 
