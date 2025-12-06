@@ -153,15 +153,13 @@ Measure the install size of npm packages (including all dependencies):
 import { getInstallSize } from 'pkg-size'
 
 // Single package
-const result = await getInstallSize('lodash')
+const result = await getInstallSize(['lodash'])
 
-// Multiple packages (space-delimited)
-const multiResult = await getInstallSize('lodash react @babel/core')
+// Multiple packages
+const multiResult = await getInstallSize(['lodash', 'react', '@babel/core'])
 
-// With options
-const resultWithPnpm = await getInstallSize('lodash', {
-    packageManager: 'pnpm'
-})
+// Also accepts space-delimited string
+const stringResult = await getInstallSize('lodash react')
 ```
 
 #### Types
@@ -185,7 +183,10 @@ type InstallSizeOptions = {
     packageManager?: 'npm' | 'pnpm' | 'yarn'
 }
 
-function getInstallSize(packages: string, options?: InstallSizeOptions): Promise<InstallSizeResult>
+function getInstallSize(
+    packages: string | string[],
+    options?: InstallSizeOptions
+): Promise<InstallSizeResult>
 ```
 
 

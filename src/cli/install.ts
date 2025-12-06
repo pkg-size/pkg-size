@@ -37,7 +37,7 @@ export const runInstallMode = async (packageSpecs: string[], options: InstallMod
 		console.log(dim(`Installing with ${packageManager}...`));
 	}
 
-	const data = await getInstallSize(packageSpecs.join(' '), { packageManager });
+	const data = await getInstallSize(packageSpecs, { packageManager });
 
 	if (json) {
 		console.log(JSON.stringify(data));

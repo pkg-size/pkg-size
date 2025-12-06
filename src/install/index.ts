@@ -7,10 +7,10 @@ import { getNodeModulesPackages } from './node-modules.js';
 import type { InstallSizeResult, InstallSizeOptions } from './types.js';
 
 export const getInstallSize = async (
-	packages: string,
+	packages: string | string[],
 	options: InstallSizeOptions = {},
 ): Promise<InstallSizeResult> => {
-	const packageSpecs = packages.trim().split(/\s+/);
+	const packageSpecs = Array.isArray(packages) ? packages : packages.trim().split(/\s+/);
 	const packageManager = options.packageManager ?? detectPackageManager();
 
 	await using tempDirectory = await createDisposableDirectory();
