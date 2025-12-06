@@ -1,5 +1,6 @@
 import fsp from 'node:fs/promises';
 import path from 'node:path';
+import { fdir as Fdir } from 'fdir';
 import pMap from 'p-map';
 import { fsExists } from '../utils/fs-exists.js';
 import type { PackageFile, InstalledPackage, SizeResult } from './types.js';
@@ -8,47 +9,31 @@ import type { PackageFile, InstalledPackage, SizeResult } from './types.js';
 const statConcurrency = 100;
 
 const getDirectorySize = async (directory: string): Promise<SizeResult> => {
-	// Collect all file paths first, then stat with limited concurrency
-	const filePaths: string[] = [];
+	const filePaths = await new Fdir()
+		.withRelativePaths()
+		.crawl(directory)
+		.withPromise();
 
-	const collectFiles = async (currentDirectory: string): Promise<void> => {
-		const entries = await fsp.readdir(currentDirectory, { withFileTypes: true });
-
-		for (const entry of entries) {
-			const fullPath = path.join(currentDirectory, entry.name);
-
-			if (entry.isDirectory()) {
-				await collectFiles(fullPath);
-			} else if (entry.isFile()) {
-				filePaths.push(fullPath);
-			}
-			// Skip symlinks - we read from actual package directories
-		}
-	};
-
-	await collectFiles(directory);
-
-	// Stat files with concurrency limit
-	const fileEntries = await pMap(
+	const files = await pMap(
 		filePaths,
-		async (filePath): Promise<PackageFile> => {
-			const stats = await fsp.stat(filePath);
+		async (relativePath): Promise<PackageFile> => {
+			const stats = await fsp.stat(path.join(directory, relativePath));
 			return {
-				path: path.relative(directory, filePath),
+				path: relativePath,
 				size: stats.size,
 			};
 		},
 		{ concurrency: statConcurrency },
 	);
 
-	let totalSize = 0;
-	for (const file of fileEntries) {
-		totalSize += file.size;
+	let size = 0;
+	for (const file of files) {
+		size += file.size;
 	}
 
 	return {
-		size: totalSize,
-		files: fileEntries,
+		size,
+		files,
 	};
 };
 

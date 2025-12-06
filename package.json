@@ -47,6 +47,7 @@
 	},
 	"dependencies": {
 		"cleye": "^2.1.0",
+		"fdir": "^6.5.0",
 		"yoctocolors": "^2.1.2"
 	},
 	"devDependencies": {

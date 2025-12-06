@@ -40,7 +40,12 @@ export const getInstallSize = async (
 	}
 	const installTime = result.durationMs;
 
-	const { packages: installedPackages, totalSize } = await analyzeNodeModules(installedDirectory.path);
+	const {
+		packages: installedPackages,
+		totalSize,
+	} = await analyzeNodeModules(
+		installedDirectory.path,
+	);
 
 	return {
 		packages: installedPackages,
