@@ -4,7 +4,7 @@ import { publishCommand } from './commands/publish.js';
 import { installCommand } from './commands/install.js';
 import { scanCommand } from './commands/scan.js';
 
-cli({
+const argv = cli({
 	name: packageJson.name,
 	version: packageJson.version,
 	commands: [
@@ -25,3 +25,8 @@ cli({
 		],
 	},
 });
+
+// Show help if no command was provided or an invalid command was used
+if (!argv.command) {
+	argv.showHelp();
+}

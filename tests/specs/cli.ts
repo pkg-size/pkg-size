@@ -51,6 +51,40 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('--sort-by');
 				expect(result.stdout).toContain('--json');
 			});
+
+			test('shows help when no subcommand provided', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, []);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).toContain('pkg-size');
+				expect(result.stdout).toContain('publish');
+				expect(result.stdout).toContain('install');
+				expect(result.stdout).toContain('scan');
+			});
+
+			test('shows help when invalid subcommand provided', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['invalid-command']);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).toContain('pkg-size');
+				expect(result.stdout).toContain('publish');
+				expect(result.stdout).toContain('install');
+				expect(result.stdout).toContain('scan');
+			});
 		});
 
 		describe('publish', ({ test }) => {
