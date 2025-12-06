@@ -36,7 +36,6 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 export type LocalModeOptions = {
 	compression: string | false;
 	sortBy: string;
-	unit: string;
 	ignoreFiles?: string;
 	json?: boolean;
 };
@@ -56,7 +55,7 @@ export const getSortProperty = (
 
 export const runLocalMode = async (pkgPath: string, options: LocalModeOptions) => {
 	const {
-		compression, sortBy, unit, ignoreFiles, json,
+		compression, sortBy, ignoreFiles, json,
 	} = options;
 	const sizes: string[] = compression ? ['size', compression] : ['size'];
 
@@ -70,7 +69,7 @@ export const runLocalMode = async (pkgPath: string, options: LocalModeOptions) =
 		return;
 	}
 
-	const getSize = (bytes: number): string => byteSize(bytes, { units: unit }).toString();
+	const getSize = (bytes: number): string => byteSize(bytes).toString();
 
 	console.log('');
 	console.log(green(bold('Package path')));

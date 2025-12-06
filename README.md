@@ -58,11 +58,6 @@ pkg-size --compression=false
 pkg-size --sort-by=name
 ```
 
-### Use [IEC units](https://github.com/75lb/byte-size#byte-size) (insted of metric) for size
-```sh
-pkg-size --unit=iec
-```
-
 ## 📦 Install Size Mode
 
 Measure the install size of npm packages (including all transitive dependencies):
@@ -90,9 +85,6 @@ Compression algorithm to display alongside uncompressed size. Options: `gzip`, `
 
 ### -s, --sort-by \<property\>
 Sort list by `name`, `size`, or `compressed` (default: `compressed`)
-
-### -u, --unit \<unit\>
-Display units: `metric`, `iec`, `metric_octet`, `iec_octet` (default: `metric`)
 
 ### -i, --ignore-files \<glob\>
 Glob to ignore files from list. Total size will still include them.

@@ -25,12 +25,11 @@ const formatTime = (ms: number): string => {
 export type InstallModeOptions = {
 	packageManager?: string;
 	sortBy: string;
-	unit: string;
 	json?: boolean;
 };
 
 export const runInstallMode = async (packageSpecs: string[], options: InstallModeOptions) => {
-	const { sortBy, unit, json } = options;
+	const { sortBy, json } = options;
 	const packageManager = options.packageManager ?? detectPackageManager();
 
 	if (!json) {
@@ -45,7 +44,7 @@ export const runInstallMode = async (packageSpecs: string[], options: InstallMod
 		return;
 	}
 
-	const getSize = (bytes: number): string => byteSize(bytes, { units: unit }).toString();
+	const getSize = (bytes: number): string => byteSize(bytes).toString();
 
 	console.log(dim(`Completed in ${formatTime(data.installTime)}`));
 	console.log('');

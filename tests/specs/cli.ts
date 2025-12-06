@@ -19,7 +19,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('pkg-size');
 				expect(result.stdout).toContain('--compression');
 				expect(result.stdout).toContain('--sort-by');
-				expect(result.stdout).toContain('--unit');
 				expect(result.stdout).toContain('--json');
 			});
 
@@ -227,25 +226,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				// Files should be sorted by compressed size descending (large first)
 				expect(jsFiles[0].path).toBe('large.js');
 				expect(jsFiles[1].path).toBe('small.js');
-			});
-
-			test('supports -u/--unit flag for different units', async () => {
-				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
-						name: 'test-package',
-						version: '1.0.0',
-					}),
-					'data.js': 'x'.repeat(2048),
-				});
-
-				const metricResult = await pkgSizeCli(fixture.path, ['--unit', 'metric']);
-				const iecResult = await pkgSizeCli(fixture.path, ['--unit', 'iec']);
-
-				expect('exitCode' in metricResult).toBe(false);
-				expect('exitCode' in iecResult).toBe(false);
-				// Metric uses kB, IEC uses KiB
-				expect(metricResult.stdout).toContain('kB');
-				expect(iecResult.stdout).toContain('KiB');
 			});
 
 			test('uses cwd when no path specified', async () => {

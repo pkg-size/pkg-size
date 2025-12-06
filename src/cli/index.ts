@@ -52,12 +52,6 @@ const argv = cli({
 			description: 'Sort list by (name, size, compressed)',
 			default: 'compressed',
 		},
-		unit: {
-			type: String,
-			alias: 'u',
-			description: 'Display units (metric, iec, metric_octet, iec_octet)',
-			default: 'metric',
-		},
 		ignoreFiles: {
 			type: String,
 			alias: 'i',
@@ -89,7 +83,6 @@ const argv = cli({
 			'',
 			'# Sorting and display',
 			'pkg-size --sort-by=name',
-			'pkg-size --unit=iec',
 		],
 	},
 });
@@ -97,7 +90,7 @@ const argv = cli({
 (async () => {
 	const packages = argv._.packages ?? [];
 	const {
-		compression, sortBy, unit, ignoreFiles, json, packageManager,
+		compression, sortBy, ignoreFiles, json, packageManager,
 	} = argv.flags;
 
 	// Local mode: no args or single local path
@@ -109,7 +102,6 @@ const argv = cli({
 		await runLocalMode(localPath, {
 			compression,
 			sortBy,
-			unit,
 			ignoreFiles,
 			json,
 		});
@@ -132,7 +124,6 @@ const argv = cli({
 	await runInstallMode(packages, {
 		packageManager,
 		sortBy,
-		unit,
 		json,
 	});
 })();
