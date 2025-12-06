@@ -793,6 +793,101 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(json.packages).toEqual([]);
 				expect(json.totalSize).toBe(0);
 			});
+
+			test('groups scoped packages by scope with --group=scope', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'@babel': {
+							core: {
+								'package.json': JSON.stringify({
+									name: '@babel/core',
+									version: '1.0.0',
+								}),
+								'index.js': 'content',
+							},
+							parser: {
+								'package.json': JSON.stringify({
+									name: '@babel/parser',
+									version: '1.0.0',
+								}),
+								'index.js': 'content',
+							},
+						},
+						'@types': {
+							node: {
+								'package.json': JSON.stringify({
+									name: '@types/node',
+									version: '1.0.0',
+								}),
+								'index.js': 'content',
+							},
+						},
+						lodash: {
+							'package.json': JSON.stringify({
+								name: 'lodash',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=scope', '--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+
+				// Should have groups for @babel, @types, and ungrouped packages
+				expect(json.groups).toBeDefined();
+				expect(json.groups['@babel']).toBeDefined();
+				expect(json.groups['@babel'].packages).toHaveLength(2);
+				expect(json.groups['@types']).toBeDefined();
+				expect(json.groups['@types'].packages).toHaveLength(1);
+				expect(json.groups['(unscoped)']).toBeDefined();
+				expect(json.groups['(unscoped)'].packages).toHaveLength(1);
+			});
+
+			test('displays grouped output in table format with --group=scope', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'@babel': {
+							core: {
+								'package.json': JSON.stringify({
+									name: '@babel/core',
+									version: '1.0.0',
+								}),
+								'index.js': 'content',
+							},
+						},
+						lodash: {
+							'package.json': JSON.stringify({
+								name: 'lodash',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=scope']);
+
+				expect('exitCode' in result).toBe(false);
+				// Group headers should be shown
+				expect(result.stdout).toContain('@babel');
+				expect(result.stdout).toContain('(unscoped)');
+				// Scoped packages show short name under group header
+				expect(result.stdout).toContain('core');
+				// Unscoped packages show full name
+				expect(result.stdout).toContain('lodash');
+			});
 		});
 	});
 });

@@ -68,6 +68,9 @@ npx pkg-size install lodash @babel/core typescript
 # Use a specific package manager
 npx pkg-size install react --package-manager=pnpm
 
+# Group by scope (e.g., @babel/*)
+npx pkg-size install @babel/core --group=scope
+
 # JSON output
 npx pkg-size install lodash --json
 ```
@@ -87,6 +90,9 @@ npx pkg-size analyze ./path/to/project
 
 # Sort by name
 npx pkg-size analyze --sort-by=name
+
+# Group by scope (e.g., @babel/*)
+npx pkg-size analyze --group=scope
 
 # JSON output
 npx pkg-size analyze --json
@@ -116,6 +122,9 @@ Package manager to use. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_
 #### -s, --sort-by \<property\>
 Sort list by `name` or `size` (default: `size`)
 
+#### -g, --group \<type\>
+Group packages by `scope`. Scoped packages (e.g., `@babel/core`) are grouped under their organization.
+
 #### --json
 JSON output
 
@@ -123,6 +132,9 @@ JSON output
 
 #### -s, --sort-by \<property\>
 Sort list by `name` or `size` (default: `size`)
+
+#### -g, --group \<type\>
+Group packages by `scope`. Scoped packages (e.g., `@babel/core`) are grouped under their organization.
 
 #### --json
 JSON output
