@@ -2,7 +2,7 @@ import { cli } from 'cleye';
 import packageJson from '../../package.json';
 import { publishCommand } from './commands/publish.js';
 import { installCommand } from './commands/install.js';
-import { scanCommand } from './commands/scan.js';
+import { analyzeCommand } from './commands/analyze.js';
 
 const argv = cli({
 	name: packageJson.name,
@@ -10,7 +10,7 @@ const argv = cli({
 	commands: [
 		publishCommand,
 		installCommand,
-		scanCommand,
+		analyzeCommand,
 	],
 	help: {
 		examples: [
@@ -21,7 +21,7 @@ const argv = cli({
 			'pkg-size install lodash react',
 			'',
 			'# Analyze existing node_modules',
-			'pkg-size scan',
+			'pkg-size analyze',
 		],
 	},
 });

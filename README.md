@@ -15,7 +15,7 @@
 Command-line tool to:
 - Analyze the publish size of your npm package (what gets uploaded to npm)
 - Measure the install size of any npm packages (including all dependencies)
-- Scan your existing `node_modules` directory
+- Analyze your existing `node_modules` directory
 
 **Curious how big your npm package's publish size is?**
 
@@ -74,22 +74,22 @@ npx pkg-size install lodash --json
 
 This mode installs the specified packages in a temporary directory and measures the total `node_modules` size.
 
-### `scan` - Analyze existing node_modules
+### `analyze` - Analyze existing node_modules
 
 Analyze an existing `node_modules` directory:
 
 ```sh
-# Scan current directory's node_modules
-npx pkg-size scan
+# Analyze current directory's node_modules
+npx pkg-size analyze
 
-# Scan specific project path
-npx pkg-size scan ./path/to/project
+# Analyze specific project path
+npx pkg-size analyze ./path/to/project
 
 # Sort by name
-npx pkg-size scan --sort-by=name
+npx pkg-size analyze --sort-by=name
 
 # JSON output
-npx pkg-size scan --json
+npx pkg-size analyze --json
 ```
 
 ## ⚙️ CLI Options
@@ -119,7 +119,7 @@ Sort list by `name` or `size` (default: `size`)
 #### --json
 JSON output
 
-### `scan` options
+### `analyze` options
 
 #### -s, --sort-by \<property\>
 Sort list by `name` or `size` (default: `size`)

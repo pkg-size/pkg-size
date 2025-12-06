@@ -15,8 +15,8 @@ const comparePackages = (sortByProperty: string) => (a: InstalledPackage, b: Ins
 	return b.size - a.size;
 };
 
-export const scanCommand = command({
-	name: 'scan',
+export const analyzeCommand = command({
+	name: 'analyze',
 	parameters: ['[path]'],
 	flags: {
 		sortBy: {
@@ -33,10 +33,10 @@ export const scanCommand = command({
 	help: {
 		description: 'Analyze the existing node_modules directory',
 		examples: [
-			'pkg-size scan',
-			'pkg-size scan ./path/to/project',
-			'pkg-size scan --sort-by=name',
-			'pkg-size scan --json',
+			'pkg-size analyze',
+			'pkg-size analyze ./path/to/project',
+			'pkg-size analyze --sort-by=name',
+			'pkg-size analyze --json',
 		],
 	},
 }, async (argv) => {

@@ -19,7 +19,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('pkg-size');
 				expect(result.stdout).toContain('publish');
 				expect(result.stdout).toContain('install');
-				expect(result.stdout).toContain('scan');
+				expect(result.stdout).toContain('analyze');
 			});
 
 			test('shows version with --version', async () => {
@@ -66,7 +66,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('pkg-size');
 				expect(result.stdout).toContain('publish');
 				expect(result.stdout).toContain('install');
-				expect(result.stdout).toContain('scan');
+				expect(result.stdout).toContain('analyze');
 			});
 
 			test('shows help when invalid subcommand provided', async () => {
@@ -83,7 +83,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('pkg-size');
 				expect(result.stdout).toContain('publish');
 				expect(result.stdout).toContain('install');
-				expect(result.stdout).toContain('scan');
+				expect(result.stdout).toContain('analyze');
 			});
 		});
 
@@ -625,7 +625,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			}, 60_000);
 		});
 
-		describe('scan', ({ test }) => {
+		describe('analyze', ({ test }) => {
 			test('analyzes existing node_modules', async () => {
 				await using fixture = await createFixture({
 					'package.json': JSON.stringify({
@@ -643,7 +643,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['scan', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -686,7 +686,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['scan']);
+				const result = await pkgSizeCli(fixture.path, ['analyze']);
 
 				expect('exitCode' in result).toBe(false);
 				expect(result.stdout).toContain('Package');
@@ -718,7 +718,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['scan', '--sort-by', 'name', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by', 'name', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -745,7 +745,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['scan', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -771,7 +771,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['scan', `${fixture.path}/subdir`, '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', `${fixture.path}/subdir`, '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -786,7 +786,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					}),
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['scan', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
