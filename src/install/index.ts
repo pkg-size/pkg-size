@@ -3,7 +3,7 @@ import path from 'node:path';
 import spawn from 'nano-spawn';
 import { detectPackageManager } from '../utils/package-manager.js';
 import { createDisposableDirectory } from './disposable-directory.js';
-import { getNodeModulesPackages } from './node-modules.js';
+import { analyzeNodeModules } from './analyze-node-modules.js';
 import type { InstallSizeResult, InstallSizeOptions } from './types.js';
 
 export const getInstallSize = async (
@@ -40,13 +40,7 @@ export const getInstallSize = async (
 	}
 	const installTime = result.durationMs;
 
-	// Measure node_modules
-	const installedPackages = await getNodeModulesPackages(path.join(installedDirectory.path, 'node_modules'));
-
-	let totalSize = 0;
-	for (const pkg of installedPackages) {
-		totalSize += pkg.size;
-	}
+	const { packages: installedPackages, totalSize } = await analyzeNodeModules(installedDirectory.path);
 
 	return {
 		packages: installedPackages,

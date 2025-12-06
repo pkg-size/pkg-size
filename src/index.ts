@@ -8,9 +8,11 @@ export type {
 
 // Install size analysis
 export { getInstallSize } from './install/index.js';
+export { analyzeNodeModules } from './install/analyze-node-modules.js';
 export type {
 	PackageFile,
 	InstalledPackage,
+	NodeModulesAnalysis,
 	InstallSizeResult,
 	InstallSizeOptions,
 } from './install/types.js';

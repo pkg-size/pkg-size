@@ -9,9 +9,12 @@ export type InstalledPackage = {
 	files: PackageFile[];
 };
 
-export type InstallSizeResult = {
+export type NodeModulesAnalysis = {
 	packages: InstalledPackage[];
 	totalSize: number;
+};
+
+export type InstallSizeResult = NodeModulesAnalysis & {
 	installTime: number;
 	packageManager: string;
 };
