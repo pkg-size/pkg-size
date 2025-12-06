@@ -5,6 +5,7 @@ import fsp from 'node:fs/promises';
 import tarFs from 'tar-fs';
 import pMap from 'p-map';
 import globToRegexp from 'glob-to-regexp';
+import type { PackageJson } from 'type-fest';
 import { getPacklist } from '../utils/get-packlist.js';
 import type { FileEntry, PackageSizeResult, PackageSizeOptions } from './types.js';
 
@@ -86,7 +87,7 @@ export const getPackageSize = async (
 	pkgPath = path.resolve(pkgPath);
 
 	const packageJsonPath = path.join(pkgPath, 'package.json');
-	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, 'utf8'));
+	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, 'utf8')) as PackageJson;
 
 	let filesList = await getPacklist(pkgPath, packageJson);
 
