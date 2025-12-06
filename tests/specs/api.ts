@@ -1,6 +1,6 @@
 import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
-import { getPackageSize, getInstallSize } from '../../src/index.js';
+import { getPackageSize, getInstallSize, analyzeNodeModules } from '../../src/index.js';
 import { detectPackageManager } from '../../src/utils/package-manager.js';
 
 export default testSuite(({ describe }) => {
@@ -349,6 +349,130 @@ export default testSuite(({ describe }) => {
 				} else {
 					process.env.npm_config_user_agent = originalAgent;
 				}
+			});
+		});
+
+		describe('Scan Mode', ({ test }) => {
+			test('returns node_modules analysis', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'some-package': {
+							'package.json': JSON.stringify({
+								name: 'some-package',
+								version: '1.0.0',
+							}),
+							'index.js': 'module.exports = 1;',
+						},
+						'another-package': {
+							'package.json': JSON.stringify({
+								name: 'another-package',
+								version: '2.0.0',
+							}),
+							'lib.js': 'export default 2;',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+
+				expect(result).toEqual({
+					packages: expect.arrayContaining([
+						{
+							name: 'some-package',
+							size: expect.any(Number),
+							files: expect.arrayContaining([
+								{
+									path: 'package.json',
+									size: expect.any(Number),
+								},
+								{
+									path: 'index.js',
+									size: expect.any(Number),
+								},
+							]),
+						},
+						{
+							name: 'another-package',
+							size: expect.any(Number),
+							files: expect.arrayContaining([
+								{
+									path: 'package.json',
+									size: expect.any(Number),
+								},
+								{
+									path: 'lib.js',
+									size: expect.any(Number),
+								},
+							]),
+						},
+					]),
+					totalSize: expect.any(Number),
+				});
+
+				expect(result.packages.length).toBe(2);
+				expect(result.totalSize).toBeGreaterThan(0);
+			});
+
+			test('handles scoped packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'@scope': {
+							'scoped-pkg': {
+								'package.json': JSON.stringify({
+									name: '@scope/scoped-pkg',
+									version: '1.0.0',
+								}),
+								'index.js': 'content',
+							},
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+
+				expect(result).toEqual({
+					packages: [
+						{
+							name: '@scope/scoped-pkg',
+							size: expect.any(Number),
+							files: expect.arrayContaining([
+								{
+									path: 'package.json',
+									size: expect.any(Number),
+								},
+								{
+									path: 'index.js',
+									size: expect.any(Number),
+								},
+							]),
+						},
+					],
+					totalSize: expect.any(Number),
+				});
+			});
+
+			test('returns empty packages when no node_modules', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+
+				expect(result).toEqual({
+					packages: [],
+					totalSize: 0,
+				});
 			});
 		});
 	});

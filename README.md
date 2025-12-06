@@ -12,93 +12,127 @@
 	<i>Calculate the size of your npm package distribution</i>
 </p>
 
-**⚡️ Try it in your npm package**
+Command-line tool to:
+- Analyze the publish size of your npm package (what gets uploaded to npm)
+- Measure the install size of any npm packages (including all dependencies)
+- Analyze your existing `node_modules` directory
 
+**Curious how big your npm package's publish size is?**
+
+Try it in your package:
 ```sh
-$ npx pkg-size
+npx pkg-size publish
 ```
-
-### Features
-- **🔍 Size analysis** Quickly determine the total size of what you're publishing to npm!
-- **🔥 Same behavior as npm `pack`/`publish`** Collects publish files as specified in your `package.json`!
-- **🙌 Gzip & Brotli** See how your files compress in addition to normal size!
-- **📦 Install size** Measure the install size of any npm package (including all dependencies)!
-- **🤖 Node.js API** Integrate size checks to your CI via Node.js API
 
 <sub>Support this project by ⭐️ starring and sharing it. [Follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
 
-## 🙋‍♂️ Why?
-To quickly determine the uncompressed size, gzip size, and brotli size of your package before publishing it to npm.
-
-
-## 🚀 Install
-```sh
-npm i pkg-size
-```
-
 ## 🚦 Quick Usage
 
-### Get the package size by package path
+pkg-size has three subcommands:
+
+### `publish` - Analyze publish size
+
+Analyze what will be published to npm:
+
 ```sh
-pkg-size ./package/path
+# Analyze current directory
+npx pkg-size publish
+
+# Analyze specific package path
+npx pkg-size publish ./package/path
+
+# Order files by name
+npx pkg-size publish --sort-by=name
+
+# Use brotli compression instead of gzip
+npx pkg-size publish --compression=brotli
+
+# Show only uncompressed size
+npx pkg-size publish --compression=false
+
+# JSON output
+npx pkg-size publish --json
 ```
 
-### Use brotli compression instead of gzip
-```sh
-pkg-size --compression=brotli
-```
-
-### Show only uncompressed size
-```sh
-pkg-size --compression=false
-```
-
-### Order files by name
-```sh
-pkg-size --sort-by=name
-```
-
-## 📦 Install Size Mode
+### `install` - Measure install size
 
 Measure the install size of npm packages (including all transitive dependencies):
 
 ```sh
-# Measure install size of packages
-pkg-size lodash react vue
+# Measure install size of a package
+npx pkg-size install lodash
 
-# Measure scoped packages
-pkg-size @babel/core typescript
+# Measure install size of packages
+npx pkg-size install lodash @babel/core typescript
 
 # Use a specific package manager
-pkg-size react --package-manager=pnpm
+npx pkg-size install react --package-manager=pnpm
 
 # JSON output
-pkg-size lodash --json
+npx pkg-size install lodash --json
 ```
 
 This mode installs the specified packages in a temporary directory and measures the total `node_modules` size.
 
+### `analyze` - Analyze existing node_modules
+
+Analyze an existing `node_modules` directory:
+
+```sh
+# Analyze current directory's node_modules
+npx pkg-size analyze
+
+# Analyze specific project path
+npx pkg-size analyze ./path/to/project
+
+# Sort by name
+npx pkg-size analyze --sort-by=name
+
+# JSON output
+npx pkg-size analyze --json
+```
+
 ## ⚙️ CLI Options
 
-### -c, --compression \<algorithm\>
+### `publish` options
+
+#### -c, --compression \<algorithm\>
 Compression algorithm to display alongside uncompressed size. Options: `gzip`, `brotli`, or `false` to disable. (default: `gzip`)
 
-### -s, --sort-by \<property\>
+#### -s, --sort-by \<property\>
 Sort list by `name`, `size`, or `compressed` (default: `compressed`)
 
-### -i, --ignore-files \<glob\>
+#### -i, --ignore-files \<glob\>
 Glob to ignore files from list. Total size will still include them.
 
-### --json
+#### --json
 JSON output
 
-### -p, --package-manager \<manager\>
-Package manager to use for install size mode. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_config_user_agent` by default.
+### `install` options
 
-### -h, --help
-Display this message
+#### -p, --package-manager \<manager\>
+Package manager to use. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_config_user_agent` by default.
 
-### --version
+#### -s, --sort-by \<property\>
+Sort list by `name` or `size` (default: `size`)
+
+#### --json
+JSON output
+
+### `analyze` options
+
+#### -s, --sort-by \<property\>
+Sort list by `name` or `size` (default: `size`)
+
+#### --json
+JSON output
+
+### Global options
+
+#### -h, --help
+Display help message
+
+#### --version
 Display version number
 
 
@@ -197,6 +231,43 @@ function getInstallSize(
     packages: string | string[],
     options?: InstallSizeOptions
 ): Promise<InstallSizeResult>
+```
+
+### analyzeNodeModules
+
+Analyze an existing `node_modules` directory:
+
+```js
+import { analyzeNodeModules } from 'pkg-size'
+
+// Analyze current directory's node_modules
+const result = await analyzeNodeModules(process.cwd())
+
+// Analyze specific project path
+const otherResult = await analyzeNodeModules('/path/to/project')
+```
+
+#### Types
+```ts
+type PackageFile = {
+    path: string
+    size: number
+}
+
+type InstalledPackage = {
+    name: string
+    size: number
+    files: PackageFile[]
+}
+
+type NodeModulesAnalysis = {
+    packages: InstalledPackage[]
+    totalSize: number
+}
+
+function analyzeNodeModules(
+    projectPath: string
+): Promise<NodeModulesAnalysis>
 ```
 
 

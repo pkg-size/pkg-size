@@ -1,10 +1,25 @@
+import { command } from 'cleye';
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline, yellow,
 } from 'yoctocolors';
-import { getPackageSize } from '../local/index.js';
-import type { FileEntry } from '../local/types.js';
+import { getPackageSize } from '../../local/index.js';
+import type { FileEntry } from '../../local/types.js';
+
+const compressions = ['gzip', 'brotli'] as const;
+
+type Compression = typeof compressions[number] | false;
+
+const CompressionType = (value: string): Compression => {
+	if (value === 'false') {
+		return false;
+	}
+	if (!compressions.includes(value as typeof compressions[number])) {
+		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, or false`);
+	}
+	return value as typeof compressions[number];
+};
 
 type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli';
 
@@ -33,14 +48,7 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 	return 0;
 };
 
-export type LocalModeOptions = {
-	compression: string | false;
-	sortBy: string;
-	ignoreFiles?: string;
-	json?: boolean;
-};
-
-export const getSortProperty = (
+const getSortProperty = (
 	sortBy: string,
 	compression: string | false,
 ): keyof FileEntry => {
@@ -53,13 +61,46 @@ export const getSortProperty = (
 	return 'path';
 };
 
-export const runLocalMode = async (
-	packagePath: string,
-	options: LocalModeOptions,
-) => {
+export const publishCommand = command({
+	name: 'publish',
+	parameters: ['[path]'],
+	flags: {
+		compression: {
+			type: CompressionType,
+			alias: 'c',
+			description: 'Compression algorithm (gzip, brotli) or false to disable',
+			default: 'gzip',
+		},
+		sortBy: {
+			type: String,
+			alias: 's',
+			description: 'Sort list by (name, size, compressed)',
+			default: 'compressed',
+		},
+		ignoreFiles: {
+			type: String,
+			alias: 'i',
+			description: 'Glob to ignore files from list. Total size will still include them.',
+		},
+		json: {
+			type: Boolean,
+			description: 'JSON output',
+		},
+	},
+	help: {
+		description: 'Analyze the publish size of a package (what gets uploaded to npm)',
+		examples: [
+			'pkg-size publish',
+			'pkg-size publish ./path/to/package',
+			'pkg-size publish --compression=brotli',
+			'pkg-size publish --json',
+		],
+	},
+}, async (argv) => {
+	const packagePath = argv._.path ?? process.cwd();
 	const {
 		compression, sortBy, ignoreFiles, json,
-	} = options;
+	} = argv.flags;
 	const sizes: string[] = compression ? ['size', compression] : ['size'];
 
 	const distData = await getPackageSize(packagePath, {
@@ -134,4 +175,4 @@ export const runLocalMode = async (
 	table.row(...totalsRow);
 
 	console.log(`${table.toString()}\n`);
-};
+});
