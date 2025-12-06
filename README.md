@@ -186,6 +186,8 @@ type InstallSizeResult = {
 type InstallSizeOptions = {
     // auto-detected by default
     packageManager?: 'npm' | 'pnpm' | 'yarn'
+    // defaults to os.tmpdir()
+    tempDirectory?: string
 }
 
 function getInstallSize(

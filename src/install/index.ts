@@ -13,11 +13,11 @@ export const getInstallSize = async (
 	const packageSpecs = Array.isArray(packages) ? packages : packages.trim().split(/\s+/);
 	const packageManager = options.packageManager ?? detectPackageManager();
 
-	await using tempDirectory = await createDisposableDirectory();
+	await using installedDirectory = await createDisposableDirectory(options.tempDirectory);
 
 	// Create minimal package.json
 	await fsp.writeFile(
-		path.join(tempDirectory.path, 'package.json'),
+		path.join(installedDirectory.path, 'package.json'),
 		'{}',
 	);
 
@@ -27,7 +27,7 @@ export const getInstallSize = async (
 	let result;
 	try {
 		result = await spawn(packageManager, [installCommand, ...packageSpecs], {
-			cwd: tempDirectory.path,
+			cwd: installedDirectory.path,
 			stdout: 'ignore',
 			stderr: 'pipe',
 		});
@@ -41,7 +41,7 @@ export const getInstallSize = async (
 	const installTime = result.durationMs;
 
 	// Measure node_modules
-	const installedPackages = await getNodeModulesPackages(path.join(tempDirectory.path, 'node_modules'));
+	const installedPackages = await getNodeModulesPackages(path.join(installedDirectory.path, 'node_modules'));
 
 	let totalSize = 0;
 	for (const pkg of installedPackages) {

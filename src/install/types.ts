@@ -23,6 +23,12 @@ export type InstallSizeOptions = {
 	 * Available: 'npm', 'pnpm', 'yarn'
 	 */
 	packageManager?: string;
+
+	/**
+	 * Parent directory for creating the temporary install directory.
+	 * Defaults to os.tmpdir().
+	 */
+	tempDirectory?: string;
 };
 
 // Internal type

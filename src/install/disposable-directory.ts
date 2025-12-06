@@ -5,8 +5,8 @@ import os from 'node:os';
 
 // TODO: Replace with fsPromises.mkdtempDisposable() when Node.js 24.4.0+ is minimum version
 // https://nodejs.org/api/fs.html#fspromisesmkdtempdisposableprefix-options
-export const createDisposableDirectory = async () => {
-	const directoryPath = await fsp.mkdtemp(path.join(os.tmpdir(), 'pkg-size-'));
+export const createDisposableDirectory = async (tempDirectory = os.tmpdir()) => {
+	const directoryPath = await fsp.mkdtemp(path.join(tempDirectory, 'pkg-size-'));
 
 	let disposed = false;
 
