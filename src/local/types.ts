@@ -6,7 +6,7 @@ export type FileEntry = {
 };
 
 export type PackageSizeResult = {
-	pkgPath: string;
+	packagePath: string;
 	tarballSize: number;
 	files: FileEntry[];
 	privatePackage: boolean;

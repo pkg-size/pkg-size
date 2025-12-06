@@ -5,10 +5,10 @@ import type { PackageJson } from 'type-fest';
 const edgesOut = new Map();
 
 export const getPacklist = (
-	pkgPath: string,
+	path: string,
 	packageJson: PackageJson,
 ) => packlist({
-	path: pkgPath,
+	path,
 	package: packageJson,
 	edgesOut,
 });

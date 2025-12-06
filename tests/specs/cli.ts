@@ -69,7 +69,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
-				expect(json.pkgPath).toBe(fixture.path);
+				expect(json.packagePath).toBe(fixture.path);
 				expect(typeof json.tarballSize).toBe('number');
 				expect(Array.isArray(json.files)).toBe(true);
 			});
@@ -165,7 +165,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
-				expect(json.pkgPath).toBe(subdirPath);
+				expect(json.packagePath).toBe(subdirPath);
 			});
 
 			test('supports -s/--sort-by flag for size sorting', async () => {
@@ -241,7 +241,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
-				expect(json.pkgPath).toBe(fixture.path);
+				expect(json.packagePath).toBe(fixture.path);
 			});
 
 			test('displays totals row', async () => {

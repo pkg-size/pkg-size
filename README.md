@@ -131,7 +131,7 @@ type FileEntry = {
 }
 
 type PackageSizeResult = {
-    pkgPath: string
+    packagePath: string
     tarballSize: number
     files: FileEntry[]
     privatePackage: boolean
@@ -143,7 +143,10 @@ type PackageSizeOptions = {
     ignoreFiles?: string
 }
 
-function getPackageSize(pkgPath: string, options?: PackageSizeOptions): Promise<PackageSizeResult>
+function getPackageSize(
+    packagePath: string,
+    options?: PackageSizeOptions
+): Promise<PackageSizeResult>
 ```
 
 ### getInstallSize

@@ -53,13 +53,16 @@ export const getSortProperty = (
 	return 'path';
 };
 
-export const runLocalMode = async (pkgPath: string, options: LocalModeOptions) => {
+export const runLocalMode = async (
+	packagePath: string,
+	options: LocalModeOptions,
+) => {
 	const {
 		compression, sortBy, ignoreFiles, json,
 	} = options;
 	const sizes: string[] = compression ? ['size', compression] : ['size'];
 
-	const distData = await getPackageSize(pkgPath, {
+	const distData = await getPackageSize(packagePath, {
 		sizes,
 		ignoreFiles,
 	});
@@ -77,7 +80,7 @@ export const runLocalMode = async (pkgPath: string, options: LocalModeOptions) =
 
 	console.log('');
 	console.log(green(bold('Package path')));
-	console.log(`${distData.pkgPath}\n`);
+	console.log(`${distData.packagePath}\n`);
 	console.log(green(bold('Tarball size')));
 	console.log(`${getSize(distData.tarballSize)}\n`);
 

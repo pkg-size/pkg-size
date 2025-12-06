@@ -10,11 +10,11 @@ import { getPacklist } from '../utils/get-packlist.js';
 import type { FileEntry, PackageSizeResult, PackageSizeOptions } from './types.js';
 
 const getTarballSize = (
-	pkgPath: string,
+	packagePath: string,
 	entries: string[],
 ) => new Promise<number>((resolve) => {
 	let totalSize = 0;
-	tarFs.pack(pkgPath, {
+	tarFs.pack(packagePath, {
 		// clone array because tar-fs mutates it
 		entries: entries.slice(),
 	})
@@ -27,9 +27,9 @@ const getTarballSize = (
 		});
 });
 
-const getFileSizes = async ({ sizes, pkgPath, filePath }: {
+const getFileSizes = async ({ sizes, packagePath, filePath }: {
 	sizes: string[];
-	pkgPath: string;
+	packagePath: string;
 	filePath: string;
 }): Promise<FileEntry> => {
 	const result: FileEntry = {
@@ -40,7 +40,7 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 	};
 
 	if (sizes.length > 0) {
-		const fullFilePath = path.join(pkgPath, filePath);
+		const fullFilePath = path.join(packagePath, filePath);
 		const fileStream = fs.createReadStream(fullFilePath);
 		const calculateSizes = [];
 
@@ -81,12 +81,12 @@ const getFileSizes = async ({ sizes, pkgPath, filePath }: {
 const defaultSizes = ['size', 'gzip'];
 
 export const getPackageSize = async (
-	pkgPath: string,
+	packagePath: string,
 	options?: PackageSizeOptions,
 ): Promise<PackageSizeResult> => {
-	pkgPath = path.resolve(pkgPath);
+	packagePath = path.resolve(packagePath);
 
-	const packageJsonPath = path.join(pkgPath, 'package.json');
+	const packageJsonPath = path.join(packagePath, 'package.json');
 	let packageJson: PackageJson;
 	try {
 		packageJson = JSON.parse(await fsp.readFile(packageJsonPath, 'utf8')) as PackageJson;
@@ -95,7 +95,7 @@ export const getPackageSize = async (
 		throw new Error(`Failed to parse ${packageJsonPath}: ${message}`, { cause: error });
 	}
 
-	let filesList = await getPacklist(pkgPath, packageJson);
+	let filesList = await getPacklist(packagePath, packageJson);
 
 	if (options?.ignoreFiles) {
 		const ignorePattern = globToRegexp(options.ignoreFiles, { extended: true });
@@ -105,12 +105,12 @@ export const getPackageSize = async (
 	const sizes = options?.sizes ?? defaultSizes;
 
 	const [tarballSize, files] = await Promise.all([
-		getTarballSize(pkgPath, filesList),
+		getTarballSize(packagePath, filesList),
 		pMap(
 			filesList,
 			filePath => getFileSizes({
 				sizes,
-				pkgPath,
+				packagePath,
 				filePath,
 			}),
 			{ concurrency: 10 }, // To avoid Error: EMFILE, too many open files
@@ -118,7 +118,7 @@ export const getPackageSize = async (
 	]);
 
 	return {
-		pkgPath,
+		packagePath,
 		tarballSize,
 		files,
 		privatePackage: Boolean(packageJson.private),

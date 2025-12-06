@@ -19,7 +19,7 @@ export default testSuite(({ describe }) => {
 					sizes: ['size', 'gzip', 'brotli'],
 				});
 
-				expect(result.pkgPath).toBe(fixture.path);
+				expect(result.packagePath).toBe(fixture.path);
 				expect(typeof result.tarballSize).toBe('number');
 				expect(result.tarballSize).toBeGreaterThan(0);
 				expect(Array.isArray(result.files)).toBe(true);
@@ -137,7 +137,7 @@ export default testSuite(({ describe }) => {
 
 				const result = await getPackageSize(fixture.path);
 
-				expect(result.pkgPath).toBe(fixture.path);
+				expect(result.packagePath).toBe(fixture.path);
 				expect(result.tarballSize).toBeGreaterThan(0);
 				expect(result.files.length).toBe(2);
 			});
