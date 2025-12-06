@@ -293,15 +293,42 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
-				expect(json.packageManager).toBe('pnpm');
-				// pnpm uses symlinks - verify we still measure sizes correctly
-				expect(json.packages.length).toBeGreaterThan(0);
-				expect(json.totalSize).toBeGreaterThan(0);
-				// is-odd depends on is-number, so we should see both
-				const isOdd = json.packages.find((p: { name: string }) => p.name === 'is-odd');
-				expect(isOdd).toBeDefined();
-				expect(isOdd.size).toBeGreaterThan(0);
-				expect(isOdd.files).toBeGreaterThan(0);
+
+				expect(json).toEqual({
+					packages: expect.arrayContaining([
+						{
+							name: 'is-odd',
+							size: expect.any(Number),
+							files: expect.arrayContaining([
+								{
+									path: 'package.json',
+									size: expect.any(Number),
+								},
+								{
+									path: 'index.js',
+									size: expect.any(Number),
+								},
+							]),
+						},
+						{
+							name: 'is-number',
+							size: expect.any(Number),
+							files: expect.arrayContaining([
+								{
+									path: 'package.json',
+									size: expect.any(Number),
+								},
+								{
+									path: 'index.js',
+									size: expect.any(Number),
+								},
+							]),
+						},
+					]),
+					totalSize: expect.any(Number),
+					installTime: expect.any(Number),
+					packageManager: 'pnpm',
+				});
 			}, 30_000);
 
 			test('validates package manager flag', async () => {

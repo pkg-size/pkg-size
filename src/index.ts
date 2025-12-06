@@ -9,7 +9,8 @@ export type {
 // Install size analysis
 export { getInstallSize } from './install/index.js';
 export type {
-	PackageEntry,
+	PackageFile,
+	InstalledPackage,
 	InstallSizeResult,
 	InstallSizeOptions,
 } from './install/types.js';

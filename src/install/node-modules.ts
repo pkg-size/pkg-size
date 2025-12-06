@@ -2,7 +2,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import pMap from 'p-map';
 import { fsExists } from '../utils/fs-exists.js';
-import type { PackageEntry, SizeResult } from './types.js';
+import type { PackageFile, InstalledPackage, SizeResult } from './types.js';
 
 // Concurrency limit to avoid EMFILE (too many open files)
 const statConcurrency = 100;
@@ -29,30 +29,33 @@ const getDirectorySize = async (directory: string): Promise<SizeResult> => {
 	await collectFiles(directory);
 
 	// Stat files with concurrency limit
-	const sizes = await pMap(
+	const fileEntries = await pMap(
 		filePaths,
-		async (filePath) => {
+		async (filePath): Promise<PackageFile> => {
 			const stats = await fsp.stat(filePath);
-			return stats.size;
+			return {
+				path: path.relative(directory, filePath),
+				size: stats.size,
+			};
 		},
 		{ concurrency: statConcurrency },
 	);
 
 	let totalSize = 0;
-	for (const size of sizes) {
-		totalSize += size;
+	for (const file of fileEntries) {
+		totalSize += file.size;
 	}
 
 	return {
 		size: totalSize,
-		files: filePaths.length,
+		files: fileEntries,
 	};
 };
 
 // Collect packages from a directory, handling scoped packages (@org/pkg)
 const collectPackagesFromDirectory = async (
 	directory: string,
-	packages: PackageEntry[],
+	packages: InstalledPackage[],
 	skipHidden = false,
 ): Promise<void> => {
 	const entries = await fsp.readdir(directory, { withFileTypes: true });
@@ -97,8 +100,8 @@ const collectPackagesFromDirectory = async (
 // Get packages from pnpm's .pnpm directory (content-addressable store)
 const getPnpmPackages = async (
 	pnpmPath: string,
-): Promise<PackageEntry[]> => {
-	const packages: PackageEntry[] = [];
+): Promise<InstalledPackage[]> => {
+	const packages: InstalledPackage[] = [];
 
 	const exists = await fsExists(pnpmPath);
 	if (!exists) {
@@ -132,15 +135,15 @@ const getPnpmPackages = async (
 // Get packages from flat node_modules (npm/yarn)
 const getFlatPackages = async (
 	nodeModulesPath: string,
-): Promise<PackageEntry[]> => {
-	const packages: PackageEntry[] = [];
+): Promise<InstalledPackage[]> => {
+	const packages: InstalledPackage[] = [];
 	await collectPackagesFromDirectory(nodeModulesPath, packages, true);
 	return packages;
 };
 
 export const getNodeModulesPackages = async (
 	nodeModulesPath: string,
-): Promise<PackageEntry[]> => {
+): Promise<InstalledPackage[]> => {
 	const exists = await fsExists(nodeModulesPath);
 	if (!exists) {
 		return [];

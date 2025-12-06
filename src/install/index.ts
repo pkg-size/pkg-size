@@ -44,16 +44,13 @@ export const getInstallSize = async (
 	const installedPackages = await getNodeModulesPackages(path.join(tempDirectory.path, 'node_modules'));
 
 	let totalSize = 0;
-	let totalFiles = 0;
 	for (const pkg of installedPackages) {
 		totalSize += pkg.size;
-		totalFiles += pkg.files;
 	}
 
 	return {
 		packages: installedPackages,
 		totalSize,
-		totalFiles,
 		installTime,
 		packageManager,
 	};

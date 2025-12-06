@@ -1,13 +1,17 @@
-export type PackageEntry = {
+export type PackageFile = {
+	path: string;
+	size: number;
+};
+
+export type InstalledPackage = {
 	name: string;
 	size: number;
-	files: number;
+	files: PackageFile[];
 };
 
 export type InstallSizeResult = {
-	packages: PackageEntry[];
+	packages: InstalledPackage[];
 	totalSize: number;
-	totalFiles: number;
 	installTime: number;
 	packageManager: string;
 };
@@ -24,5 +28,5 @@ export type InstallSizeOptions = {
 // Internal type
 export type SizeResult = {
 	size: number;
-	files: number;
+	files: PackageFile[];
 };

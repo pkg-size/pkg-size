@@ -164,16 +164,20 @@ const stringResult = await getInstallSize('lodash react')
 
 #### Types
 ```ts
-type PackageEntry = {
+type PackageFile = {
+    path: string
+    size: number
+}
+
+type InstalledPackage = {
     name: string
     size: number
-    files: number
+    files: PackageFile[]
 }
 
 type InstallSizeResult = {
-    packages: PackageEntry[]
+    packages: InstalledPackage[]
     totalSize: number
-    totalFiles: number
     installTime: number
     packageManager: string
 }

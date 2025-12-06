@@ -5,9 +5,9 @@ import {
 } from 'yoctocolors';
 import { getInstallSize } from '../install/index.js';
 import { detectPackageManager } from '../utils/package-manager.js';
-import type { PackageEntry } from '../install/types.js';
+import type { InstalledPackage } from '../install/types.js';
 
-const comparePackages = (sortByProperty: string) => (a: PackageEntry, b: PackageEntry) => {
+const comparePackages = (sortByProperty: string) => (a: InstalledPackage, b: InstalledPackage) => {
 	if (sortByProperty === 'name') {
 		return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
 	}

@@ -169,19 +169,41 @@ export default testSuite(({ describe }) => {
 					packageManager: 'pnpm',
 				});
 
-				expect(Array.isArray(result.packages)).toBe(true);
-				expect(result.packages.length).toBeGreaterThan(0);
-				expect(typeof result.totalSize).toBe('number');
-				expect(result.totalSize).toBeGreaterThan(0);
-				expect(typeof result.totalFiles).toBe('number');
-				expect(result.totalFiles).toBeGreaterThan(0);
-				expect(typeof result.installTime).toBe('number');
-				expect(result.packageManager).toBe('pnpm');
-
-				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
-				expect(isOdd).toBeDefined();
-				expect(isOdd!.size).toBeGreaterThan(0);
-				expect(isOdd!.files).toBeGreaterThan(0);
+				expect(result).toEqual({
+					packages: expect.arrayContaining([
+						{
+							name: 'is-odd',
+							size: expect.any(Number),
+							files: expect.arrayContaining([
+								{
+									path: 'package.json',
+									size: expect.any(Number),
+								},
+								{
+									path: 'index.js',
+									size: expect.any(Number),
+								},
+							]),
+						},
+						{
+							name: 'is-number',
+							size: expect.any(Number),
+							files: expect.arrayContaining([
+								{
+									path: 'package.json',
+									size: expect.any(Number),
+								},
+								{
+									path: 'index.js',
+									size: expect.any(Number),
+								},
+							]),
+						},
+					]),
+					totalSize: expect.any(Number),
+					installTime: expect.any(Number),
+					packageManager: 'pnpm',
+				});
 			});
 
 			test('accepts space-delimited packages', async () => {
