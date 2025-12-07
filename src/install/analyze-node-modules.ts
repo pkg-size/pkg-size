@@ -4,9 +4,10 @@ import type { NodeModulesAnalysis } from './types.js';
 
 export const analyzeNodeModules = async (
 	directory: string,
+	packageManager?: string,
 ): Promise<NodeModulesAnalysis> => {
 	const nodeModulesPath = path.join(directory, 'node_modules');
-	const packages = await getNodeModulesPackages(nodeModulesPath);
+	const packages = await getNodeModulesPackages(nodeModulesPath, packageManager);
 
 	let totalSize = 0;
 	for (const pkg of packages) {

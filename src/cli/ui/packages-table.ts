@@ -8,11 +8,25 @@ import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/gr
 
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
+const formatPackageRef = (name: string, version: string): string => {
+	const versionSuffix = version ? ` ${dim(version)}` : '';
+	return `${cyan(name)}${versionSuffix}`;
+};
+
 const formatPackageName = (
 	pkg: InstalledPackage,
 ): string => {
-	const versionSuffix = pkg.version ? ` ${dim(pkg.version)}` : '';
-	return `${cyan(pkg.name)}${versionSuffix}`;
+	const parts: string[] = [];
+
+	// Add parent packages from path
+	for (const parent of pkg.path) {
+		parts.push(formatPackageRef(parent.name, parent.version));
+	}
+
+	// Add the package itself
+	parts.push(formatPackageRef(pkg.name, pkg.version));
+
+	return parts.join(' → ');
 };
 
 const formatGroupedPackageName = (
@@ -24,8 +38,21 @@ const formatGroupedPackageName = (
 	const displayName = groupBy === 'scope' && pkg.name.startsWith('@')
 		? pkg.name.slice(groupKey.length + 1)
 		: pkg.name;
-	const versionSuffix = pkg.version ? ` ${dim(pkg.version)}` : '';
-	return `  ${cyan(displayName)}${versionSuffix}`;
+
+	const parts: string[] = [];
+
+	// Add parent packages from path
+	for (const parent of pkg.path) {
+		const parentDisplayName = groupBy === 'scope' && parent.name.startsWith('@')
+			? parent.name.slice(groupKey.length + 1)
+			: parent.name;
+		parts.push(formatPackageRef(parentDisplayName, parent.version));
+	}
+
+	// Add the package itself
+	parts.push(formatPackageRef(displayName, pkg.version));
+
+	return `  ${parts.join(' → ')}`;
 };
 
 type RenderOptions = {

@@ -23,10 +23,16 @@ export const getInstallSize = async (
 
 	// Install packages
 	const installCommand = packageManager === 'yarn' ? 'add' : 'install';
+	const installArgs = [installCommand, ...packageSpecs];
+
+	// Use nested install strategy for npm to preserve dependency tree structure
+	if (packageManager === 'npm') {
+		installArgs.push('--install-strategy=nested');
+	}
 
 	let result;
 	try {
-		result = await spawn(packageManager, [installCommand, ...packageSpecs], {
+		result = await spawn(packageManager, installArgs, {
 			cwd: installedDirectory.path,
 			stdout: 'ignore',
 			stderr: 'pipe',
@@ -45,6 +51,7 @@ export const getInstallSize = async (
 		totalSize,
 	} = await analyzeNodeModules(
 		installedDirectory.path,
+		packageManager,
 	);
 
 	return {

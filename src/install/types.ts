@@ -3,6 +3,11 @@ export type PackageFile = {
 	size: number;
 };
 
+export type PackageReference = {
+	name: string;
+	version: string;
+};
+
 export type InstalledPackage = {
 	name: string;
 	version: string;
@@ -10,6 +15,7 @@ export type InstalledPackage = {
 	files: PackageFile[];
 	license?: string;
 	author?: string;
+	path: PackageReference[];
 };
 
 export type NodeModulesAnalysis = {

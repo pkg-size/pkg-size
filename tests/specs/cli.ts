@@ -471,6 +471,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							size: expect.any(Number),
 							license: 'MIT',
 							author: expect.any(String),
+							path: [],
 							files: expect.arrayContaining([
 								{
 									path: expect.any(String),
@@ -484,6 +485,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							size: expect.any(Number),
 							license: 'MIT',
 							author: expect.any(String),
+							path: [],
 							files: expect.arrayContaining([
 								{
 									path: expect.any(String),
@@ -623,6 +625,49 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				// Total sizes should be identical
 				expect(pnpmJson.totalSize).toBe(npmJson.totalSize);
 			}, 60_000);
+
+			test('npm install shows transitive dependencies with arrow notation', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'npm']);
+
+				expect('exitCode' in result).toBe(false);
+				// Should show arrow notation for transitive dependency
+				expect(result.stdout).toContain('→');
+				// is-number is a dependency of is-odd, should show: is-odd → is-number
+				expect(result.stdout).toContain('is-odd');
+				expect(result.stdout).toContain('is-number');
+			}, 30_000);
+
+			test('npm install JSON includes path array for transitive deps', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'npm', '--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+
+				const isOdd = json.packages.find((p: { name: string }) => p.name === 'is-odd');
+				const isNumber = json.packages.find((p: { name: string }) => p.name === 'is-number');
+
+				expect(isOdd.path).toEqual([]);
+				expect(isNumber.path).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
+			}, 30_000);
 		});
 
 		describe('analyze', ({ test }) => {
@@ -654,6 +699,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							name: 'some-package',
 							version: '1.0.0',
 							size: expect.any(Number),
+							path: [],
 							files: expect.arrayContaining([
 								{
 									path: 'package.json',

@@ -4,7 +4,12 @@ import { fdir as Fdir } from 'fdir';
 import pMap from 'p-map';
 import type { PackageJson } from 'type-fest';
 import { fsExists } from '../utils/fs-exists.js';
-import type { PackageFile, InstalledPackage, SizeResult } from './types.js';
+import type {
+	PackageFile,
+	PackageReference,
+	InstalledPackage,
+	SizeResult,
+} from './types.js';
 
 type PackageMetadata = {
 	version: string;
@@ -76,9 +81,10 @@ const getPackageMetadata = async (
 // Concurrency limit to avoid EMFILE (too many open files)
 const statConcurrency = 100;
 
-const getDirectorySize = async (directory: string): Promise<SizeResult> => {
+const getDirectorySizeExcludingNodeModules = async (directory: string): Promise<SizeResult> => {
 	const filePaths = await new Fdir()
 		.withRelativePaths()
+		.exclude((_directoryName, directoryPath) => directoryPath.includes('node_modules'))
 		.crawl(directory)
 		.withPromise();
 
@@ -105,8 +111,99 @@ const getDirectorySize = async (directory: string): Promise<SizeResult> => {
 	};
 };
 
-// Collect packages from a directory, handling scoped packages (@org/pkg)
-const collectPackagesFromDirectory = async (
+// Recursively collect packages from nested node_modules (npm --install-strategy=nested)
+const collectNestedPackages = async (
+	directory: string,
+	packages: InstalledPackage[],
+	parentPath: PackageReference[],
+): Promise<void> => {
+	const exists = await fsExists(directory);
+	if (!exists) {
+		return;
+	}
+
+	const entries = await fsp.readdir(directory, { withFileTypes: true });
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) {
+			continue;
+		}
+
+		// Skip hidden folders
+		if (entry.name.startsWith('.')) {
+			continue;
+		}
+
+		const fullPath = path.join(directory, entry.name);
+
+		// Handle scoped packages (@org/pkg)
+		if (entry.name.startsWith('@')) {
+			const scopedEntries = await fsp.readdir(fullPath, { withFileTypes: true });
+			for (const scopedEntry of scopedEntries) {
+				if (scopedEntry.isDirectory()) {
+					const scopedPath = path.join(fullPath, scopedEntry.name);
+					const packageName = `${entry.name}/${scopedEntry.name}`;
+
+					const [{ size, files }, metadata] = await Promise.all([
+						getDirectorySizeExcludingNodeModules(scopedPath),
+						getPackageMetadata(scopedPath),
+					]);
+
+					const pkg: InstalledPackage = {
+						name: packageName,
+						size,
+						files,
+						path: parentPath,
+						...metadata,
+					};
+					packages.push(pkg);
+
+					// Recursively check for nested node_modules
+					const nestedNodeModules = path.join(scopedPath, 'node_modules');
+					const currentRef: PackageReference = {
+						name: packageName,
+						version: metadata.version,
+					};
+					await collectNestedPackages(nestedNodeModules, packages, [...parentPath, currentRef]);
+				}
+			}
+		} else {
+			const [{ size, files }, metadata] = await Promise.all([
+				getDirectorySizeExcludingNodeModules(fullPath),
+				getPackageMetadata(fullPath),
+			]);
+
+			const pkg: InstalledPackage = {
+				name: entry.name,
+				size,
+				files,
+				path: parentPath,
+				...metadata,
+			};
+			packages.push(pkg);
+
+			// Recursively check for nested node_modules
+			const nestedNodeModules = path.join(fullPath, 'node_modules');
+			const currentRef: PackageReference = {
+				name: entry.name,
+				version: metadata.version,
+			};
+			await collectNestedPackages(nestedNodeModules, packages, [...parentPath, currentRef]);
+		}
+	}
+};
+
+// Get packages from npm nested install (--install-strategy=nested)
+const getNpmNestedPackages = async (
+	nodeModulesPath: string,
+): Promise<InstalledPackage[]> => {
+	const packages: InstalledPackage[] = [];
+	await collectNestedPackages(nodeModulesPath, packages, []);
+	return packages;
+};
+
+// Collect packages from a directory without recursion (for pnpm/flat structures)
+const collectPackagesFlat = async (
 	directory: string,
 	packages: InstalledPackage[],
 	skipHidden = false,
@@ -118,7 +215,7 @@ const collectPackagesFromDirectory = async (
 			continue;
 		}
 
-		// Skip hidden folders when requested (for npm/yarn flat node_modules)
+		// Skip hidden folders when requested
 		if (skipHidden && entry.name.startsWith('.')) {
 			continue;
 		}
@@ -132,26 +229,28 @@ const collectPackagesFromDirectory = async (
 				if (scopedEntry.isDirectory()) {
 					const scopedPath = path.join(fullPath, scopedEntry.name);
 					const [{ size, files }, metadata] = await Promise.all([
-						getDirectorySize(scopedPath),
+						getDirectorySizeExcludingNodeModules(scopedPath),
 						getPackageMetadata(scopedPath),
 					]);
 					packages.push({
 						name: `${entry.name}/${scopedEntry.name}`,
 						size,
 						files,
+						path: [],
 						...metadata,
 					});
 				}
 			}
 		} else {
 			const [{ size, files }, metadata] = await Promise.all([
-				getDirectorySize(fullPath),
+				getDirectorySizeExcludingNodeModules(fullPath),
 				getPackageMetadata(fullPath),
 			]);
 			packages.push({
 				name: entry.name,
 				size,
 				files,
+				path: [],
 				...metadata,
 			});
 		}
@@ -186,36 +285,60 @@ const getPnpmPackages = async (
 		const innerNodeModules = path.join(pnpmPath, entry.name, 'node_modules');
 		const innerExists = await fsExists(innerNodeModules);
 		if (innerExists) {
-			await collectPackagesFromDirectory(innerNodeModules, packages);
+			await collectPackagesFlat(innerNodeModules, packages);
 		}
 	}
 
 	return packages;
 };
 
-// Get packages from flat node_modules (npm/yarn)
+// Get packages from flat node_modules (yarn or npm hoisted)
 const getFlatPackages = async (
 	nodeModulesPath: string,
 ): Promise<InstalledPackage[]> => {
 	const packages: InstalledPackage[] = [];
-	await collectPackagesFromDirectory(nodeModulesPath, packages, true);
+	await collectPackagesFlat(nodeModulesPath, packages, true);
 	return packages;
 };
 
 export const getNodeModulesPackages = async (
 	nodeModulesPath: string,
+	packageManager?: string,
 ): Promise<InstalledPackage[]> => {
 	const exists = await fsExists(nodeModulesPath);
 	if (!exists) {
 		return [];
 	}
 
-	// Check if this is a pnpm install (has .pnpm directory)
+	// If package manager is known, use the appropriate strategy
+	if (packageManager === 'npm') {
+		return getNpmNestedPackages(nodeModulesPath);
+	}
+
+	if (packageManager === 'pnpm') {
+		const pnpmPath = path.join(nodeModulesPath, '.pnpm');
+		return getPnpmPackages(pnpmPath);
+	}
+
+	// For yarn or unknown, check filesystem structure
 	const pnpmPath = path.join(nodeModulesPath, '.pnpm');
 	const isPnpm = await fsExists(pnpmPath);
 
 	if (isPnpm) {
 		return getPnpmPackages(pnpmPath);
+	}
+
+	// Check for nested node_modules (npm nested strategy)
+	const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
+	for (const entry of entries) {
+		if (entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.startsWith('@')) {
+			const nestedPath = path.join(nodeModulesPath, entry.name, 'node_modules');
+			const hasNested = await fsExists(nestedPath);
+			if (hasNested) {
+				return getNpmNestedPackages(nodeModulesPath);
+			}
+			break; // Only check first package
+		}
 	}
 
 	return getFlatPackages(nodeModulesPath);
