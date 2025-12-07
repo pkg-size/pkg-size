@@ -233,7 +233,7 @@ type PackageFile = {
 
 type InstalledPackage = {
     name: string
-    version?: string
+    version: string
     size: number
     files: PackageFile[]
     license?: string
@@ -283,7 +283,7 @@ type PackageFile = {
 
 type InstalledPackage = {
     name: string
-    version?: string
+    version: string
     size: number
     files: PackageFile[]
     license?: string
