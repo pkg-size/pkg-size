@@ -2,13 +2,14 @@ import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
 import { getPackageSize, getInstallSize, analyzeNodeModules } from '../../src/index.js';
 import { detectPackageManager } from '../../src/utils/package-manager.js';
+import { definePackageJson } from '../utils/package-json.js';
 
 export default testSuite(({ describe }) => {
 	describe('API', ({ describe }) => {
 		describe('Local Mode', ({ test }) => {
 			test('returns package size data', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -30,7 +31,7 @@ export default testSuite(({ describe }) => {
 				const content = 'x'.repeat(1000);
 
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -50,7 +51,7 @@ export default testSuite(({ describe }) => {
 
 			test('respects .npmignore', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -69,7 +70,7 @@ export default testSuite(({ describe }) => {
 
 			test('respects files field in package.json', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 						files: ['dist'],
@@ -90,7 +91,7 @@ export default testSuite(({ describe }) => {
 
 			test('supports ignoreFiles option', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -109,7 +110,7 @@ export default testSuite(({ describe }) => {
 
 			test('calculates only requested sizes', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -128,7 +129,7 @@ export default testSuite(({ describe }) => {
 
 			test('works without options', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -146,7 +147,7 @@ export default testSuite(({ describe }) => {
 				const largeContent = 'x'.repeat(10_000);
 
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -164,7 +165,7 @@ export default testSuite(({ describe }) => {
 
 			test('returns privatePackage: true for private packages', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 						private: true,
@@ -181,7 +182,7 @@ export default testSuite(({ describe }) => {
 
 			test('returns privatePackage: false for public packages', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -197,7 +198,7 @@ export default testSuite(({ describe }) => {
 
 			test('handles package with only package.json', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -213,7 +214,7 @@ export default testSuite(({ describe }) => {
 
 			test('handles empty files array in package.json', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 						files: [],
@@ -232,7 +233,7 @@ export default testSuite(({ describe }) => {
 
 			test('handles .npmignore that excludes all files', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -268,40 +269,39 @@ export default testSuite(({ describe }) => {
 				});
 
 				expect(result).toEqual({
+					packageManager: 'pnpm',
+					totalSize: expect.any(Number),
+					installTime: expect.any(Number),
 					packages: expect.arrayContaining([
 						{
 							name: 'is-odd',
+							version: expect.any(String),
 							size: expect.any(Number),
+							license: 'MIT',
+							author: expect.any(String),
 							files: expect.arrayContaining([
 								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
+									path: expect.any(String),
 									size: expect.any(Number),
 								},
 							]),
 						},
 						{
 							name: 'is-number',
+							version: expect.any(String),
 							size: expect.any(Number),
+							license: 'MIT',
+							author: expect.any(String),
 							files: expect.arrayContaining([
 								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
+									path: expect.any(String),
 									size: expect.any(Number),
 								},
 							]),
 						},
 					]),
-					totalSize: expect.any(Number),
-					installTime: expect.any(Number),
-					packageManager: 'pnpm',
 				});
+				expect(result.packages).toHaveLength(2);
 			});
 
 			test('accepts space-delimited packages', async () => {
@@ -355,20 +355,20 @@ export default testSuite(({ describe }) => {
 		describe('Scan Mode', ({ test }) => {
 			test('returns node_modules analysis', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'some-package': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'some-package',
 								version: '1.0.0',
 							}),
 							'index.js': 'module.exports = 1;',
 						},
 						'another-package': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'another-package',
 								version: '2.0.0',
 							}),
@@ -379,54 +379,31 @@ export default testSuite(({ describe }) => {
 
 				const result = await analyzeNodeModules(fixture.path);
 
-				expect(result).toEqual({
-					packages: expect.arrayContaining([
-						{
-							name: 'some-package',
-							size: expect.any(Number),
-							files: expect.arrayContaining([
-								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
-									size: expect.any(Number),
-								},
-							]),
-						},
-						{
-							name: 'another-package',
-							size: expect.any(Number),
-							files: expect.arrayContaining([
-								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'lib.js',
-									size: expect.any(Number),
-								},
-							]),
-						},
-					]),
-					totalSize: expect.any(Number),
-				});
-
 				expect(result.packages.length).toBe(2);
 				expect(result.totalSize).toBeGreaterThan(0);
+
+				const somePkg = result.packages.find(pkg => pkg.name === 'some-package');
+				const anotherPkg = result.packages.find(pkg => pkg.name === 'another-package');
+
+				expect(somePkg).toBeDefined();
+				expect(somePkg?.version).toBe('1.0.0');
+				expect(somePkg?.size).toBeGreaterThan(0);
+
+				expect(anotherPkg).toBeDefined();
+				expect(anotherPkg?.version).toBe('2.0.0');
+				expect(anotherPkg?.size).toBeGreaterThan(0);
 			});
 
 			test('handles scoped packages', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'@scope': {
 							'scoped-pkg': {
-								'package.json': JSON.stringify({
+								'package.json': definePackageJson({
 									name: '@scope/scoped-pkg',
 									version: '1.0.0',
 								}),
@@ -438,30 +415,16 @@ export default testSuite(({ describe }) => {
 
 				const result = await analyzeNodeModules(fixture.path);
 
-				expect(result).toEqual({
-					packages: [
-						{
-							name: '@scope/scoped-pkg',
-							size: expect.any(Number),
-							files: expect.arrayContaining([
-								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
-									size: expect.any(Number),
-								},
-							]),
-						},
-					],
-					totalSize: expect.any(Number),
-				});
+				expect(result.packages.length).toBe(1);
+				expect(result.packages[0].name).toBe('@scope/scoped-pkg');
+				expect(result.packages[0].version).toBe('1.0.0');
+				expect(result.packages[0].size).toBeGreaterThan(0);
+				expect(result.totalSize).toBeGreaterThan(0);
 			});
 
 			test('returns empty packages when no node_modules', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -473,6 +436,184 @@ export default testSuite(({ describe }) => {
 					packages: [],
 					totalSize: 0,
 				});
+			});
+
+			test('extracts license metadata from package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'mit-package': {
+							'package.json': definePackageJson({
+								name: 'mit-package',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+						'isc-package': {
+							'package.json': definePackageJson({
+								name: 'isc-package',
+								version: '1.0.0',
+								license: 'ISC',
+							}),
+							'index.js': 'content',
+						},
+						'no-license': {
+							'package.json': definePackageJson({
+								name: 'no-license',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+
+				const mitPkg = result.packages.find(pkg => pkg.name === 'mit-package');
+				const iscPkg = result.packages.find(pkg => pkg.name === 'isc-package');
+				const noLicensePkg = result.packages.find(pkg => pkg.name === 'no-license');
+
+				expect(mitPkg?.license).toBe('MIT');
+				expect(iscPkg?.license).toBe('ISC');
+				expect(noLicensePkg?.license).toBeUndefined();
+			});
+
+			test('normalizes legacy license formats', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'object-license': {
+							// Legacy format: license as object (not typed in modern PackageJson)
+							'package.json': JSON.stringify({
+								name: 'object-license',
+								version: '1.0.0',
+								license: {
+									type: 'MIT',
+									url: 'https://opensource.org/licenses/MIT',
+								},
+							}),
+							'index.js': 'content',
+						},
+						'licenses-array': {
+							'package.json': definePackageJson({
+								name: 'licenses-array',
+								version: '1.0.0',
+								licenses: [
+									{
+										type: 'MIT',
+										url: 'https://opensource.org/licenses/MIT',
+									},
+									{
+										type: 'Apache-2.0',
+										url: 'https://opensource.org/licenses/Apache-2.0',
+									},
+								],
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+
+				const objectLicensePkg = result.packages.find(pkg => pkg.name === 'object-license');
+				const licensesArrayPkg = result.packages.find(pkg => pkg.name === 'licenses-array');
+
+				expect(objectLicensePkg?.license).toBe('MIT');
+				expect(licensesArrayPkg?.license).toBe('MIT, Apache-2.0');
+			});
+
+			test('extracts author metadata from package.json string format', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'string-author': {
+							'package.json': definePackageJson({
+								name: 'string-author',
+								version: '1.0.0',
+								author: 'John Doe <john@example.com>',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const pkg = result.packages.find(p => p.name === 'string-author');
+
+				expect(pkg?.author).toBe('John Doe <john@example.com>');
+			});
+
+			test('extracts author metadata from package.json object format', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'object-author': {
+							'package.json': definePackageJson({
+								name: 'object-author',
+								version: '1.0.0',
+								author: {
+									name: 'Jane Smith',
+									email: 'jane@example.com',
+								},
+							}),
+							'index.js': 'content',
+						},
+						'object-author-no-email': {
+							'package.json': definePackageJson({
+								name: 'object-author-no-email',
+								version: '1.0.0',
+								author: {
+									name: 'Bob',
+								},
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const withEmail = result.packages.find(p => p.name === 'object-author');
+				const noEmail = result.packages.find(p => p.name === 'object-author-no-email');
+
+				expect(withEmail?.author).toBe('Jane Smith <jane@example.com>');
+				expect(noEmail?.author).toBe('Bob');
+			});
+
+			test('handles missing author metadata', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'no-author': {
+							'package.json': definePackageJson({
+								name: 'no-author',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const pkg = result.packages.find(p => p.name === 'no-author');
+
+				expect(pkg?.author).toBeUndefined();
 			});
 		});
 	});

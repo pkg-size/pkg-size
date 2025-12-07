@@ -1,12 +1,16 @@
 import { command } from 'cleye';
-import SimpleTable from 'cli-simple-table';
-import byteSize from 'byte-size';
-import {
-	green, cyan, bold, underline, dim,
-} from 'yoctocolors';
+import { dim } from 'yoctocolors';
 import { getInstallSize } from '../../install/index.js';
 import { detectPackageManager } from '../../utils/package-manager.js';
-import type { InstalledPackage } from '../../install/types.js';
+import {
+	GroupByType,
+	groupPackages,
+	comparePackages,
+} from '../../utils/grouping.js';
+import {
+	renderPackagesTable,
+	renderGroupedPackagesTable,
+} from '../ui/packages-table.js';
 
 const packageManagers = ['npm', 'pnpm', 'yarn'] as const;
 
@@ -17,14 +21,6 @@ const PackageManagerType = (value: string): PackageManager => {
 		throw new Error(`Invalid package manager: "${value}". Must be: npm, pnpm, or yarn`);
 	}
 	return value as PackageManager;
-};
-
-const comparePackages = (sortByProperty: string) => (a: InstalledPackage, b: InstalledPackage) => {
-	if (sortByProperty === 'name') {
-		return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
-	}
-	// Default: sort by size descending
-	return b.size - a.size;
 };
 
 const formatTime = (ms: number): string => {
@@ -49,6 +45,11 @@ export const installCommand = command({
 			description: 'Sort list by (name, size)',
 			default: 'size',
 		},
+		group: {
+			type: GroupByType,
+			alias: 'g',
+			description: 'Group packages by (scope, license, author)',
+		},
 		json: {
 			type: Boolean,
 			description: 'JSON output',
@@ -61,12 +62,13 @@ export const installCommand = command({
 			'pkg-size install react react-dom',
 			'pkg-size install @babel/core typescript',
 			'pkg-size install lodash --package-manager=pnpm',
+			'pkg-size install @babel/core --group=scope',
 			'pkg-size install lodash --json',
 		],
 	},
 }, async (argv) => {
 	const { packages } = argv._;
-	const { sortBy, json } = argv.flags;
+	const { sortBy, group, json } = argv.flags;
 	const packageManager = argv.flags.packageManager ?? detectPackageManager();
 
 	if (!json) {
@@ -76,41 +78,30 @@ export const installCommand = command({
 
 	const data = await getInstallSize(packages, { packageManager });
 
+	const sortProperty = sortBy === 'name' ? 'name' : 'size';
+	data.packages.sort(comparePackages(sortProperty));
+
+	const statusMessage = `Completed in ${formatTime(data.installTime)}`;
+
+	if (group) {
+		const groups = groupPackages(data.packages, group);
+
+		if (json) {
+			console.log(JSON.stringify({
+				...data,
+				groups,
+			}));
+			return;
+		}
+
+		renderGroupedPackagesTable(groups, data.totalSize, group, sortProperty, { statusMessage });
+		return;
+	}
+
 	if (json) {
 		console.log(JSON.stringify(data));
 		return;
 	}
 
-	const getSize = (bytes: number): string => byteSize(bytes).toString();
-
-	console.log(dim(`Completed in ${formatTime(data.installTime)}`));
-	console.log('');
-
-	const table = new SimpleTable();
-
-	table.header(
-		green('Package'),
-		{
-			text: green('Size'),
-			align: 'right' as const,
-		},
-	);
-
-	const sortProperty = sortBy === 'name' ? 'name' : 'size';
-	data.packages.sort(comparePackages(sortProperty));
-
-	for (const pkg of data.packages) {
-		table.row(
-			cyan(pkg.name),
-			getSize(pkg.size),
-		);
-	}
-
-	table.row();
-	table.row(
-		bold('Total'),
-		underline(getSize(data.totalSize)),
-	);
-
-	console.log(`${table.toString()}\n`);
+	renderPackagesTable(data.packages, data.totalSize, { statusMessage });
 });

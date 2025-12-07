@@ -5,8 +5,11 @@ export type PackageFile = {
 
 export type InstalledPackage = {
 	name: string;
+	version: string;
 	size: number;
 	files: PackageFile[];
+	license?: string;
+	author?: string;
 };
 
 export type NodeModulesAnalysis = {

@@ -68,6 +68,15 @@ npx pkg-size install lodash @babel/core typescript
 # Use a specific package manager
 npx pkg-size install react --package-manager=pnpm
 
+# Group by scope (e.g., @babel/*)
+npx pkg-size install @babel/core --group=scope
+
+# Group by license
+npx pkg-size install lodash react --group=license
+
+# Group by author
+npx pkg-size install lodash react --group=author
+
 # JSON output
 npx pkg-size install lodash --json
 ```
@@ -87,6 +96,15 @@ npx pkg-size analyze ./path/to/project
 
 # Sort by name
 npx pkg-size analyze --sort-by=name
+
+# Group by scope (e.g., @babel/*)
+npx pkg-size analyze --group=scope
+
+# Group by license
+npx pkg-size analyze --group=license
+
+# Group by author
+npx pkg-size analyze --group=author
 
 # JSON output
 npx pkg-size analyze --json
@@ -116,6 +134,9 @@ Package manager to use. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_
 #### -s, --sort-by \<property\>
 Sort list by `name` or `size` (default: `size`)
 
+#### -g, --group \<type\>
+Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
+
 #### --json
 JSON output
 
@@ -123,6 +144,9 @@ JSON output
 
 #### -s, --sort-by \<property\>
 Sort list by `name` or `size` (default: `size`)
+
+#### -g, --group \<type\>
+Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
 
 #### --json
 JSON output
@@ -209,8 +233,11 @@ type PackageFile = {
 
 type InstalledPackage = {
     name: string
+    version: string
     size: number
     files: PackageFile[]
+    license?: string
+    author?: string
 }
 
 type InstallSizeResult = {
@@ -256,8 +283,11 @@ type PackageFile = {
 
 type InstalledPackage = {
     name: string
+    version: string
     size: number
     files: PackageFile[]
+    license?: string
+    author?: string
 }
 
 type NodeModulesAnalysis = {
