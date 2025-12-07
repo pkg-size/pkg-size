@@ -32,18 +32,8 @@ type RenderOptions = {
 	statusMessage?: string;
 };
 
-export const renderPackagesTable = (
-	packages: InstalledPackage[],
-	totalSize: number,
-	options: RenderOptions = {},
-): void => {
-	if (options.statusMessage) {
-		console.log(dim(options.statusMessage));
-	}
-	console.log('');
-
+const createTable = (): SimpleTable => {
 	const table = new SimpleTable();
-
 	table.header(
 		green('Package'),
 		{
@@ -51,13 +41,18 @@ export const renderPackagesTable = (
 			align: 'right' as const,
 		},
 	);
+	return table;
+};
 
-	for (const pkg of packages) {
-		table.row(
-			formatPackageName(pkg),
-			formatSize(pkg.size),
-		);
+const printTable = (
+	table: SimpleTable,
+	totalSize: number,
+	options: RenderOptions,
+): void => {
+	if (options.statusMessage) {
+		console.log(dim(options.statusMessage));
 	}
+	console.log('');
 
 	table.row();
 	table.row(
@@ -68,6 +63,23 @@ export const renderPackagesTable = (
 	console.log(`${table.toString()}\n`);
 };
 
+export const renderPackagesTable = (
+	packages: InstalledPackage[],
+	totalSize: number,
+	options: RenderOptions = {},
+): void => {
+	const table = createTable();
+
+	for (const pkg of packages) {
+		table.row(
+			formatPackageName(pkg),
+			formatSize(pkg.size),
+		);
+	}
+
+	printTable(table, totalSize, options);
+};
+
 export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
@@ -75,20 +87,7 @@ export const renderGroupedPackagesTable = (
 	sortProperty: string,
 	options: RenderOptions = {},
 ): void => {
-	if (options.statusMessage) {
-		console.log(dim(options.statusMessage));
-	}
-	console.log('');
-
-	const table = new SimpleTable();
-
-	table.header(
-		green('Package'),
-		{
-			text: green('Size'),
-			align: 'right' as const,
-		},
-	);
+	const table = createTable();
 
 	// Sort groups by total size descending
 	const sortedGroups = Object.entries(groups).sort(
@@ -113,10 +112,5 @@ export const renderGroupedPackagesTable = (
 		table.row();
 	}
 
-	table.row(
-		bold('Total'),
-		underline(formatSize(totalSize)),
-	);
-
-	console.log(`${table.toString()}\n`);
+	printTable(table, totalSize, options);
 };
