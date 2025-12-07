@@ -491,7 +491,8 @@ export default testSuite(({ describe }) => {
 					}),
 					node_modules: {
 						'object-license': {
-							'package.json': definePackageJson({
+							// Legacy format: license as object (not typed in modern PackageJson)
+							'package.json': JSON.stringify({
 								name: 'object-license',
 								version: '1.0.0',
 								license: { type: 'MIT', url: 'https://opensource.org/licenses/MIT' },
