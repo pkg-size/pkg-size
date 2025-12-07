@@ -652,6 +652,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					packages: [
 						{
 							name: 'some-package',
+							version: '1.0.0',
 							size: expect.any(Number),
 							files: expect.arrayContaining([
 								{
@@ -887,6 +888,217 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('core');
 				// Unscoped packages show full name
 				expect(result.stdout).toContain('lodash');
+			});
+
+			test('groups packages by license with --group=license', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'mit-pkg-1': {
+							'package.json': JSON.stringify({
+								name: 'mit-pkg-1',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+						'mit-pkg-2': {
+							'package.json': JSON.stringify({
+								name: 'mit-pkg-2',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+						'isc-pkg': {
+							'package.json': JSON.stringify({
+								name: 'isc-pkg',
+								version: '1.0.0',
+								license: 'ISC',
+							}),
+							'index.js': 'content',
+						},
+						'no-license-pkg': {
+							'package.json': JSON.stringify({
+								name: 'no-license-pkg',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=license', '--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+
+				expect(json.groups).toBeDefined();
+				expect(json.groups.MIT).toBeDefined();
+				expect(json.groups.MIT.packages).toHaveLength(2);
+				expect(json.groups.ISC).toBeDefined();
+				expect(json.groups.ISC.packages).toHaveLength(1);
+				expect(json.groups['(unknown)']).toBeDefined();
+				expect(json.groups['(unknown)'].packages).toHaveLength(1);
+			});
+
+			test('displays grouped output in table format with --group=license', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'mit-pkg': {
+							'package.json': JSON.stringify({
+								name: 'mit-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+						'apache-pkg': {
+							'package.json': JSON.stringify({
+								name: 'apache-pkg',
+								version: '1.0.0',
+								license: 'Apache-2.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=license']);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).toContain('MIT');
+				expect(result.stdout).toContain('Apache-2.0');
+				expect(result.stdout).toContain('mit-pkg');
+				expect(result.stdout).toContain('apache-pkg');
+			});
+
+			test('groups packages by author with --group=author', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'john-pkg-1': {
+							'package.json': JSON.stringify({
+								name: 'john-pkg-1',
+								version: '1.0.0',
+								author: 'John Doe',
+							}),
+							'index.js': 'content',
+						},
+						'john-pkg-2': {
+							'package.json': JSON.stringify({
+								name: 'john-pkg-2',
+								version: '1.0.0',
+								author: 'John Doe',
+							}),
+							'index.js': 'content',
+						},
+						'jane-pkg': {
+							'package.json': JSON.stringify({
+								name: 'jane-pkg',
+								version: '1.0.0',
+								author: {
+									name: 'Jane Smith',
+									email: 'jane@example.com',
+								},
+							}),
+							'index.js': 'content',
+						},
+						'no-author-pkg': {
+							'package.json': JSON.stringify({
+								name: 'no-author-pkg',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=author', '--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+
+				expect(json.groups).toBeDefined();
+				expect(json.groups['John Doe']).toBeDefined();
+				expect(json.groups['John Doe'].packages).toHaveLength(2);
+				expect(json.groups['Jane Smith <jane@example.com>']).toBeDefined();
+				expect(json.groups['Jane Smith <jane@example.com>'].packages).toHaveLength(1);
+				expect(json.groups['(unknown)']).toBeDefined();
+				expect(json.groups['(unknown)'].packages).toHaveLength(1);
+			});
+
+			test('displays grouped output in table format with --group=author', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'john-pkg': {
+							'package.json': JSON.stringify({
+								name: 'john-pkg',
+								version: '1.0.0',
+								author: 'John Doe',
+							}),
+							'index.js': 'content',
+						},
+						'jane-pkg': {
+							'package.json': JSON.stringify({
+								name: 'jane-pkg',
+								version: '1.0.0',
+								author: 'Jane Smith',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=author']);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).toContain('John Doe');
+				expect(result.stdout).toContain('Jane Smith');
+				expect(result.stdout).toContain('john-pkg');
+				expect(result.stdout).toContain('jane-pkg');
+			});
+
+			test('includes metadata in JSON output', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'full-metadata': {
+							'package.json': JSON.stringify({
+								name: 'full-metadata',
+								version: '1.0.0',
+								license: 'MIT',
+								author: 'Test Author',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+
+				expect(json.packages[0].license).toBe('MIT');
+				expect(json.packages[0].author).toBe('Test Author');
 			});
 		});
 	});

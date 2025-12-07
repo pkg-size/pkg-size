@@ -19,13 +19,13 @@ const PackageManagerType = (value: string): PackageManager => {
 	return value as PackageManager;
 };
 
-const groupByOptions = ['scope'] as const;
+const groupByOptions = ['scope', 'license', 'author'] as const;
 
 type GroupBy = typeof groupByOptions[number] | undefined;
 
 const GroupByType = (value: string): GroupBy => {
 	if (!groupByOptions.includes(value as typeof groupByOptions[number])) {
-		throw new Error(`Invalid group: "${value}". Must be: scope`);
+		throw new Error(`Invalid group: "${value}". Must be: ${groupByOptions.join(', ')}`);
 	}
 	return value as GroupBy;
 };
@@ -60,21 +60,38 @@ const getScope = (packageName: string): string => {
 	return '(unscoped)';
 };
 
-const groupPackagesByScope = (
+const getGroupKey = (
+	pkg: InstalledPackage,
+	groupBy: NonNullable<GroupBy>,
+): string => {
+	if (groupBy === 'scope') {
+		return getScope(pkg.name);
+	}
+	if (groupBy === 'license') {
+		return pkg.license ?? '(unknown)';
+	}
+	if (groupBy === 'author') {
+		return pkg.author ?? '(unknown)';
+	}
+	return '(unknown)';
+};
+
+const groupPackages = (
 	packages: InstalledPackage[],
+	groupBy: NonNullable<GroupBy>,
 ): Record<string, PackageGroup> => {
 	const groups: Record<string, PackageGroup> = {};
 
 	for (const pkg of packages) {
-		const scope = getScope(pkg.name);
-		if (!groups[scope]) {
-			groups[scope] = {
+		const key = getGroupKey(pkg, groupBy);
+		if (!groups[key]) {
+			groups[key] = {
 				packages: [],
 				totalSize: 0,
 			};
 		}
-		groups[scope].packages.push(pkg);
-		groups[scope].totalSize += pkg.size;
+		groups[key].packages.push(pkg);
+		groups[key].totalSize += pkg.size;
 	}
 
 	return groups;
@@ -98,7 +115,7 @@ export const installCommand = command({
 		group: {
 			type: GroupByType,
 			alias: 'g',
-			description: 'Group packages by (scope)',
+			description: 'Group packages by (scope, license, author)',
 		},
 		json: {
 			type: Boolean,
@@ -131,8 +148,8 @@ export const installCommand = command({
 	const sortProperty = sortBy === 'name' ? 'name' : 'size';
 	data.packages.sort(comparePackages(sortProperty));
 
-	if (group === 'scope') {
-		const groups = groupPackagesByScope(data.packages);
+	if (group) {
+		const groups = groupPackages(data.packages, group);
 
 		if (json) {
 			console.log(JSON.stringify({
@@ -162,25 +179,29 @@ export const installCommand = command({
 			([, a], [, b]) => b.totalSize - a.totalSize,
 		);
 
-		for (const [scope, groupData] of sortedGroups) {
+		for (const [groupKey, groupData] of sortedGroups) {
 			// Group header
-			table.row(bold(scope), dim(getSize(groupData.totalSize)));
+			table.row(bold(groupKey), dim(getSize(groupData.totalSize)));
 
 			// Sort packages within group
 			groupData.packages.sort(comparePackages(sortProperty));
 
 			for (const pkg of groupData.packages) {
-				const displayName = pkg.name.startsWith('@')
-					? pkg.name.slice(scope.length + 1)
+				// For scope grouping, show shortened names for scoped packages
+				const displayName = group === 'scope' && pkg.name.startsWith('@')
+					? pkg.name.slice(groupKey.length + 1)
 					: pkg.name;
+				const versionSuffix = pkg.version ? ` ${dim(pkg.version)}` : '';
 				table.row(
-					`  ${cyan(displayName)}`,
+					`  ${cyan(displayName)}${versionSuffix}`,
 					getSize(pkg.size),
 				);
 			}
+
+			// Empty row after each group
+			table.row();
 		}
 
-		table.row();
 		table.row(
 			bold('Total'),
 			underline(getSize(data.totalSize)),
@@ -211,8 +232,9 @@ export const installCommand = command({
 	);
 
 	for (const pkg of data.packages) {
+		const versionSuffix = pkg.version ? ` ${dim(pkg.version)}` : '';
 		table.row(
-			cyan(pkg.name),
+			`${cyan(pkg.name)}${versionSuffix}`,
 			getSize(pkg.size),
 		);
 	}

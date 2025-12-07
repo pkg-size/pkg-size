@@ -5,6 +5,52 @@ import pMap from 'p-map';
 import { fsExists } from '../utils/fs-exists.js';
 import type { PackageFile, InstalledPackage, SizeResult } from './types.js';
 
+type PackageMetadata = {
+	version: string;
+	license?: string;
+	author?: string;
+};
+
+const normalizeAuthor = (
+	author: unknown,
+): string | undefined => {
+	if (typeof author === 'string') {
+		return author;
+	}
+	if (author && typeof author === 'object' && 'name' in author) {
+		const authorObject = author as { name?: string;
+			email?: string; };
+		if (typeof authorObject.name === 'string') {
+			return authorObject.email
+				? `${authorObject.name} <${authorObject.email}>`
+				: authorObject.name;
+		}
+	}
+	return undefined;
+};
+
+const getPackageMetadata = async (
+	packageDirectory: string,
+): Promise<PackageMetadata> => {
+	const packageJsonPath = path.join(packageDirectory, 'package.json');
+	const exists = await fsExists(packageJsonPath);
+	if (!exists) {
+		return { version: '' };
+	}
+
+	try {
+		const content = await fsp.readFile(packageJsonPath, 'utf8');
+		const packageJson = JSON.parse(content) as Record<string, unknown>;
+		return {
+			version: typeof packageJson.version === 'string' ? packageJson.version : '',
+			license: typeof packageJson.license === 'string' ? packageJson.license : undefined,
+			author: normalizeAuthor(packageJson.author),
+		};
+	} catch {
+		return { version: '' };
+	}
+};
+
 // Concurrency limit to avoid EMFILE (too many open files)
 const statConcurrency = 100;
 
@@ -63,20 +109,28 @@ const collectPackagesFromDirectory = async (
 			for (const scopedEntry of scopedEntries) {
 				if (scopedEntry.isDirectory()) {
 					const scopedPath = path.join(fullPath, scopedEntry.name);
-					const { size, files } = await getDirectorySize(scopedPath);
+					const [{ size, files }, metadata] = await Promise.all([
+						getDirectorySize(scopedPath),
+						getPackageMetadata(scopedPath),
+					]);
 					packages.push({
 						name: `${entry.name}/${scopedEntry.name}`,
 						size,
 						files,
+						...metadata,
 					});
 				}
 			}
 		} else {
-			const { size, files } = await getDirectorySize(fullPath);
+			const [{ size, files }, metadata] = await Promise.all([
+				getDirectorySize(fullPath),
+				getPackageMetadata(fullPath),
+			]);
 			packages.push({
 				name: entry.name,
 				size,
 				files,
+				...metadata,
 			});
 		}
 	}

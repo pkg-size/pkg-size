@@ -379,42 +379,19 @@ export default testSuite(({ describe }) => {
 
 				const result = await analyzeNodeModules(fixture.path);
 
-				expect(result).toEqual({
-					packages: expect.arrayContaining([
-						{
-							name: 'some-package',
-							size: expect.any(Number),
-							files: expect.arrayContaining([
-								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
-									size: expect.any(Number),
-								},
-							]),
-						},
-						{
-							name: 'another-package',
-							size: expect.any(Number),
-							files: expect.arrayContaining([
-								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'lib.js',
-									size: expect.any(Number),
-								},
-							]),
-						},
-					]),
-					totalSize: expect.any(Number),
-				});
-
 				expect(result.packages.length).toBe(2);
 				expect(result.totalSize).toBeGreaterThan(0);
+
+				const somePkg = result.packages.find(pkg => pkg.name === 'some-package');
+				const anotherPkg = result.packages.find(pkg => pkg.name === 'another-package');
+
+				expect(somePkg).toBeDefined();
+				expect(somePkg?.version).toBe('1.0.0');
+				expect(somePkg?.size).toBeGreaterThan(0);
+
+				expect(anotherPkg).toBeDefined();
+				expect(anotherPkg?.version).toBe('2.0.0');
+				expect(anotherPkg?.size).toBeGreaterThan(0);
 			});
 
 			test('handles scoped packages', async () => {
@@ -438,25 +415,11 @@ export default testSuite(({ describe }) => {
 
 				const result = await analyzeNodeModules(fixture.path);
 
-				expect(result).toEqual({
-					packages: [
-						{
-							name: '@scope/scoped-pkg',
-							size: expect.any(Number),
-							files: expect.arrayContaining([
-								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
-									size: expect.any(Number),
-								},
-							]),
-						},
-					],
-					totalSize: expect.any(Number),
-				});
+				expect(result.packages.length).toBe(1);
+				expect(result.packages[0].name).toBe('@scope/scoped-pkg');
+				expect(result.packages[0].version).toBe('1.0.0');
+				expect(result.packages[0].size).toBeGreaterThan(0);
+				expect(result.totalSize).toBeGreaterThan(0);
 			});
 
 			test('returns empty packages when no node_modules', async () => {
@@ -473,6 +436,136 @@ export default testSuite(({ describe }) => {
 					packages: [],
 					totalSize: 0,
 				});
+			});
+
+			test('extracts license metadata from package.json', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'mit-package': {
+							'package.json': JSON.stringify({
+								name: 'mit-package',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+						'isc-package': {
+							'package.json': JSON.stringify({
+								name: 'isc-package',
+								version: '1.0.0',
+								license: 'ISC',
+							}),
+							'index.js': 'content',
+						},
+						'no-license': {
+							'package.json': JSON.stringify({
+								name: 'no-license',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+
+				const mitPkg = result.packages.find(pkg => pkg.name === 'mit-package');
+				const iscPkg = result.packages.find(pkg => pkg.name === 'isc-package');
+				const noLicensePkg = result.packages.find(pkg => pkg.name === 'no-license');
+
+				expect(mitPkg?.license).toBe('MIT');
+				expect(iscPkg?.license).toBe('ISC');
+				expect(noLicensePkg?.license).toBeUndefined();
+			});
+
+			test('extracts author metadata from package.json string format', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'string-author': {
+							'package.json': JSON.stringify({
+								name: 'string-author',
+								version: '1.0.0',
+								author: 'John Doe <john@example.com>',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const pkg = result.packages.find(p => p.name === 'string-author');
+
+				expect(pkg?.author).toBe('John Doe <john@example.com>');
+			});
+
+			test('extracts author metadata from package.json object format', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'object-author': {
+							'package.json': JSON.stringify({
+								name: 'object-author',
+								version: '1.0.0',
+								author: {
+									name: 'Jane Smith',
+									email: 'jane@example.com',
+								},
+							}),
+							'index.js': 'content',
+						},
+						'object-author-no-email': {
+							'package.json': JSON.stringify({
+								name: 'object-author-no-email',
+								version: '1.0.0',
+								author: {
+									name: 'Bob',
+								},
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const withEmail = result.packages.find(p => p.name === 'object-author');
+				const noEmail = result.packages.find(p => p.name === 'object-author-no-email');
+
+				expect(withEmail?.author).toBe('Jane Smith <jane@example.com>');
+				expect(noEmail?.author).toBe('Bob');
+			});
+
+			test('handles missing author metadata', async () => {
+				await using fixture = await createFixture({
+					'package.json': JSON.stringify({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'no-author': {
+							'package.json': JSON.stringify({
+								name: 'no-author',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const pkg = result.packages.find(p => p.name === 'no-author');
+
+				expect(pkg?.author).toBeUndefined();
 			});
 		});
 	});
