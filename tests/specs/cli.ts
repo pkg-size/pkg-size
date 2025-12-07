@@ -1,13 +1,14 @@
 import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
 import type { PkgSizeCli } from '../utils/pkg-size.js';
+import { definePackageJson } from '../utils/package-json.js';
 
 export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 	describe('CLI', ({ describe }) => {
 		describe('General', ({ test }) => {
 			test('shows help with --help', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -24,7 +25,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('shows version with --version', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -38,7 +39,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('shows publish help with publish --help', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -54,7 +55,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('shows help when no subcommand provided', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -71,7 +72,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('shows help when invalid subcommand provided', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -90,7 +91,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 		describe('publish', ({ test }) => {
 			test('outputs package sizes', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -108,7 +109,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports --json flag', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -126,7 +127,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports -c/--compression flag with gzip', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -145,7 +146,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports --compression flag with brotli', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -164,7 +165,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports --compression=false to disable compression', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -183,7 +184,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports -i/--ignore-files flag', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -202,7 +203,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			test('accepts package path as argument', async () => {
 				await using fixture = await createFixture({
 					subdir: {
-						'package.json': JSON.stringify({
+						'package.json': definePackageJson({
 							name: 'subdir-package',
 							version: '1.0.0',
 						}),
@@ -220,7 +221,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports -s/--sort-by flag for size sorting', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -240,7 +241,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports --sort-by name for alphabetical sorting', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -260,7 +261,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports --sort-by compressed for compression size sorting', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -280,7 +281,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('uses cwd when no path specified', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -296,7 +297,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('displays totals row', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -314,7 +315,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('shows warning for private packages', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 						private: true,
@@ -330,7 +331,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('does not show warning for public packages', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -345,7 +346,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('includes privatePackage in JSON output for private packages', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 						private: true,
@@ -362,7 +363,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('handles package with only package.json', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -378,7 +379,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('handles empty files array in package.json', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 						files: [],
@@ -396,7 +397,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('handles .npmignore that excludes all files', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -431,7 +432,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 		describe('install', ({ test }) => {
 			test('supports --package-manager flag with npm', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -448,7 +449,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports --package-manager flag with pnpm', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -498,7 +499,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('validates package manager flag', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -515,7 +516,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('supports --package-manager flag with yarn', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -536,7 +537,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('handles scoped packages correctly', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -556,7 +557,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('sorts packages by name', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -574,7 +575,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('renders human readable table', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -591,7 +592,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('npm and pnpm report same packages and similar sizes', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -628,13 +629,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 		describe('analyze', ({ test }) => {
 			test('analyzes existing node_modules', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'some-package': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'some-package',
 								version: '1.0.0',
 							}),
@@ -672,13 +673,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('renders human readable table', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'some-package': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'some-package',
 								version: '1.0.0',
 							}),
@@ -697,20 +698,20 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('sorts packages by name', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'zebra-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'zebra-pkg',
 								version: '1.0.0',
 							}),
 							'index.js': 'content',
 						},
 						'alpha-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'alpha-pkg',
 								version: '1.0.0',
 							}),
@@ -729,14 +730,14 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('handles scoped packages', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'@scope': {
 							'scoped-pkg': {
-								'package.json': JSON.stringify({
+								'package.json': definePackageJson({
 									name: '@scope/scoped-pkg',
 									version: '1.0.0',
 								}),
@@ -756,13 +757,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			test('accepts path argument', async () => {
 				await using fixture = await createFixture({
 					subdir: {
-						'package.json': JSON.stringify({
+						'package.json': definePackageJson({
 							name: 'test-package',
 							version: '1.0.0',
 						}),
 						node_modules: {
 							'some-package': {
-								'package.json': JSON.stringify({
+								'package.json': definePackageJson({
 									name: 'some-package',
 									version: '1.0.0',
 								}),
@@ -781,7 +782,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('returns empty packages array when no node_modules', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
@@ -797,21 +798,21 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('groups scoped packages by scope with --group=scope', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'@babel': {
 							core: {
-								'package.json': JSON.stringify({
+								'package.json': definePackageJson({
 									name: '@babel/core',
 									version: '1.0.0',
 								}),
 								'index.js': 'content',
 							},
 							parser: {
-								'package.json': JSON.stringify({
+								'package.json': definePackageJson({
 									name: '@babel/parser',
 									version: '1.0.0',
 								}),
@@ -820,7 +821,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 						},
 						'@types': {
 							node: {
-								'package.json': JSON.stringify({
+								'package.json': definePackageJson({
 									name: '@types/node',
 									version: '1.0.0',
 								}),
@@ -828,7 +829,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							},
 						},
 						lodash: {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'lodash',
 								version: '1.0.0',
 							}),
@@ -854,14 +855,14 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('displays grouped output in table format with --group=scope', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'@babel': {
 							core: {
-								'package.json': JSON.stringify({
+								'package.json': definePackageJson({
 									name: '@babel/core',
 									version: '1.0.0',
 								}),
@@ -869,7 +870,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							},
 						},
 						lodash: {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'lodash',
 								version: '1.0.0',
 							}),
@@ -892,13 +893,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('groups packages by license with --group=license', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'mit-pkg-1': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'mit-pkg-1',
 								version: '1.0.0',
 								license: 'MIT',
@@ -906,7 +907,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'mit-pkg-2': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'mit-pkg-2',
 								version: '1.0.0',
 								license: 'MIT',
@@ -914,7 +915,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'isc-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'isc-pkg',
 								version: '1.0.0',
 								license: 'ISC',
@@ -922,7 +923,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'no-license-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'no-license-pkg',
 								version: '1.0.0',
 							}),
@@ -947,13 +948,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('displays grouped output in table format with --group=license', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'mit-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'mit-pkg',
 								version: '1.0.0',
 								license: 'MIT',
@@ -961,7 +962,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'apache-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'apache-pkg',
 								version: '1.0.0',
 								license: 'Apache-2.0',
@@ -982,13 +983,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('groups packages by author with --group=author', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'john-pkg-1': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'john-pkg-1',
 								version: '1.0.0',
 								author: 'John Doe',
@@ -996,7 +997,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'john-pkg-2': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'john-pkg-2',
 								version: '1.0.0',
 								author: 'John Doe',
@@ -1004,7 +1005,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'jane-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'jane-pkg',
 								version: '1.0.0',
 								author: {
@@ -1015,7 +1016,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'no-author-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'no-author-pkg',
 								version: '1.0.0',
 							}),
@@ -1040,13 +1041,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('displays grouped output in table format with --group=author', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'john-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'john-pkg',
 								version: '1.0.0',
 								author: 'John Doe',
@@ -1054,7 +1055,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							'index.js': 'content',
 						},
 						'jane-pkg': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'jane-pkg',
 								version: '1.0.0',
 								author: 'Jane Smith',
@@ -1075,13 +1076,13 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			test('includes metadata in JSON output', async () => {
 				await using fixture = await createFixture({
-					'package.json': JSON.stringify({
+					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
 						'full-metadata': {
-							'package.json': JSON.stringify({
+							'package.json': definePackageJson({
 								name: 'full-metadata',
 								version: '1.0.0',
 								license: 'MIT',

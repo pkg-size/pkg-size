@@ -26,6 +26,31 @@ const normalizeAuthor = (
 		: author.name;
 };
 
+// Handle legacy license formats: object { type, url } or array of objects
+const normalizeLicense = (
+	license: unknown,
+	licenses: PackageJson['licenses'],
+): string | undefined => {
+	if (typeof license === 'string') {
+		return license;
+	}
+	// Handle legacy object format: { type: "MIT", url: "..." }
+	if (license && typeof license === 'object' && 'type' in license) {
+		const licenseObject = license as { type?: string };
+		if (typeof licenseObject.type === 'string') {
+			return licenseObject.type;
+		}
+	}
+	// Fall back to deprecated licenses array
+	if (licenses && licenses.length > 0) {
+		return licenses
+			.map(l => l.type)
+			.filter(Boolean)
+			.join(', ') || undefined;
+	}
+	return undefined;
+};
+
 const getPackageMetadata = async (
 	packageDirectory: string,
 ): Promise<PackageMetadata> => {
@@ -40,7 +65,7 @@ const getPackageMetadata = async (
 		const packageJson = JSON.parse(content) as PackageJson;
 		return {
 			version: packageJson.version ?? '',
-			license: packageJson.license,
+			license: normalizeLicense(packageJson.license, packageJson.licenses),
 			author: normalizeAuthor(packageJson.author),
 		};
 	} catch {
