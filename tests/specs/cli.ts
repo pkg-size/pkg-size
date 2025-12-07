@@ -461,40 +461,39 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const json = JSON.parse(result.stdout);
 
 				expect(json).toEqual({
+					packageManager: 'pnpm',
+					totalSize: expect.any(Number),
+					installTime: expect.any(Number),
 					packages: expect.arrayContaining([
 						{
 							name: 'is-odd',
+							version: expect.any(String),
 							size: expect.any(Number),
+							license: 'MIT',
+							author: expect.any(String),
 							files: expect.arrayContaining([
 								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
+									path: expect.any(String),
 									size: expect.any(Number),
 								},
 							]),
 						},
 						{
 							name: 'is-number',
+							version: expect.any(String),
 							size: expect.any(Number),
+							license: 'MIT',
+							author: expect.any(String),
 							files: expect.arrayContaining([
 								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
+									path: expect.any(String),
 									size: expect.any(Number),
 								},
 							]),
 						},
 					]),
-					totalSize: expect.any(Number),
-					installTime: expect.any(Number),
-					packageManager: 'pnpm',
 				});
+				expect(json.packages).toHaveLength(2);
 			}, 30_000);
 
 			test('validates package manager flag', async () => {

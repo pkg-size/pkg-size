@@ -269,40 +269,39 @@ export default testSuite(({ describe }) => {
 				});
 
 				expect(result).toEqual({
+					packageManager: 'pnpm',
+					totalSize: expect.any(Number),
+					installTime: expect.any(Number),
 					packages: expect.arrayContaining([
 						{
 							name: 'is-odd',
+							version: expect.any(String),
 							size: expect.any(Number),
+							license: 'MIT',
+							author: expect.any(String),
 							files: expect.arrayContaining([
 								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
+									path: expect.any(String),
 									size: expect.any(Number),
 								},
 							]),
 						},
 						{
 							name: 'is-number',
+							version: expect.any(String),
 							size: expect.any(Number),
+							license: 'MIT',
+							author: expect.any(String),
 							files: expect.arrayContaining([
 								{
-									path: 'package.json',
-									size: expect.any(Number),
-								},
-								{
-									path: 'index.js',
+									path: expect.any(String),
 									size: expect.any(Number),
 								},
 							]),
 						},
 					]),
-					totalSize: expect.any(Number),
-					installTime: expect.any(Number),
-					packageManager: 'pnpm',
 				});
+				expect(result.packages).toHaveLength(2);
 			});
 
 			test('accepts space-delimited packages', async () => {
@@ -495,7 +494,10 @@ export default testSuite(({ describe }) => {
 							'package.json': JSON.stringify({
 								name: 'object-license',
 								version: '1.0.0',
-								license: { type: 'MIT', url: 'https://opensource.org/licenses/MIT' },
+								license: {
+									type: 'MIT',
+									url: 'https://opensource.org/licenses/MIT',
+								},
 							}),
 							'index.js': 'content',
 						},
@@ -504,8 +506,14 @@ export default testSuite(({ describe }) => {
 								name: 'licenses-array',
 								version: '1.0.0',
 								licenses: [
-									{ type: 'MIT', url: 'https://opensource.org/licenses/MIT' },
-									{ type: 'Apache-2.0', url: 'https://opensource.org/licenses/Apache-2.0' },
+									{
+										type: 'MIT',
+										url: 'https://opensource.org/licenses/MIT',
+									},
+									{
+										type: 'Apache-2.0',
+										url: 'https://opensource.org/licenses/Apache-2.0',
+									},
 								],
 							}),
 							'index.js': 'content',
