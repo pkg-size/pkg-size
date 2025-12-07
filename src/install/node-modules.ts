@@ -2,6 +2,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fdir as Fdir } from 'fdir';
 import pMap from 'p-map';
+import type { PackageJson } from 'type-fest';
 import { fsExists } from '../utils/fs-exists.js';
 import type { PackageFile, InstalledPackage, SizeResult } from './types.js';
 
@@ -12,21 +13,17 @@ type PackageMetadata = {
 };
 
 const normalizeAuthor = (
-	author: unknown,
+	author: PackageJson.Person | undefined,
 ): string | undefined => {
+	if (!author) {
+		return undefined;
+	}
 	if (typeof author === 'string') {
 		return author;
 	}
-	if (author && typeof author === 'object' && 'name' in author) {
-		const authorObject = author as { name?: string;
-			email?: string; };
-		if (typeof authorObject.name === 'string') {
-			return authorObject.email
-				? `${authorObject.name} <${authorObject.email}>`
-				: authorObject.name;
-		}
-	}
-	return undefined;
+	return author.email
+		? `${author.name} <${author.email}>`
+		: author.name;
 };
 
 const getPackageMetadata = async (
@@ -40,10 +37,10 @@ const getPackageMetadata = async (
 
 	try {
 		const content = await fsp.readFile(packageJsonPath, 'utf8');
-		const packageJson = JSON.parse(content) as Record<string, unknown>;
+		const packageJson = JSON.parse(content) as PackageJson;
 		return {
-			version: typeof packageJson.version === 'string' ? packageJson.version : '',
-			license: typeof packageJson.license === 'string' ? packageJson.license : undefined,
+			version: packageJson.version ?? '',
+			license: packageJson.license,
 			author: normalizeAuthor(packageJson.author),
 		};
 	} catch {
