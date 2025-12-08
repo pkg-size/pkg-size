@@ -25,9 +25,9 @@ const formatAuthor = (author: string): string | null => {
 
 const formatDependencyInfo = (pkg: InstalledPackage): string => {
 	if (pkg.dependencyCount === 0) {
-		return `${('Dependencies:')} ${dim('0')}`;
+		return `${bold('Dependencies:')} ${dim('0')}`;
 	}
-	return `${('Dependencies:')} ${dim(`${pkg.dependencyCount} (${formatSize(pkg.dependencySize)})`)}`;
+	return `${bold('Dependencies:')} ${dim(`${pkg.dependencyCount} (${formatSize(pkg.dependencySize)})`)}`;
 };
 
 const formatPackageRef = (name: string, version: string): string => {
@@ -41,7 +41,7 @@ const formatPath = (
 	const parts: string[] = [];
 
 	for (const parent of pkg.path) {
-		parts.push((parent.name + ' ' + parent.version));
+		parts.push((parent.name + ' v' + parent.version));
 	}
 
 	return parts.join(' → ');
@@ -124,7 +124,28 @@ type RenderOptions = {
 
 const formatPercentage = (size: number, totalSize: number): string => {
 	const percentage = (size / totalSize) * 100;
-	return `${percentage.toFixed(1)}%`;
+
+	// ≥ 1% → no decimals
+	if (percentage >= 1) {
+		return `${Math.round(percentage)}%`;
+	}
+
+	// 0.1% to 0.9%
+	if (percentage >= 0.05) {
+		return `${Number(percentage.toFixed(1))}%`;
+	}
+
+	// 0.01% to 0.04%
+	if (percentage >= 0.005) {
+		return `${Number(percentage.toFixed(2))}%`;
+	}
+
+	// Truly tiny
+	if (percentage > 0) {
+		return '<0.01%';
+	}
+
+	return '0%';
 };
 
 const createTable = (): SimpleTable => {
@@ -188,7 +209,7 @@ export const renderPackagesTable = (
 		// Show size and path underneath package when verbose
 		if (options.verbose) {
 			const pathPart = pkg.path.length > 0
-				? `${bold('Installed by:')} ${formatPath(pkg)}`
+				? `${bold('Installed by:')} ${dim(formatPath(pkg))}`
 				: '';
 			table.row(formatSize(pkg.size), pathPart);
 		}
