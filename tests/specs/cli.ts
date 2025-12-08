@@ -734,7 +734,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(packageLines.length).toBeGreaterThanOrEqual(2);
 			}, 30_000);
 
-			test('--verbose shows author information', async () => {
+			test('--verbose shows author and license information', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -746,6 +746,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 								name: 'test-pkg',
 								version: '1.0.0',
 								author: 'Test Author',
+								license: 'MIT',
 							}),
 							'index.js': 'module.exports = 1;',
 						},
@@ -758,9 +759,11 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				// Should show "by" and author name
 				expect(result.stdout).toContain('by');
 				expect(result.stdout).toContain('Test Author');
+				// Should show license
+				expect(result.stdout).toContain('MIT');
 			});
 
-			test('without --verbose hides author information', async () => {
+			test('without --verbose hides author and license information', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -772,6 +775,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 								name: 'test-pkg',
 								version: '1.0.0',
 								author: 'Test Author',
+								license: 'MIT',
 							}),
 							'index.js': 'module.exports = 1;',
 						},
@@ -783,6 +787,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect('exitCode' in result).toBe(false);
 				// Should NOT show author info without verbose
 				expect(result.stdout).not.toContain('Test Author');
+				// Should NOT show license without verbose (check for MIT not preceded by test-pkg)
+				expect(result.stdout).not.toMatch(/\bby\b/);
 			});
 		});
 

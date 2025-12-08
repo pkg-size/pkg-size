@@ -1,7 +1,7 @@
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
-	green, cyan, bold, underline, dim,
+	green, cyan, bold, underline, dim, yellow,
 } from 'yoctocolors';
 import type { InstalledPackage } from '../../install/types.js';
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
@@ -32,10 +32,18 @@ const formatPackageName = (
 	verbose = false,
 ): string => {
 	const base = formatPackageRef(pkg.name, pkg.version);
-	if (verbose && pkg.author) {
-		return `${base} ${dim('by')} ${pkg.author}`;
+	if (!verbose) {
+		return base;
 	}
-	return base;
+
+	const parts = [base];
+	if (pkg.author) {
+		parts.push(`${dim('by')} ${pkg.author}`);
+	}
+	if (pkg.license) {
+		parts.push(yellow(pkg.license));
+	}
+	return parts.join(' ');
 };
 
 const formatGroupedPath = (
@@ -71,10 +79,18 @@ const formatGroupedPackageName = (
 		: pkg.name;
 
 	const base = formatPackageRef(displayName, pkg.version);
-	if (verbose && pkg.author) {
-		return `  ${base} ${dim('by')} ${pkg.author}`;
+	if (!verbose) {
+		return `  ${base}`;
 	}
-	return `  ${base}`;
+
+	const parts = [base];
+	if (pkg.author) {
+		parts.push(`${dim('by')} ${pkg.author}`);
+	}
+	if (pkg.license) {
+		parts.push(yellow(pkg.license));
+	}
+	return `  ${parts.join(' ')}`;
 };
 
 type RenderOptions = {
