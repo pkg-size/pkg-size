@@ -16,6 +16,8 @@ export type InstalledPackage = {
 	license?: string;
 	author?: string;
 	path: PackageReference[];
+	dependencySize: number;
+	dependencyCount: number;
 };
 
 export type NodeModulesAnalysis = {

@@ -1,16 +1,25 @@
 import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
-import {
-	green, cyan, bold, underline, dim, yellow,
-} from 'yoctocolors';
+import ansis, {
+	green, bold, underline, dim, yellow,
+} from 'ansis';
 import type { InstalledPackage } from '../../install/types.js';
+
+const orange = ansis.hex('#FFA500');
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
 
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
+const formatDependencyInfo = (pkg: InstalledPackage): string => {
+	if (pkg.dependencyCount === 0) {
+		return `${('Dependencies:')} ${dim('0')}`;
+	}
+	return `${('Dependencies:')} ${dim(`${pkg.dependencyCount} (${formatSize(pkg.dependencySize)})`)}`;
+};
+
 const formatPackageRef = (name: string, version: string): string => {
-	const versionSuffix = version ? ` ${dim(version)}` : '';
-	return `${cyan(name)}${versionSuffix}`;
+	const versionSuffix = version ? ` v${(version)}` : '';
+	return orange(`${(name)}${versionSuffix}`);
 };
 
 const formatPath = (
@@ -19,17 +28,17 @@ const formatPath = (
 	const parts: string[] = [];
 
 	for (const parent of pkg.path) {
-		parts.push(formatPackageRef(parent.name, parent.version));
+		parts.push((parent.name + ' ' + parent.version));
 	}
 
-	return `${parts.join(' → ')} ↴`;
+	return parts.join(' → ');
 };
 
 const formatPackageName = (
 	pkg: InstalledPackage,
 	verbose = false,
 ): string => {
-	const base = formatPackageRef(pkg.name, pkg.version);
+	const base = underline(formatPackageRef(pkg.name, pkg.version));
 	if (!verbose) {
 		return base;
 	}
@@ -61,7 +70,7 @@ const formatGroupedPath = (
 		parts.push(formatPackageRef(getDisplayName(parent.name), parent.version));
 	}
 
-	return `  ${parts.join(' → ')} ↴`;
+	return parts.join(' → ');
 };
 
 const formatGroupedPackageName = (
@@ -94,16 +103,21 @@ type RenderOptions = {
 	verbose?: boolean;
 };
 
+const formatPercentage = (size: number, totalSize: number): string => {
+	const percentage = (size / totalSize) * 100;
+	return `${percentage.toFixed(1)}%`;
+};
+
 const createTable = (): SimpleTable => {
-	const table = new SimpleTable();
+	const table = new SimpleTable({ columnPadding: 2 });
 	table.header(
+		{
+			text: green('%'),
+			align: 'right' as const,
+		},
 		{
 			text: green('Package'),
 			maxWidth: Infinity,
-		},
-		{
-			text: green('Size'),
-			align: 'right' as const,
 		},
 	);
 	return table;
@@ -121,8 +135,12 @@ const printTable = (
 
 	table.row();
 	table.row(
+		underline('100%'),
 		bold('Total'),
+	);
+	table.row(
 		underline(formatSize(totalSize)),
+		'',
 	);
 
 	console.log(`${table.toString()}\n`);
@@ -143,15 +161,23 @@ export const renderPackagesTable = (
 			table.row();
 		}
 
-		// Show path on separate dimmed line above package when verbose
-		if (options.verbose && pkg.path.length > 0) {
-			table.row(dim(formatPath(pkg)));
+		table.row(
+			formatPercentage(pkg.size, totalSize),
+			formatPackageName(pkg, options.verbose),
+		);
+
+		// Show size and path underneath package when verbose
+		if (options.verbose) {
+			const pathPart = pkg.path.length > 0
+				? `${bold('Installed by:')} ${formatPath(pkg)}`
+				: '';
+			table.row(formatSize(pkg.size), pathPart);
 		}
 
-		table.row(
-			formatPackageName(pkg, options.verbose),
-			formatSize(pkg.size),
-		);
+		// Show dependency info underneath package when verbose
+		if (options.verbose) {
+			table.row('', formatDependencyInfo(pkg));
+		}
 	}
 
 	printTable(table, totalSize, options);
@@ -173,7 +199,7 @@ export const renderGroupedPackagesTable = (
 
 	for (const [groupKey, groupData] of sortedGroups) {
 		// Group header
-		table.row(bold(groupKey), dim(formatSize(groupData.totalSize)));
+		table.row(dim(formatPercentage(groupData.totalSize, totalSize)), bold(groupKey));
 
 		// Sort packages within group
 		groupData.packages.sort(comparePackages(sortProperty));
@@ -186,15 +212,23 @@ export const renderGroupedPackagesTable = (
 				table.row();
 			}
 
-			// Show path on separate dimmed line above package when verbose
-			if (options.verbose && pkg.path.length > 0) {
-				table.row(dim(formatGroupedPath(pkg, groupKey, groupBy)));
+			table.row(
+				formatPercentage(pkg.size, totalSize),
+				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
+			);
+
+			// Show size and path underneath package when verbose
+			if (options.verbose) {
+				const pathPart = pkg.path.length > 0
+					? `  ${bold('Installed by:')} ${formatGroupedPath(pkg, groupKey, groupBy)}`
+					: '';
+				table.row(formatSize(pkg.size), pathPart);
 			}
 
-			table.row(
-				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
-				formatSize(pkg.size),
-			);
+			// Show dependency info underneath package when verbose
+			if (options.verbose) {
+				table.row('', `  ${formatDependencyInfo(pkg)}`);
+			}
 		}
 
 		// Empty row after each group

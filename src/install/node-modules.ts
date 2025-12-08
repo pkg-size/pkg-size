@@ -154,6 +154,8 @@ const collectNestedPackages = async (
 						size,
 						files,
 						path: parentPath,
+						dependencySize: 0,
+						dependencyCount: 0,
 						...metadata,
 					};
 					packages.push(pkg);
@@ -178,6 +180,8 @@ const collectNestedPackages = async (
 				size,
 				files,
 				path: parentPath,
+				dependencySize: 0,
+				dependencyCount: 0,
 				...metadata,
 			};
 			packages.push(pkg);
@@ -237,6 +241,8 @@ const collectPackagesFlat = async (
 						size,
 						files,
 						path: [],
+						dependencySize: 0,
+						dependencyCount: 0,
 						...metadata,
 					});
 				}
@@ -251,6 +257,8 @@ const collectPackagesFlat = async (
 				size,
 				files,
 				path: [],
+				dependencySize: 0,
+				dependencyCount: 0,
 				...metadata,
 			});
 		}
@@ -427,6 +435,8 @@ const getPnpmPackages = async (
 							size,
 							files,
 							path: dependencyPath,
+							dependencySize: 0,
+							dependencyCount: 0,
 							...metadata,
 						});
 					}
@@ -447,6 +457,8 @@ const getPnpmPackages = async (
 					size,
 					files,
 					path: dependencyPath,
+					dependencySize: 0,
+					dependencyCount: 0,
 					...metadata,
 				});
 			}
@@ -465,6 +477,62 @@ const getFlatPackages = async (
 	return packages;
 };
 
+type DependencyStats = {
+	size: number;
+	count: number;
+};
+
+// Calculate dependency sizes and counts for all packages using path data
+const calculateDependencySizes = (packages: InstalledPackage[]): void => {
+	// Build children map: parent name -> child packages
+	const childrenMap = new Map<string, InstalledPackage[]>();
+
+	for (const pkg of packages) {
+		if (pkg.path.length > 0) {
+			// Immediate parent is the last element in path
+			const parent = pkg.path[pkg.path.length - 1].name;
+			if (!childrenMap.has(parent)) {
+				childrenMap.set(parent, []);
+			}
+			childrenMap.get(parent)!.push(pkg);
+		}
+	}
+
+	// Recursively calculate dependency size and count with deduplication
+	const calculateStats = (
+		packageName: string,
+		visited: Set<string>,
+	): DependencyStats => {
+		if (visited.has(packageName)) {
+			return { size: 0, count: 0 };
+		}
+		visited.add(packageName);
+
+		const children = childrenMap.get(packageName);
+		if (!children || children.length === 0) {
+			return { size: 0, count: 0 };
+		}
+
+		let totalSize = 0;
+		let totalCount = 0;
+		for (const child of children) {
+			totalSize += child.size;
+			totalCount += 1;
+			const childStats = calculateStats(child.name, visited);
+			totalSize += childStats.size;
+			totalCount += childStats.count;
+		}
+		return { size: totalSize, count: totalCount };
+	};
+
+	// Set dependencySize and dependencyCount for each package
+	for (const pkg of packages) {
+		const stats = calculateStats(pkg.name, new Set());
+		pkg.dependencySize = stats.size;
+		pkg.dependencyCount = stats.count;
+	}
+};
+
 export const getNodeModulesPackages = async (
 	nodeModulesPath: string,
 	packageManager?: string,
@@ -474,36 +542,41 @@ export const getNodeModulesPackages = async (
 		return [];
 	}
 
+	let packages: InstalledPackage[];
+
 	// If package manager is known, use the appropriate strategy
 	if (packageManager === 'npm') {
-		return getNpmNestedPackages(nodeModulesPath);
-	}
-
-	if (packageManager === 'pnpm') {
+		packages = await getNpmNestedPackages(nodeModulesPath);
+	} else if (packageManager === 'pnpm') {
 		const pnpmPath = path.join(nodeModulesPath, '.pnpm');
-		return getPnpmPackages(pnpmPath);
-	}
+		packages = await getPnpmPackages(pnpmPath);
+	} else {
+		// For yarn or unknown, check filesystem structure
+		const pnpmPath = path.join(nodeModulesPath, '.pnpm');
+		const isPnpm = await fsExists(pnpmPath);
 
-	// For yarn or unknown, check filesystem structure
-	const pnpmPath = path.join(nodeModulesPath, '.pnpm');
-	const isPnpm = await fsExists(pnpmPath);
-
-	if (isPnpm) {
-		return getPnpmPackages(pnpmPath);
-	}
-
-	// Check for nested node_modules (npm nested strategy)
-	const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
-	for (const entry of entries) {
-		if (entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.startsWith('@')) {
-			const nestedPath = path.join(nodeModulesPath, entry.name, 'node_modules');
-			const hasNested = await fsExists(nestedPath);
-			if (hasNested) {
-				return getNpmNestedPackages(nodeModulesPath);
+		if (isPnpm) {
+			packages = await getPnpmPackages(pnpmPath);
+		} else {
+			// Check for nested node_modules (npm nested strategy)
+			const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
+			let hasNested = false;
+			for (const entry of entries) {
+				if (entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.startsWith('@')) {
+					const nestedPath = path.join(nodeModulesPath, entry.name, 'node_modules');
+					hasNested = await fsExists(nestedPath);
+					break; // Only check first package
+				}
 			}
-			break; // Only check first package
+
+			packages = hasNested
+				? await getNpmNestedPackages(nodeModulesPath)
+				: await getFlatPackages(nodeModulesPath);
 		}
 	}
 
-	return getFlatPackages(nodeModulesPath);
+	// Calculate dependency sizes for all packages
+	calculateDependencySizes(packages);
+
+	return packages;
 };

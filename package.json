@@ -51,6 +51,7 @@
 		"@types/npm-packlist": "^7.0.3",
 		"@types/tar": "^6.1.13",
 		"@types/tar-fs": "^2.0.4",
+		"ansis": "^4.2.0",
 		"brotli-size": "^4.0.0",
 		"byte-size": "^9.0.1",
 		"clean-pkg-json": "^1.3.0",
