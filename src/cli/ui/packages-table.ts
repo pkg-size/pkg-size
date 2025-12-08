@@ -1,6 +1,6 @@
 import byteSize from 'byte-size';
 import ansis, {
-	green, bold, underline, dim, yellow,
+	green, bold, dim, yellow,
 } from 'ansis';
 import type { InstalledPackage } from '../../install/types.js';
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
@@ -188,8 +188,10 @@ export const renderPackagesTable = (
 
 	const rows: Row[] = [];
 
-	// Header
-	rows.push([green('%'), green('Package')]);
+	// Header with total size and package count
+	const packageCount = packages.length.toLocaleString();
+	const packageLabel = packages.length === 1 ? 'Package' : 'Packages';
+	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)]);
 	rows.push(['', '']);
 
 	for (let i = 0; i < packages.length; i += 1) {
@@ -219,11 +221,6 @@ export const renderPackagesTable = (
 		}
 	}
 
-	// Footer
-	rows.push(['', '']);
-	rows.push([underline('100%'), bold('Total')]);
-	rows.push([underline(formatSize(totalSize)), '']);
-
 	printRows(rows);
 	console.log('');
 };
@@ -242,8 +239,16 @@ export const renderGroupedPackagesTable = (
 
 	const rows: Row[] = [];
 
-	// Header
-	rows.push([green('%'), green('Package')]);
+	// Count total packages across all groups
+	let totalPackages = 0;
+	for (const groupData of Object.values(groups)) {
+		totalPackages += groupData.packages.length;
+	}
+
+	// Header with total size and package count
+	const packageCount = totalPackages.toLocaleString();
+	const packageLabel = totalPackages === 1 ? 'Package' : 'Packages';
+	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)]);
 	rows.push(['', '']);
 
 	// Sort groups by total size descending
@@ -288,10 +293,6 @@ export const renderGroupedPackagesTable = (
 		// Empty row after each group
 		rows.push(['', '']);
 	}
-
-	// Footer
-	rows.push([underline('100%'), bold('Total')]);
-	rows.push([underline(formatSize(totalSize)), '']);
 
 	printRows(rows);
 	console.log('');
