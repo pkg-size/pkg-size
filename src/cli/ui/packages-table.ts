@@ -4,9 +4,11 @@ import ansis, {
 	green, bold, underline, dim, yellow,
 } from 'ansis';
 import type { InstalledPackage } from '../../install/types.js';
+import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
+import terminalLink from 'terminal-link';
 
 const orange = ansis.hex('#FFA500');
-import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
+
 
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
@@ -18,8 +20,8 @@ const formatDependencyInfo = (pkg: InstalledPackage): string => {
 };
 
 const formatPackageRef = (name: string, version: string): string => {
-	const versionSuffix = version ? ` v${(version)}` : '';
-	return orange(`${(name)}${versionSuffix}`);
+	const nameWithVersion = orange(name + (version ? ` v${version}` : ''))
+	return terminalLink(nameWithVersion, `https://www.npmjs.com/package/${name}/v/${version}`);
 };
 
 const formatPath = (
@@ -38,7 +40,7 @@ const formatPackageName = (
 	pkg: InstalledPackage,
 	verbose = false,
 ): string => {
-	const base = underline(formatPackageRef(pkg.name, pkg.version));
+	const base = (formatPackageRef(pkg.name, pkg.version));
 	if (!verbose) {
 		return base;
 	}

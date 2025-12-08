@@ -36,7 +36,7 @@
 	},
 	"packageManager": "pnpm@10.24.0",
 	"scripts": {
-		"build": "pkgroll --minify --clean-dist",
+		"build": "pkgroll --export-condition=node --minify --clean-dist",
 		"lint": "lintroll --cache",
 		"test": "tsx tests",
 		"type-check": "tsc",
@@ -69,6 +69,7 @@
 		"p-map": "^7.0.4",
 		"pkgroll": "^2.21.4",
 		"tar-fs": "^3.1.1",
+		"terminal-link": "^5.0.0",
 		"tsx": "^4.21.0",
 		"type-fest": "^5.3.0",
 		"typescript": "^5.9.3",
