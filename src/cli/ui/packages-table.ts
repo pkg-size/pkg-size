@@ -5,33 +5,22 @@ import ansis, {
 } from 'ansis';
 import type { InstalledPackage } from '../../install/types.js';
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
+import { parseAuthor } from '../../utils/parse-author.js';
 import terminalLink from 'terminal-link';
 
 const orange = ansis.hex('#FFA500');
 
-
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
 const formatAuthor = (author: string): string | null => {
-	// Strip email in angle brackets: "Name <email>" → "Name"
-	let name = author.replace(/<[^>]+>/g, '').trim();
-
-	// Check for URL in parentheses: "Name (url)"
-	const urlMatch = name.match(/^(.+?)\s*\((.+)\)$/);
-	if (urlMatch) {
-		const [, authorName, url] = urlMatch;
-		if (url.startsWith('http://') || url.startsWith('https://')) {
-			return terminalLink(authorName.trim(), url);
-		}
-		return authorName.trim();
-	}
-
-	// Skip if what remains is just an email (no name)
-	if (!name || name.includes('@')) {
+	const parsed = parseAuthor(author);
+	if (!parsed) {
 		return null;
 	}
-
-	return name;
+	if (parsed.url) {
+		return terminalLink(parsed.name, parsed.url);
+	}
+	return parsed.name;
 };
 
 const formatDependencyInfo = (pkg: InstalledPackage): string => {
