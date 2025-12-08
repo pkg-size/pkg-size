@@ -1,4 +1,3 @@
-import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import ansis, {
 	green, bold, underline, dim, yellow,
@@ -31,7 +30,7 @@ const formatDependencyInfo = (pkg: InstalledPackage): string => {
 };
 
 const formatPackageRef = (name: string, version: string): string => {
-	const nameWithVersion = orange(name + (version ? ` v${version}` : ''))
+	const nameWithVersion = orange(name + (version ? ` v${version}` : ''));
 	return terminalLink(nameWithVersion, `https://www.npmjs.com/package/${name}/v/${version}`);
 };
 
@@ -41,7 +40,7 @@ const formatPath = (
 	const parts: string[] = [];
 
 	for (const parent of pkg.path) {
-		parts.push((parent.name + ' v' + parent.version));
+		parts.push(parent.name + ' v' + parent.version);
 	}
 
 	return parts.join(' → ');
@@ -51,7 +50,7 @@ const formatPackageName = (
 	pkg: InstalledPackage,
 	verbose = false,
 ): string => {
-	const base = (formatPackageRef(pkg.name, pkg.version));
+	const base = formatPackageRef(pkg.name, pkg.version);
 	if (!verbose) {
 		return base;
 	}
@@ -148,42 +147,33 @@ const formatPercentage = (size: number, totalSize: number): string => {
 	return '0%';
 };
 
-const createTable = (): SimpleTable => {
-	const table = new SimpleTable({ columnPadding: 2 });
-	table.header(
-		{
-			text: green('%'),
-			align: 'right' as const,
-		},
-		{
-			text: green('Package'),
-			maxWidth: Infinity,
-		},
-	);
-	return table;
+const padLeft = (text: string, width: number): string => {
+	const textWidth = ansis.strip(text).length;
+	const padding = Math.max(0, width - textWidth);
+	return ' '.repeat(padding) + text;
 };
 
-const printTable = (
-	table: SimpleTable,
-	totalSize: number,
-	options: RenderOptions,
-): void => {
-	if (options.statusMessage) {
-		console.log(dim(options.statusMessage));
+type Row = [string, string];
+
+const printRows = (rows: Row[], columnGap = 2): void => {
+	// Calculate max width of first column
+	let maxFirstColWidth = 0;
+	for (const [first] of rows) {
+		const width = ansis.strip(first).length;
+		if (width > maxFirstColWidth) {
+			maxFirstColWidth = width;
+		}
 	}
-	console.log('');
 
-	table.row();
-	table.row(
-		underline('100%'),
-		bold('Total'),
-	);
-	table.row(
-		underline(formatSize(totalSize)),
-		'',
-	);
+	const gap = ' '.repeat(columnGap);
 
-	console.log(`${table.toString()}\n`);
+	for (const [first, second] of rows) {
+		if (!first && !second) {
+			console.log('');
+		} else {
+			console.log(padLeft(first, maxFirstColWidth) + gap + second);
+		}
+	}
 };
 
 export const renderPackagesTable = (
@@ -191,36 +181,51 @@ export const renderPackagesTable = (
 	totalSize: number,
 	options: RenderOptions = {},
 ): void => {
-	const table = createTable();
+	if (options.statusMessage) {
+		console.log(dim(options.statusMessage));
+	}
+	console.log('');
+
+	const rows: Row[] = [];
+
+	// Header
+	rows.push([green('%'), green('Package')]);
+	rows.push(['', '']);
 
 	for (let i = 0; i < packages.length; i += 1) {
 		const pkg = packages[i];
 
 		// Empty line above each package only in verbose mode (skip first)
 		if (options.verbose && i > 0) {
-			table.row();
+			rows.push(['', '']);
 		}
 
-		table.row(
+		rows.push([
 			formatPercentage(pkg.size, totalSize),
 			formatPackageName(pkg, options.verbose),
-		);
+		]);
 
 		// Show size and path underneath package when verbose
 		if (options.verbose) {
 			const pathPart = pkg.path.length > 0
 				? `${bold('Installed by:')} ${dim(formatPath(pkg))}`
 				: '';
-			table.row(formatSize(pkg.size), pathPart);
+			rows.push([formatSize(pkg.size), pathPart]);
 		}
 
 		// Show dependency info underneath package when verbose
 		if (options.verbose) {
-			table.row('', formatDependencyInfo(pkg));
+			rows.push(['', formatDependencyInfo(pkg)]);
 		}
 	}
 
-	printTable(table, totalSize, options);
+	// Footer
+	rows.push(['', '']);
+	rows.push([underline('100%'), bold('Total')]);
+	rows.push([underline(formatSize(totalSize)), '']);
+
+	printRows(rows);
+	console.log('');
 };
 
 export const renderGroupedPackagesTable = (
@@ -230,7 +235,16 @@ export const renderGroupedPackagesTable = (
 	sortProperty: string,
 	options: RenderOptions = {},
 ): void => {
-	const table = createTable();
+	if (options.statusMessage) {
+		console.log(dim(options.statusMessage));
+	}
+	console.log('');
+
+	const rows: Row[] = [];
+
+	// Header
+	rows.push([green('%'), green('Package')]);
+	rows.push(['', '']);
 
 	// Sort groups by total size descending
 	const sortedGroups = Object.entries(groups).sort(
@@ -239,7 +253,7 @@ export const renderGroupedPackagesTable = (
 
 	for (const [groupKey, groupData] of sortedGroups) {
 		// Group header
-		table.row(dim(formatPercentage(groupData.totalSize, totalSize)), bold(groupKey));
+		rows.push([dim(formatPercentage(groupData.totalSize, totalSize)), bold(groupKey)]);
 
 		// Sort packages within group
 		groupData.packages.sort(comparePackages(sortProperty));
@@ -249,31 +263,36 @@ export const renderGroupedPackagesTable = (
 
 			// Empty line above each package only in verbose mode (skip first)
 			if (options.verbose && i > 0) {
-				table.row();
+				rows.push(['', '']);
 			}
 
-			table.row(
+			rows.push([
 				formatPercentage(pkg.size, totalSize),
 				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
-			);
+			]);
 
 			// Show size and path underneath package when verbose
 			if (options.verbose) {
 				const pathPart = pkg.path.length > 0
 					? `  ${bold('Installed by:')} ${formatGroupedPath(pkg, groupKey, groupBy)}`
 					: '';
-				table.row(formatSize(pkg.size), pathPart);
+				rows.push([formatSize(pkg.size), pathPart]);
 			}
 
 			// Show dependency info underneath package when verbose
 			if (options.verbose) {
-				table.row('', `  ${formatDependencyInfo(pkg)}`);
+				rows.push(['', `  ${formatDependencyInfo(pkg)}`]);
 			}
 		}
 
 		// Empty row after each group
-		table.row();
+		rows.push(['', '']);
 	}
 
-	printTable(table, totalSize, options);
+	// Footer
+	rows.push([underline('100%'), bold('Total')]);
+	rows.push([underline(formatSize(totalSize)), '']);
+
+	printRows(rows);
+	console.log('');
 };

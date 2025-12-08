@@ -1,5 +1,5 @@
 import { command } from 'cleye';
-import { dim } from 'yoctocolors';
+import { dim } from 'ansis';
 import { getInstallSize } from '../../install/index.js';
 import { detectPackageManager } from '../../utils/package-manager.js';
 import {
