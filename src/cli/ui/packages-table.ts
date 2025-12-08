@@ -136,9 +136,11 @@ export const renderPackagesTable = (
 ): void => {
 	const table = createTable();
 
-	for (const pkg of packages) {
-		// Empty line above each package only in verbose mode
-		if (options.verbose) {
+	for (let i = 0; i < packages.length; i += 1) {
+		const pkg = packages[i];
+
+		// Empty line above each package only in verbose mode (skip first)
+		if (options.verbose && i > 0) {
 			table.row();
 		}
 
@@ -177,9 +179,11 @@ export const renderGroupedPackagesTable = (
 		// Sort packages within group
 		groupData.packages.sort(comparePackages(sortProperty));
 
-		for (const pkg of groupData.packages) {
-			// Empty line above each package only in verbose mode
-			if (options.verbose) {
+		for (let i = 0; i < groupData.packages.length; i += 1) {
+			const pkg = groupData.packages[i];
+
+			// Empty line above each package only in verbose mode (skip first)
+			if (options.verbose && i > 0) {
 				table.row();
 			}
 
