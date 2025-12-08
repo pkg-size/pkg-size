@@ -257,18 +257,55 @@ const collectPackagesFlat = async (
 	}
 };
 
+// Parse pnpm directory name to extract package name and version
+// Format: {package-name}@{version} or @{scope}+{name}@{version}
+const parsePnpmDirName = (
+	dirName: string,
+): PackageReference | undefined => {
+	// Handle scoped packages: @scope+name@version
+	if (dirName.startsWith('@')) {
+		const atIndex = dirName.lastIndexOf('@');
+		if (atIndex > 0) {
+			const nameWithPlus = dirName.slice(0, atIndex);
+			const version = dirName.slice(atIndex + 1);
+			// Convert @scope+name to @scope/name
+			const name = nameWithPlus.replace('+', '/');
+			return {
+				name,
+				version,
+			};
+		}
+		return undefined;
+	}
+
+	// Handle regular packages: name@version
+	const atIndex = dirName.lastIndexOf('@');
+	if (atIndex > 0) {
+		const name = dirName.slice(0, atIndex);
+		const version = dirName.slice(atIndex + 1);
+		return {
+			name,
+			version,
+		};
+	}
+	return undefined;
+};
+
 // Get packages from pnpm's .pnpm directory (content-addressable store)
+// Build dependency paths by analyzing symlinks in each package's node_modules
 const getPnpmPackages = async (
 	pnpmPath: string,
 ): Promise<InstalledPackage[]> => {
-	const packages: InstalledPackage[] = [];
-
 	const exists = await fsExists(pnpmPath);
 	if (!exists) {
-		return packages;
+		return [];
 	}
 
 	const entries = await fsp.readdir(pnpmPath, { withFileTypes: true });
+
+	// First pass: build a map of which packages depend on which
+	// Key: package name, Value: array of parent packages that depend on it
+	const dependencyMap = new Map<string, PackageReference[]>();
 
 	for (const entry of entries) {
 		if (!entry.isDirectory()) {
@@ -280,12 +317,108 @@ const getPnpmPackages = async (
 			continue;
 		}
 
-		// Read the actual package name from the filesystem
-		// Structure: .pnpm/{hash}/node_modules/{actual-package-name}
+		// Parse parent package info from directory name
+		const parentRef = parsePnpmDirName(entry.name);
+		if (!parentRef) {
+			continue;
+		}
+
+		// Check node_modules inside this package directory
 		const innerNodeModules = path.join(pnpmPath, entry.name, 'node_modules');
 		const innerExists = await fsExists(innerNodeModules);
-		if (innerExists) {
-			await collectPackagesFlat(innerNodeModules, packages);
+		if (!innerExists) {
+			continue;
+		}
+
+		// Find symlinks (dependencies) in this node_modules
+		const innerEntries = await fsp.readdir(innerNodeModules, { withFileTypes: true });
+		for (const innerEntry of innerEntries) {
+			// Handle scoped packages
+			if (innerEntry.name.startsWith('@') && innerEntry.isDirectory()) {
+				const scopedPath = path.join(innerNodeModules, innerEntry.name);
+				const scopedEntries = await fsp.readdir(scopedPath, { withFileTypes: true });
+				for (const scopedEntry of scopedEntries) {
+					if (scopedEntry.isSymbolicLink()) {
+						const depName = `${innerEntry.name}/${scopedEntry.name}`;
+						const parents = dependencyMap.get(depName) || [];
+						parents.push(parentRef);
+						dependencyMap.set(depName, parents);
+					}
+				}
+			} else if (innerEntry.isSymbolicLink()) {
+				// Regular package symlink = dependency of parent
+				const parents = dependencyMap.get(innerEntry.name) || [];
+				parents.push(parentRef);
+				dependencyMap.set(innerEntry.name, parents);
+			}
+		}
+	}
+
+	// Second pass: collect packages with their paths
+	const packages: InstalledPackage[] = [];
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) {
+			continue;
+		}
+
+		if (entry.name === 'node_modules' || entry.name === 'lock.yaml') {
+			continue;
+		}
+
+		const innerNodeModules = path.join(pnpmPath, entry.name, 'node_modules');
+		const innerExists = await fsExists(innerNodeModules);
+		if (!innerExists) {
+			continue;
+		}
+
+		const innerEntries = await fsp.readdir(innerNodeModules, { withFileTypes: true });
+		for (const innerEntry of innerEntries) {
+			// Handle scoped packages
+			if (innerEntry.name.startsWith('@') && innerEntry.isDirectory()) {
+				const scopedPath = path.join(innerNodeModules, innerEntry.name);
+				const scopedEntries = await fsp.readdir(scopedPath, { withFileTypes: true });
+				for (const scopedEntry of scopedEntries) {
+					// Only process real directories (not symlinks)
+					if (scopedEntry.isDirectory() && !scopedEntry.isSymbolicLink()) {
+						const pkgPath = path.join(scopedPath, scopedEntry.name);
+						const packageName = `${innerEntry.name}/${scopedEntry.name}`;
+						const [{ size, files }, metadata] = await Promise.all([
+							getDirectorySizeExcludingNodeModules(pkgPath),
+							getPackageMetadata(pkgPath),
+						]);
+
+						// Get parent path from dependency map
+						const parents = dependencyMap.get(packageName) || [];
+
+						packages.push({
+							name: packageName,
+							size,
+							files,
+							path: parents,
+							...metadata,
+						});
+					}
+				}
+			} else if (innerEntry.isDirectory() && !innerEntry.isSymbolicLink()) {
+				// Real directory = the package itself
+				const pkgPath = path.join(innerNodeModules, innerEntry.name);
+				const [{ size, files }, metadata] = await Promise.all([
+					getDirectorySizeExcludingNodeModules(pkgPath),
+					getPackageMetadata(pkgPath),
+				]);
+
+				// Get parent path from dependency map
+				const parents = dependencyMap.get(innerEntry.name) || [];
+
+				packages.push({
+					name: innerEntry.name,
+					size,
+					files,
+					path: parents,
+					...metadata,
+				});
+			}
 		}
 	}
 

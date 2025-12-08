@@ -13,50 +13,73 @@ const formatPackageRef = (name: string, version: string): string => {
 	return `${cyan(name)}${versionSuffix}`;
 };
 
-const formatPackageName = (
+const formatPath = (
 	pkg: InstalledPackage,
 ): string => {
 	const parts: string[] = [];
 
-	// Add parent packages from path
 	for (const parent of pkg.path) {
 		parts.push(formatPackageRef(parent.name, parent.version));
 	}
 
-	// Add the package itself
 	parts.push(formatPackageRef(pkg.name, pkg.version));
 
 	return parts.join(' → ');
+};
+
+const formatPackageName = (
+	pkg: InstalledPackage,
+	verbose = false,
+): string => {
+	const base = formatPackageRef(pkg.name, pkg.version);
+	if (verbose && pkg.author) {
+		return `${base} ${dim('by')} ${pkg.author}`;
+	}
+	return base;
+};
+
+const formatGroupedPath = (
+	pkg: InstalledPackage,
+	groupKey: string,
+	groupBy: GroupBy,
+): string => {
+	const getDisplayName = (name: string): string => (
+		groupBy === 'scope' && name.startsWith('@')
+			? name.slice(groupKey.length + 1)
+			: name
+	);
+
+	const parts: string[] = [];
+
+	for (const parent of pkg.path) {
+		parts.push(formatPackageRef(getDisplayName(parent.name), parent.version));
+	}
+
+	parts.push(formatPackageRef(getDisplayName(pkg.name), pkg.version));
+
+	return `  ${parts.join(' → ')}`;
 };
 
 const formatGroupedPackageName = (
 	pkg: InstalledPackage,
 	groupKey: string,
 	groupBy: GroupBy,
+	verbose = false,
 ): string => {
-	// For scope grouping, show shortened names for scoped packages
 	const displayName = groupBy === 'scope' && pkg.name.startsWith('@')
 		? pkg.name.slice(groupKey.length + 1)
 		: pkg.name;
 
-	const parts: string[] = [];
-
-	// Add parent packages from path
-	for (const parent of pkg.path) {
-		const parentDisplayName = groupBy === 'scope' && parent.name.startsWith('@')
-			? parent.name.slice(groupKey.length + 1)
-			: parent.name;
-		parts.push(formatPackageRef(parentDisplayName, parent.version));
+	const base = formatPackageRef(displayName, pkg.version);
+	if (verbose && pkg.author) {
+		return `  ${base} ${dim('by')} ${pkg.author}`;
 	}
-
-	// Add the package itself
-	parts.push(formatPackageRef(displayName, pkg.version));
-
-	return `  ${parts.join(' → ')}`;
+	return `  ${base}`;
 };
 
 type RenderOptions = {
 	statusMessage?: string;
+	verbose?: boolean;
 };
 
 const createTable = (): SimpleTable => {
@@ -98,10 +121,20 @@ export const renderPackagesTable = (
 	const table = createTable();
 
 	for (const pkg of packages) {
+		// Empty line above each package only in verbose mode
+		if (options.verbose) {
+			table.row();
+		}
+
 		table.row(
-			formatPackageName(pkg),
+			formatPackageName(pkg, options.verbose),
 			formatSize(pkg.size),
 		);
+
+		// Show path on separate dimmed line when verbose and package has dependencies
+		if (options.verbose && pkg.path.length > 0) {
+			table.row(dim(formatPath(pkg)));
+		}
 	}
 
 	printTable(table, totalSize, options);
@@ -129,10 +162,20 @@ export const renderGroupedPackagesTable = (
 		groupData.packages.sort(comparePackages(sortProperty));
 
 		for (const pkg of groupData.packages) {
+			// Empty line above each package only in verbose mode
+			if (options.verbose) {
+				table.row();
+			}
+
 			table.row(
-				formatGroupedPackageName(pkg, groupKey, groupBy),
+				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
 				formatSize(pkg.size),
 			);
+
+			// Show path on separate dimmed line when verbose and package has dependencies
+			if (options.verbose && pkg.path.length > 0) {
+				table.row(dim(formatGroupedPath(pkg, groupKey, groupBy)));
+			}
 		}
 
 		// Empty row after each group

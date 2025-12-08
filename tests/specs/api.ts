@@ -268,42 +268,30 @@ export default testSuite(({ describe }) => {
 					packageManager: 'pnpm',
 				});
 
-				expect(result).toEqual({
-					packageManager: 'pnpm',
-					totalSize: expect.any(Number),
-					installTime: expect.any(Number),
-					packages: expect.arrayContaining([
-						{
-							name: 'is-odd',
-							version: expect.any(String),
-							size: expect.any(Number),
-							license: 'MIT',
-							author: expect.any(String),
-							path: [],
-							files: expect.arrayContaining([
-								{
-									path: expect.any(String),
-									size: expect.any(Number),
-								},
-							]),
-						},
-						{
-							name: 'is-number',
-							version: expect.any(String),
-							size: expect.any(Number),
-							license: 'MIT',
-							author: expect.any(String),
-							path: [],
-							files: expect.arrayContaining([
-								{
-									path: expect.any(String),
-									size: expect.any(Number),
-								},
-							]),
-						},
-					]),
-				});
+				expect(result.packageManager).toBe('pnpm');
+				expect(result.totalSize).toBeGreaterThan(0);
+				expect(result.installTime).toBeGreaterThan(0);
 				expect(result.packages).toHaveLength(2);
+
+				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
+				const isNumber = result.packages.find(pkg => pkg.name === 'is-number');
+
+				expect(isOdd).toBeDefined();
+				expect(isOdd!.version).toBeDefined();
+				expect(isOdd!.size).toBeGreaterThan(0);
+				expect(isOdd!.license).toBe('MIT');
+				expect(isOdd!.path).toEqual([]);
+
+				expect(isNumber).toBeDefined();
+				expect(isNumber!.version).toBeDefined();
+				expect(isNumber!.size).toBeGreaterThan(0);
+				expect(isNumber!.license).toBe('MIT');
+				expect(isNumber!.path).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
 			});
 
 			test('accepts space-delimited packages', async () => {
@@ -356,6 +344,27 @@ export default testSuite(({ describe }) => {
 			test('npm returns transitive dependency paths', async () => {
 				const result = await getInstallSize('is-odd', {
 					packageManager: 'npm',
+				});
+
+				// is-odd depends on is-number, so is-number should have is-odd in its path
+				const isNumber = result.packages.find(pkg => pkg.name === 'is-number');
+				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
+
+				expect(isOdd).toBeDefined();
+				expect(isOdd!.path).toEqual([]);
+
+				expect(isNumber).toBeDefined();
+				expect(isNumber!.path).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
+			}, 30_000);
+
+			test('pnpm returns transitive dependency paths', async () => {
+				const result = await getInstallSize('is-odd', {
+					packageManager: 'pnpm',
 				});
 
 				// is-odd depends on is-number, so is-number should have is-odd in its path

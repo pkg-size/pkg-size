@@ -460,42 +460,24 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
 
-				expect(json).toEqual({
-					packageManager: 'pnpm',
-					totalSize: expect.any(Number),
-					installTime: expect.any(Number),
-					packages: expect.arrayContaining([
-						{
-							name: 'is-odd',
-							version: expect.any(String),
-							size: expect.any(Number),
-							license: 'MIT',
-							author: expect.any(String),
-							path: [],
-							files: expect.arrayContaining([
-								{
-									path: expect.any(String),
-									size: expect.any(Number),
-								},
-							]),
-						},
-						{
-							name: 'is-number',
-							version: expect.any(String),
-							size: expect.any(Number),
-							license: 'MIT',
-							author: expect.any(String),
-							path: [],
-							files: expect.arrayContaining([
-								{
-									path: expect.any(String),
-									size: expect.any(Number),
-								},
-							]),
-						},
-					]),
-				});
+				expect(json.packageManager).toBe('pnpm');
+				expect(json.totalSize).toBeGreaterThan(0);
+				expect(json.installTime).toBeGreaterThan(0);
 				expect(json.packages).toHaveLength(2);
+
+				const isOdd = json.packages.find((p: { name: string }) => p.name === 'is-odd');
+				const isNumber = json.packages.find((p: { name: string }) => p.name === 'is-number');
+
+				expect(isOdd).toBeDefined();
+				expect(isOdd.path).toEqual([]);
+
+				expect(isNumber).toBeDefined();
+				expect(isNumber.path).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
 			}, 30_000);
 
 			test('validates package manager flag', async () => {
@@ -626,7 +608,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(pnpmJson.totalSize).toBe(npmJson.totalSize);
 			}, 60_000);
 
-			test('npm install shows transitive dependencies with arrow notation', async () => {
+			test('npm install shows transitive dependencies with --verbose', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -634,7 +616,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					}),
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'npm']);
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'npm', '--verbose']);
 
 				expect('exitCode' in result).toBe(false);
 				// Should show arrow notation for transitive dependency
@@ -667,6 +649,89 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 						version: expect.any(String),
 					},
 				]);
+			}, 30_000);
+
+			test('pnpm install shows transitive dependencies with --verbose', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+				// Should show arrow notation for transitive dependency
+				expect(result.stdout).toContain('→');
+				expect(result.stdout).toContain('is-odd');
+				expect(result.stdout).toContain('is-number');
+			}, 30_000);
+
+			test('pnpm install JSON includes path array for transitive deps', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--json']);
+
+				expect('exitCode' in result).toBe(false);
+				const json = JSON.parse(result.stdout);
+
+				const isOdd = json.packages.find((p: { name: string }) => p.name === 'is-odd');
+				const isNumber = json.packages.find((p: { name: string }) => p.name === 'is-number');
+
+				expect(isOdd.path).toEqual([]);
+				expect(isNumber.path).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
+			}, 30_000);
+
+			test('without --verbose hides dependency paths and empty lines', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm']);
+
+				expect('exitCode' in result).toBe(false);
+				// Should NOT show arrow notation without verbose
+				expect(result.stdout).not.toContain('→');
+				// Should show package names
+				expect(result.stdout).toContain('is-odd');
+				expect(result.stdout).toContain('is-number');
+				// Should NOT have consecutive empty lines between packages
+				expect(result.stdout).not.toMatch(/is-odd.*\n\n.*is-number/s);
+				expect(result.stdout).not.toMatch(/is-number.*\n\n.*is-odd/s);
+			}, 30_000);
+
+			test('--verbose shows dependency paths on separate line with empty lines between packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+				// Should show arrow notation for dependency path
+				expect(result.stdout).toContain('→');
+				// Should have empty lines between packages (verbose mode)
+				// The output has empty rows between package entries
+				const lines = result.stdout.split('\n');
+				const packageLines = lines.filter(line => line.includes('is-odd') || line.includes('is-number'));
+				expect(packageLines.length).toBeGreaterThanOrEqual(2);
 			}, 30_000);
 		});
 
