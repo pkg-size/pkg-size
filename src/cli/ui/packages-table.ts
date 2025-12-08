@@ -12,6 +12,28 @@ const orange = ansis.hex('#FFA500');
 
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
+const formatAuthor = (author: string): string | null => {
+	// Strip email in angle brackets: "Name <email>" → "Name"
+	let name = author.replace(/<[^>]+>/g, '').trim();
+
+	// Check for URL in parentheses: "Name (url)"
+	const urlMatch = name.match(/^(.+?)\s*\((.+)\)$/);
+	if (urlMatch) {
+		const [, authorName, url] = urlMatch;
+		if (url.startsWith('http://') || url.startsWith('https://')) {
+			return terminalLink(authorName.trim(), url);
+		}
+		return authorName.trim();
+	}
+
+	// Skip if what remains is just an email (no name)
+	if (!name || name.includes('@')) {
+		return null;
+	}
+
+	return name;
+};
+
 const formatDependencyInfo = (pkg: InstalledPackage): string => {
 	if (pkg.dependencyCount === 0) {
 		return `${('Dependencies:')} ${dim('0')}`;
@@ -47,7 +69,10 @@ const formatPackageName = (
 
 	const parts = [base];
 	if (pkg.author) {
-		parts.push(`${dim('by')} ${pkg.author}`);
+		const formattedAuthor = formatAuthor(pkg.author);
+		if (formattedAuthor) {
+			parts.push(`${dim('by')} ${formattedAuthor}`);
+		}
 	}
 	if (pkg.license) {
 		parts.push(yellow(pkg.license));
@@ -92,7 +117,10 @@ const formatGroupedPackageName = (
 
 	const parts = [base];
 	if (pkg.author) {
-		parts.push(`${dim('by')} ${pkg.author}`);
+		const formattedAuthor = formatAuthor(pkg.author);
+		if (formattedAuthor) {
+			parts.push(`${dim('by')} ${formattedAuthor}`);
+		}
 	}
 	if (pkg.license) {
 		parts.push(yellow(pkg.license));
