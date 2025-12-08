@@ -733,6 +733,57 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const packageLines = lines.filter(line => line.includes('is-odd') || line.includes('is-number'));
 				expect(packageLines.length).toBeGreaterThanOrEqual(2);
 			}, 30_000);
+
+			test('--verbose shows author information', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'test-pkg': {
+							'package.json': definePackageJson({
+								name: 'test-pkg',
+								version: '1.0.0',
+								author: 'Test Author',
+							}),
+							'index.js': 'module.exports = 1;',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+				// Should show "by" and author name
+				expect(result.stdout).toContain('by');
+				expect(result.stdout).toContain('Test Author');
+			});
+
+			test('without --verbose hides author information', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'test-pkg': {
+							'package.json': definePackageJson({
+								name: 'test-pkg',
+								version: '1.0.0',
+								author: 'Test Author',
+							}),
+							'index.js': 'module.exports = 1;',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze']);
+
+				expect('exitCode' in result).toBe(false);
+				// Should NOT show author info without verbose
+				expect(result.stdout).not.toContain('Test Author');
+			});
 		});
 
 		describe('analyze', ({ test }) => {
