@@ -619,9 +619,9 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'npm', '--verbose']);
 
 				expect('exitCode' in result).toBe(false);
-				// Should show arrow notation for transitive dependency
-				expect(result.stdout).toContain('→');
-				// is-number is a dependency of is-odd, should show: is-odd → is-number
+				// Should show path prefix for transitive dependency
+				expect(result.stdout).toContain('↴');
+				// is-number is a dependency of is-odd, should show path: └ is-odd
 				expect(result.stdout).toContain('is-odd');
 				expect(result.stdout).toContain('is-number');
 			}, 30_000);
@@ -662,8 +662,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--verbose']);
 
 				expect('exitCode' in result).toBe(false);
-				// Should show arrow notation for transitive dependency
-				expect(result.stdout).toContain('→');
+				// Should show path prefix for transitive dependency
+				expect(result.stdout).toContain('↴');
 				expect(result.stdout).toContain('is-odd');
 				expect(result.stdout).toContain('is-number');
 			}, 30_000);
@@ -704,8 +704,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm']);
 
 				expect('exitCode' in result).toBe(false);
-				// Should NOT show arrow notation without verbose
-				expect(result.stdout).not.toContain('→');
+				// Should NOT show path prefix without verbose
+				expect(result.stdout).not.toContain('↴');
 				// Should show package names
 				expect(result.stdout).toContain('is-odd');
 				expect(result.stdout).toContain('is-number');
@@ -725,8 +725,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--verbose']);
 
 				expect('exitCode' in result).toBe(false);
-				// Should show arrow notation for dependency path
-				expect(result.stdout).toContain('→');
+				// Should show path prefix for dependency path
+				expect(result.stdout).toContain('↴');
 				// Should have empty lines between packages (verbose mode)
 				// The output has empty rows between package entries
 				const lines = result.stdout.split('\n');

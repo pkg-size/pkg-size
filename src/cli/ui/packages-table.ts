@@ -22,9 +22,7 @@ const formatPath = (
 		parts.push(formatPackageRef(parent.name, parent.version));
 	}
 
-	parts.push(formatPackageRef(pkg.name, pkg.version));
-
-	return parts.join(' → ');
+	return `${parts.join(' → ')} ↴`;
 };
 
 const formatPackageName = (
@@ -63,9 +61,7 @@ const formatGroupedPath = (
 		parts.push(formatPackageRef(getDisplayName(parent.name), parent.version));
 	}
 
-	parts.push(formatPackageRef(getDisplayName(pkg.name), pkg.version));
-
-	return `  ${parts.join(' → ')}`;
+	return `  ${parts.join(' → ')} ↴`;
 };
 
 const formatGroupedPackageName = (
@@ -101,7 +97,10 @@ type RenderOptions = {
 const createTable = (): SimpleTable => {
 	const table = new SimpleTable();
 	table.header(
-		green('Package'),
+		{
+			text: green('Package'),
+			maxWidth: Infinity,
+		},
 		{
 			text: green('Size'),
 			align: 'right' as const,
@@ -144,15 +143,15 @@ export const renderPackagesTable = (
 			table.row();
 		}
 
+		// Show path on separate dimmed line above package when verbose
+		if (options.verbose && pkg.path.length > 0) {
+			table.row(dim(formatPath(pkg)));
+		}
+
 		table.row(
 			formatPackageName(pkg, options.verbose),
 			formatSize(pkg.size),
 		);
-
-		// Show path on separate dimmed line when verbose and package has dependencies
-		if (options.verbose && pkg.path.length > 0) {
-			table.row(dim(formatPath(pkg)));
-		}
 	}
 
 	printTable(table, totalSize, options);
@@ -187,15 +186,15 @@ export const renderGroupedPackagesTable = (
 				table.row();
 			}
 
+			// Show path on separate dimmed line above package when verbose
+			if (options.verbose && pkg.path.length > 0) {
+				table.row(dim(formatGroupedPath(pkg, groupKey, groupBy)));
+			}
+
 			table.row(
 				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
 				formatSize(pkg.size),
 			);
-
-			// Show path on separate dimmed line when verbose and package has dependencies
-			if (options.verbose && pkg.path.length > 0) {
-				table.row(dim(formatGroupedPath(pkg, groupKey, groupBy)));
-			}
 		}
 
 		// Empty row after each group

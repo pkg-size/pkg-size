@@ -258,37 +258,68 @@ const collectPackagesFlat = async (
 };
 
 // Parse pnpm directory name to extract package name and version
-// Format: {package-name}@{version} or @{scope}+{name}@{version}
+// Format: {name}@{version} or @{scope}+{name}@{version}
+// Can include peer dep info: {name}@{version}_{peer-deps}
+// Example: nx@21.6.4_@swc-node+register@1.9.2_@swc+core@1.12.11
 const parsePnpmDirName = (
 	dirName: string,
 ): PackageReference | undefined => {
-	// Handle scoped packages: @scope+name@version
-	if (dirName.startsWith('@')) {
-		const atIndex = dirName.lastIndexOf('@');
-		if (atIndex > 0) {
-			const nameWithPlus = dirName.slice(0, atIndex);
-			const version = dirName.slice(atIndex + 1);
-			// Convert @scope+name to @scope/name
-			const name = nameWithPlus.replace('+', '/');
-			return {
-				name,
-				version,
-			};
+	// Find the @ that starts the version (followed by a digit)
+	// This distinguishes the version @ from scoped package @ and peer dep @
+	let atIndex = -1;
+
+	for (let i = 1; i < dirName.length - 1; i += 1) {
+		if (dirName[i] === '@' && /\d/.test(dirName[i + 1])) {
+			atIndex = i;
+			break;
 		}
+	}
+
+	if (atIndex === -1) {
 		return undefined;
 	}
 
-	// Handle regular packages: name@version
-	const atIndex = dirName.lastIndexOf('@');
-	if (atIndex > 0) {
-		const name = dirName.slice(0, atIndex);
-		const version = dirName.slice(atIndex + 1);
-		return {
-			name,
-			version,
-		};
+	const nameWithPlus = dirName.slice(0, atIndex);
+	let version = dirName.slice(atIndex + 1);
+
+	// Remove peer dep info (everything after first _)
+	const underscoreIndex = version.indexOf('_');
+	if (underscoreIndex !== -1) {
+		version = version.slice(0, underscoreIndex);
 	}
-	return undefined;
+
+	// Convert @scope+name to @scope/name for scoped packages
+	const name = nameWithPlus.replace('+', '/');
+
+	return {
+		name,
+		version,
+	};
+};
+
+// Recursively build the full dependency path from root to a package
+const buildDependencyPath = (
+	packageName: string,
+	dependencyMap: Map<string, PackageReference[]>,
+	visited: Set<string> = new Set(),
+): PackageReference[] => {
+	// Prevent cycles
+	if (visited.has(packageName)) {
+		return [];
+	}
+	visited.add(packageName);
+
+	const parents = dependencyMap.get(packageName);
+	if (!parents || parents.length === 0) {
+		// Root package - no parent
+		return [];
+	}
+
+	// Take first parent and recursively build its path
+	const parent = parents[0];
+	const parentPath = buildDependencyPath(parent.name, dependencyMap, visited);
+
+	return [...parentPath, parent];
 };
 
 // Get packages from pnpm's .pnpm directory (content-addressable store)
@@ -388,14 +419,14 @@ const getPnpmPackages = async (
 							getPackageMetadata(pkgPath),
 						]);
 
-						// Get parent path from dependency map
-						const parents = dependencyMap.get(packageName) || [];
+						// Build full dependency path from root to this package
+						const dependencyPath = buildDependencyPath(packageName, dependencyMap);
 
 						packages.push({
 							name: packageName,
 							size,
 							files,
-							path: parents,
+							path: dependencyPath,
 							...metadata,
 						});
 					}
@@ -408,14 +439,14 @@ const getPnpmPackages = async (
 					getPackageMetadata(pkgPath),
 				]);
 
-				// Get parent path from dependency map
-				const parents = dependencyMap.get(innerEntry.name) || [];
+				// Build full dependency path from root to this package
+				const dependencyPath = buildDependencyPath(innerEntry.name, dependencyMap);
 
 				packages.push({
 					name: innerEntry.name,
 					size,
 					files,
-					path: parents,
+					path: dependencyPath,
 					...metadata,
 				});
 			}
