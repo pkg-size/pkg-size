@@ -1,13 +1,16 @@
 import byteSize from 'byte-size';
 import ansis, {
 	green, bold, dim, yellow,
+	bgYellowBright,
+	underline,
 } from 'ansis';
 import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
 import { parseAuthor } from '../../utils/parse-author.js';
 
-const orange = ansis.hex('#FFA500');
+const orange = ansis.hex('#ffAA300');
+const amberEarth = ansis.hex('#E57C04');
 
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
@@ -25,22 +28,22 @@ const formatAuthor = (author: string): string | null => {
 const formatEmojiLinks = (pkg: InstalledPackage): string => {
 	// 📦 unpkg.com (always present)
 	const links = [
-		terminalLink('📦', `https://unpkg.com/browse/${pkg.name}@${pkg.version}/`),
+		(terminalLink('📦', `https://unpkg.com/browse/${pkg.name}@${pkg.version}/`)),
 	];
 
 	// 😺 GitHub repo
 	if (pkg.repository) {
-		links.push(terminalLink('😺', pkg.repository));
+		links.push((terminalLink('😺', pkg.repository)));
 	}
 
 	// 🌐 Homepage
 	if (pkg.homepage) {
-		links.push(terminalLink('🌐', pkg.homepage));
+		links.push((terminalLink('🌐', pkg.homepage)));
 	}
 
 	// ♥️ Funding
 	if (pkg.funding) {
-		links.push(terminalLink('♥️', pkg.funding));
+		links.push((terminalLink('♥️', pkg.funding)));
 	}
 
 	return links.join(' ');
@@ -89,7 +92,7 @@ const formatPackageName = (
 	if (pkg.license) {
 		parts.push(yellow(pkg.license));
 	}
-	parts.push(formatEmojiLinks(pkg));
+	parts.push('| ' + (formatEmojiLinks(pkg)));
 	return parts.join(' ');
 };
 
@@ -217,7 +220,13 @@ export const renderPackagesTable = (
 	// Header with total size and package count
 	const packageCount = packages.length.toLocaleString();
 	const packageLabel = packages.length === 1 ? 'Package' : 'Packages';
-	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)], ['', '']);
+	rows.push(
+		[
+			underline(bold(amberEarth(formatSize(totalSize)))),
+			underline(bold(amberEarth(`${packageCount} ${packageLabel}`))),
+		],
+		['', ''],
+	);
 
 	for (let i = 0; i < packages.length; i += 1) {
 		const pkg = packages[i];
@@ -228,7 +237,7 @@ export const renderPackagesTable = (
 		}
 
 		rows.push([
-			formatPercentage(pkg.size, totalSize),
+			bold(formatPercentage(pkg.size, totalSize)),
 			formatPackageName(pkg, options.verbose),
 		]);
 
@@ -236,7 +245,7 @@ export const renderPackagesTable = (
 		if (options.verbose) {
 			const pathPart = pkg.path.length > 0
 				? `${bold('Installed by:')} ${dim(formatPath(pkg))}`
-				: '';
+				: `${bold('Installed by:')} ${dim('package.json')}`;
 			rows.push([formatSize(pkg.size), pathPart]);
 		}
 
@@ -304,7 +313,7 @@ export const renderGroupedPackagesTable = (
 			if (options.verbose) {
 				const pathPart = pkg.path.length > 0
 					? `  ${bold('Installed by:')} ${formatGroupedPath(pkg, groupKey, groupBy)}`
-					: '';
+					: `  ${bold('Installed by:')} ${dim('package.json')}`;
 				rows.push([formatSize(pkg.size), pathPart]);
 			}
 
