@@ -15,6 +15,9 @@ type PackageMetadata = {
 	version: string;
 	license?: string;
 	author?: string;
+	repository?: string;
+	homepage?: string;
+	funding?: string;
 };
 
 const normalizeAuthor = (
@@ -56,6 +59,68 @@ const normalizeLicense = (
 	return undefined;
 };
 
+// Repository can be string or object { type, url }
+const normalizeRepository = (
+	repository: PackageJson['repository'],
+): string | undefined => {
+	if (!repository) {
+		return undefined;
+	}
+	if (typeof repository === 'string') {
+		// Handle shorthand like "github:user/repo"
+		if (repository.startsWith('github:')) {
+			return `https://github.com/${repository.slice(7)}`;
+		}
+		if (repository.startsWith('gitlab:')) {
+			return `https://gitlab.com/${repository.slice(7)}`;
+		}
+		if (repository.startsWith('bitbucket:')) {
+			return `https://bitbucket.org/${repository.slice(10)}`;
+		}
+		// Plain "user/repo" format typically means GitHub
+		if (/^[\w-]+\/[\w-]+$/.test(repository)) {
+			return `https://github.com/${repository}`;
+		}
+		return repository;
+	}
+	if (typeof repository.url === 'string') {
+		let { url } = repository;
+		// Convert git:// and git+https:// to https://
+		url = url.replace(/^git\+/, '').replace(/^git:\/\//, 'https://');
+		// Remove .git suffix
+		url = url.replace(/\.git$/, '');
+		return url;
+	}
+	return undefined;
+};
+
+// Funding can be string, object { url }, or array
+const normalizeFunding = (
+	funding: PackageJson['funding'],
+): string | undefined => {
+	if (!funding) {
+		return undefined;
+	}
+	if (typeof funding === 'string') {
+		return funding;
+	}
+	if (Array.isArray(funding)) {
+		// Take first funding URL
+		const first = funding[0];
+		if (typeof first === 'string') {
+			return first;
+		}
+		if (first && typeof first.url === 'string') {
+			return first.url;
+		}
+		return undefined;
+	}
+	if (typeof funding.url === 'string') {
+		return funding.url;
+	}
+	return undefined;
+};
+
 const getPackageMetadata = async (
 	packageDirectory: string,
 ): Promise<PackageMetadata> => {
@@ -72,6 +137,9 @@ const getPackageMetadata = async (
 			version: packageJson.version ?? '',
 			license: normalizeLicense(packageJson.license, packageJson.licenses),
 			author: normalizeAuthor(packageJson.author),
+			repository: normalizeRepository(packageJson.repository),
+			homepage: packageJson.homepage,
+			funding: normalizeFunding(packageJson.funding),
 		};
 	} catch {
 		return { version: '' };
@@ -490,7 +558,7 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 	for (const pkg of packages) {
 		if (pkg.path.length > 0) {
 			// Immediate parent is the last element in path
-			const parent = pkg.path[pkg.path.length - 1].name;
+			const parent = pkg.path.at(-1)!.name;
 			if (!childrenMap.has(parent)) {
 				childrenMap.set(parent, []);
 			}
@@ -504,13 +572,19 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 		visited: Set<string>,
 	): DependencyStats => {
 		if (visited.has(packageName)) {
-			return { size: 0, count: 0 };
+			return {
+				size: 0,
+				count: 0,
+			};
 		}
 		visited.add(packageName);
 
 		const children = childrenMap.get(packageName);
 		if (!children || children.length === 0) {
-			return { size: 0, count: 0 };
+			return {
+				size: 0,
+				count: 0,
+			};
 		}
 
 		let totalSize = 0;
@@ -522,7 +596,10 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 			totalSize += childStats.size;
 			totalCount += childStats.count;
 		}
-		return { size: totalSize, count: totalCount };
+		return {
+			size: totalSize,
+			count: totalCount,
+		};
 	};
 
 	// Set dependencySize and dependencyCount for each package

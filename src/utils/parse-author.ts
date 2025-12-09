@@ -5,7 +5,7 @@ export type ParsedAuthor = {
 
 export const parseAuthor = (author: string): ParsedAuthor => {
 	// Strip email in angle brackets: "Name <email>" → "Name"
-	let name = author.replace(/<[^>]+>/g, '').trim();
+	const name = author.replaceAll(/<[^>]+>/g, '').trim();
 
 	// Check for URL in parentheses: "Name (url)"
 	const urlMatch = name.match(/^(.+?)\s*\((.+)\)$/);
@@ -16,7 +16,10 @@ export const parseAuthor = (author: string): ParsedAuthor => {
 			return null;
 		}
 		if (url.startsWith('http://') || url.startsWith('https://')) {
-			return { name: trimmedName, url };
+			return {
+				name: trimmedName,
+				url,
+			};
 		}
 		return { name: trimmedName };
 	}

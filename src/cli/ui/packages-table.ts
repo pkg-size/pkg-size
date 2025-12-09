@@ -2,10 +2,10 @@ import byteSize from 'byte-size';
 import ansis, {
 	green, bold, dim, yellow,
 } from 'ansis';
+import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
 import { parseAuthor } from '../../utils/parse-author.js';
-import terminalLink from 'terminal-link';
 
 const orange = ansis.hex('#FFA500');
 
@@ -20,6 +20,30 @@ const formatAuthor = (author: string): string | null => {
 		return terminalLink(parsed.name, parsed.url);
 	}
 	return parsed.name;
+};
+
+const formatEmojiLinks = (pkg: InstalledPackage): string => {
+	// 📦 unpkg.com (always present)
+	const links = [
+		terminalLink('📦', `https://unpkg.com/browse/${pkg.name}@${pkg.version}/`),
+	];
+
+	// 😺 GitHub repo
+	if (pkg.repository) {
+		links.push(terminalLink('😺', pkg.repository));
+	}
+
+	// 🌐 Homepage
+	if (pkg.homepage) {
+		links.push(terminalLink('🌐', pkg.homepage));
+	}
+
+	// ♥️ Funding
+	if (pkg.funding) {
+		links.push(terminalLink('♥️', pkg.funding));
+	}
+
+	return links.join(' ');
 };
 
 const formatDependencyInfo = (pkg: InstalledPackage): string => {
@@ -40,7 +64,7 @@ const formatPath = (
 	const parts: string[] = [];
 
 	for (const parent of pkg.path) {
-		parts.push(parent.name + ' v' + parent.version);
+		parts.push(`${parent.name} v${parent.version}`);
 	}
 
 	return parts.join(' → ');
@@ -65,6 +89,7 @@ const formatPackageName = (
 	if (pkg.license) {
 		parts.push(yellow(pkg.license));
 	}
+	parts.push(formatEmojiLinks(pkg));
 	return parts.join(' ');
 };
 
@@ -113,6 +138,7 @@ const formatGroupedPackageName = (
 	if (pkg.license) {
 		parts.push(yellow(pkg.license));
 	}
+	parts.push(formatEmojiLinks(pkg));
 	return `  ${parts.join(' ')}`;
 };
 
@@ -191,8 +217,7 @@ export const renderPackagesTable = (
 	// Header with total size and package count
 	const packageCount = packages.length.toLocaleString();
 	const packageLabel = packages.length === 1 ? 'Package' : 'Packages';
-	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)]);
-	rows.push(['', '']);
+	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)], ['', '']);
 
 	for (let i = 0; i < packages.length; i += 1) {
 		const pkg = packages[i];
@@ -248,8 +273,7 @@ export const renderGroupedPackagesTable = (
 	// Header with total size and package count
 	const packageCount = totalPackages.toLocaleString();
 	const packageLabel = totalPackages === 1 ? 'Package' : 'Packages';
-	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)]);
-	rows.push(['', '']);
+	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)], ['', '']);
 
 	// Sort groups by total size descending
 	const sortedGroups = Object.entries(groups).sort(

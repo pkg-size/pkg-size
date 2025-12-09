@@ -15,6 +15,9 @@ export type InstalledPackage = {
 	files: PackageFile[];
 	license?: string;
 	author?: string;
+	repository?: string;
+	homepage?: string;
+	funding?: string;
 	path: PackageReference[];
 	dependencySize: number;
 	dependencyCount: number;
