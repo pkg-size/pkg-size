@@ -87,10 +87,9 @@ await describe('parseAuthor', ({ test }) => {
 	});
 
 	// Special cases
-	test('name with Twitter-style handle', () => {
-		// "Tobias Koppers @sokra" - has @ but also has a name before it
-		// Current implementation will return null because name includes @
-		expect(parseAuthor('Tobias Koppers @sokra')).toBeNull();
+	test('name with Twitter-style handle strips the handle', () => {
+		// "Tobias Koppers @sokra" → strips "@sokra" handle, keeps name
+		expect(parseAuthor('Tobias Koppers @sokra')).toEqual({ name: 'Tobias Koppers' });
 	});
 
 	test('Korean name with email', () => {
