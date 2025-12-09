@@ -7,8 +7,9 @@ import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
 import { parseAuthor } from '../../utils/parse-author.js';
+import { printRows } from './table.js';
 
-const orange = ansis.hex('#ffAA300');
+const orange = ansis.hex('#FFAA30');
 const amberEarth = ansis.hex('#E57C04');
 
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
@@ -175,34 +176,6 @@ const formatPercentage = (size: number, totalSize: number): string => {
 	return '0%';
 };
 
-const padLeft = (text: string, width: number): string => {
-	const textWidth = ansis.strip(text).length;
-	const padding = Math.max(0, width - textWidth);
-	return ' '.repeat(padding) + text;
-};
-
-type Row = [string, string];
-
-const printRows = (rows: Row[], columnGap = 2): void => {
-	// Calculate max width of first column
-	let maxFirstColWidth = 0;
-	for (const [first] of rows) {
-		const width = ansis.strip(first).length;
-		if (width > maxFirstColWidth) {
-			maxFirstColWidth = width;
-		}
-	}
-
-	const gap = ' '.repeat(columnGap);
-
-	for (const [first, second] of rows) {
-		if (!first && !second) {
-			console.log('');
-		} else {
-			console.log(padLeft(first, maxFirstColWidth) + gap + second);
-		}
-	}
-};
 
 export const renderPackagesTable = (
 	packages: InstalledPackage[],
@@ -214,7 +187,7 @@ export const renderPackagesTable = (
 	}
 	console.log('');
 
-	const rows: Row[] = [];
+	const rows: string[][] = [];
 
 	// Header with total size and package count
 	const packageCount = packages.length.toLocaleString();
@@ -256,7 +229,7 @@ export const renderPackagesTable = (
 		}
 	}
 
-	printRows(rows);
+	printRows(rows, { align: ['right', 'left'] });
 	console.log('');
 };
 
@@ -272,7 +245,7 @@ export const renderGroupedPackagesTable = (
 	}
 	console.log('');
 
-	const rows: Row[] = [];
+	const rows: string[][] = [];
 
 	// Count total packages across all groups
 	let totalPackages = 0;
@@ -330,6 +303,6 @@ export const renderGroupedPackagesTable = (
 		rows.push(['', '']);
 	}
 
-	printRows(rows);
+	printRows(rows, { align: ['right', 'left'] });
 	console.log('');
 };

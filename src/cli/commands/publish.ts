@@ -1,10 +1,11 @@
 import { command } from 'cleye';
 import byteSize from 'byte-size';
-import ansis, {
+import {
 	green, cyan, bold, underline, yellow,
 } from 'ansis';
 import { getPackageSize } from '../../local/index.js';
 import type { FileEntry } from '../../local/types.js';
+import { printRows } from '../ui/table.js';
 
 const compressions = ['gzip', 'brotli'] as const;
 
@@ -60,45 +61,6 @@ const getSortProperty = (
 	return 'path';
 };
 
-const padLeft = (text: string, width: number): string => {
-	const textWidth = ansis.strip(text).length;
-	const padding = Math.max(0, width - textWidth);
-	return ' '.repeat(padding) + text;
-};
-
-type Row = string[];
-
-const printRows = (rows: Row[], columnGap = 2): void => {
-	// Calculate max width for each column
-	const columnWidths: number[] = [];
-	for (const row of rows) {
-		for (let i = 0; i < row.length; i += 1) {
-			const width = ansis.strip(row[i]).length;
-			if (!columnWidths[i] || width > columnWidths[i]) {
-				columnWidths[i] = width;
-			}
-		}
-	}
-
-	const gap = ' '.repeat(columnGap);
-
-	for (const row of rows) {
-		if (row.every(cell => !cell)) {
-			console.log('');
-		} else {
-			// First column left-aligned, rest right-aligned
-			const formatted = row.map((cell, i) => {
-				if (i === 0) {
-					// Left align first column
-					const padding = columnWidths[i] - ansis.strip(cell).length;
-					return cell + ' '.repeat(padding);
-				}
-				return padLeft(cell, columnWidths[i]);
-			});
-			console.log(formatted.join(gap));
-		}
-	}
-};
 
 export const publishCommand = command({
 	name: 'publish',
@@ -164,7 +126,7 @@ export const publishCommand = command({
 	console.log(green(bold('Tarball size')));
 	console.log(`${getSize(distData.tarballSize)}\n`);
 
-	const rows: Row[] = [];
+	const rows: string[][] = [];
 
 	// Header
 	const headers = compression
@@ -198,6 +160,6 @@ export const publishCommand = command({
 		: ['', underline(getSize(totalSize))];
 	rows.push(totalsRow);
 
-	printRows(rows);
+	printRows(rows, { align: ['left', 'right', 'right'] });
 	console.log('');
 });
