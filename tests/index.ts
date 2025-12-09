@@ -2,6 +2,9 @@ import { describe } from 'manten';
 import getNode from 'get-node';
 import apiTests from './specs/api.js';
 import cliTests from './specs/cli.js';
+import lockfileParserTests from './specs/lockfile-parser.js';
+import pnpmParserTests from './specs/pnpm-parser.js';
+import packageUtilsTests from './specs/package-utils.js';
 import { createPkgSizeCli } from './utils/pkg-size.js';
 
 const nodeVersions = [
@@ -29,6 +32,9 @@ const nodeVersions = [
 
 			runTestSuite(apiTests);
 			runTestSuite(cliTests, cli);
+			runTestSuite(lockfileParserTests);
+			runTestSuite(pnpmParserTests);
+			runTestSuite(packageUtilsTests);
 		});
 	}
 })();

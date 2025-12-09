@@ -30,7 +30,7 @@ import { getDirectorySizeExcludingNodeModules, getPackageMetadata } from '../pac
 //
 // Note: pnpm may hash long directory names (>120 chars) with MD5, making them
 // unparseable. These directories are skipped gracefully.
-const parsePnpmDirName = (
+export const parsePnpmDirName = (
 	dirName: string,
 ): PackageReference | undefined => {
 	// Remove peer dep suffix first (everything after first _)
