@@ -710,8 +710,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('is-odd');
 				expect(result.stdout).toContain('is-number');
 				// Should NOT have consecutive empty lines between packages
-				expect(result.stdout).not.toMatch(/is-odd.*\n\n.*is-number/s);
-				expect(result.stdout).not.toMatch(/is-number.*\n\n.*is-odd/s);
+				expect(result.stdout).not.toMatch(/is-odd[^\n]*\n\n[^\n]*is-number/);
+				expect(result.stdout).not.toMatch(/is-number[^\n]*\n\n[^\n]*is-odd/);
 			}, 30_000);
 
 			test('--verbose shows dependency paths on separate line with empty lines between packages', async () => {

@@ -8,10 +8,11 @@ export const parseAuthor = (author: string): ParsedAuthor => {
 	const name = author.replaceAll(/<[^>]+>/g, '').trim();
 
 	// Check for URL in parentheses: "Name (url)"
-	const urlMatch = name.match(/^(.+?)\s*\((.+)\)$/);
+	// Regex avoids backtracking by not allowing overlap between name capture and whitespace
+	const urlMatch = name.match(/^([^(]+)\(([^)]+)\)$/);
 	if (urlMatch) {
 		const [, authorName, url] = urlMatch;
-		const trimmedName = authorName.trim();
+		const trimmedName = authorName.trimEnd();
 		if (!trimmedName) {
 			return null;
 		}

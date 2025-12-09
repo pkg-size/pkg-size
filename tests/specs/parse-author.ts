@@ -1,5 +1,5 @@
-import { describe, test, expect } from 'manten';
-import { parseAuthor } from '../../src/utils/parse-author.ts';
+import { describe, expect } from 'manten';
+import { parseAuthor } from '../../src/utils/parse-author.js';
 
 await describe('parseAuthor', ({ test }) => {
 	// Plain names

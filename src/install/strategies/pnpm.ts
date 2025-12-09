@@ -1,3 +1,4 @@
+import type { Dirent } from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fsExists } from '../../utils/fs-exists.js';
@@ -106,7 +107,7 @@ const buildDependencyPath = (
 // Build dependency map by analyzing symlinks in each package's node_modules
 const buildDependencyMap = async (
 	pnpmPath: string,
-	entries: fsp.Dirent[],
+	entries: Dirent[],
 ): Promise<Map<string, PackageReference[]>> => {
 	const dependencyMap = new Map<string, PackageReference[]>();
 
@@ -163,7 +164,7 @@ const buildDependencyMap = async (
 // Collect packages from pnpm's .pnpm directory
 const collectPnpmPackages = async (
 	pnpmPath: string,
-	entries: fsp.Dirent[],
+	entries: Dirent[],
 	dependencyMap: Map<string, PackageReference[]>,
 ): Promise<InstalledPackage[]> => {
 	const packages: InstalledPackage[] = [];
@@ -200,7 +201,10 @@ const collectPnpmPackages = async (
 						]);
 
 						// Build full dependency path from root to this package
-						const { path: dependencyPath, additionalParentCount } = buildDependencyPath(packageName, dependencyMap);
+						const { path: dependencyPath, additionalParentCount } = buildDependencyPath(
+							packageName,
+							dependencyMap,
+						);
 
 						packages.push({
 							name: packageName,
@@ -223,7 +227,10 @@ const collectPnpmPackages = async (
 				]);
 
 				// Build full dependency path from root to this package
-				const { path: dependencyPath, additionalParentCount } = buildDependencyPath(innerEntry.name, dependencyMap);
+				const { path: dependencyPath, additionalParentCount } = buildDependencyPath(
+					innerEntry.name,
+					dependencyMap,
+				);
 
 				packages.push({
 					name: innerEntry.name,

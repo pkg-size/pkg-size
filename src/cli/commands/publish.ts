@@ -125,14 +125,14 @@ export const publishCommand = command({
 	console.log(green(bold('Tarball size')));
 	console.log(`${getSize(distData.tarballSize)}\n`);
 
-	const rows: string[][] = [];
-
 	// Header
 	const headers = compression
 		? [green('File'), green('Size'), green(compressionToLabel[compression])]
 		: [green('File'), green('Size')];
-	rows.push(headers);
-	rows.push(headers.map(() => ''));
+	const rows: string[][] = [
+		headers,
+		headers.map(() => ''),
+	];
 
 	let totalSize = 0;
 	let totalCompressed = 0;
