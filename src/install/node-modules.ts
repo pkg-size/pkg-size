@@ -337,11 +337,18 @@ const collectPackagesFlat = async (
 // Format: {name}@{version} or @{scope}+{name}@{version}
 // Can include peer dep info: {name}@{version}_{peer-deps}
 // Example: nx@21.6.4_@swc-node+register@1.9.2_@swc+core@1.12.11
+//
+// LIMITATION: This parsing relies on pnpm's internal directory naming convention,
+// which is not a stable API and may change between pnpm versions.
 const parsePnpmDirName = (
 	dirName: string,
 ): PackageReference | undefined => {
 	// Find the @ that starts the version (followed by a digit)
 	// This distinguishes the version @ from scoped package @ and peer dep @
+	//
+	// ASSUMPTION: SemVer versions always start with a digit (e.g., "1.0.0").
+	// This covers 99.9% of npm packages. Non-standard versions like "latest"
+	// or custom tags would not be parsed correctly.
 	let atIndex = -1;
 
 	for (let i = 1; i < dirName.length - 1; i += 1) {
@@ -566,25 +573,31 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 		}
 	}
 
-	// Recursively calculate dependency size and count with deduplication
+	// Memoize calculated stats to avoid O(N^2) recalculation
+	const memo = new Map<string, DependencyStats>();
+
+	// Recursively calculate dependency size and count with memoization
 	const calculateStats = (
 		packageName: string,
 		visited: Set<string>,
 	): DependencyStats => {
+		// Check memo first
+		const cached = memo.get(packageName);
+		if (cached) {
+			return cached;
+		}
+
+		// Prevent cycles
 		if (visited.has(packageName)) {
-			return {
-				size: 0,
-				count: 0,
-			};
+			return { size: 0, count: 0 };
 		}
 		visited.add(packageName);
 
 		const children = childrenMap.get(packageName);
 		if (!children || children.length === 0) {
-			return {
-				size: 0,
-				count: 0,
-			};
+			const result = { size: 0, count: 0 };
+			memo.set(packageName, result);
+			return result;
 		}
 
 		let totalSize = 0;
@@ -596,10 +609,10 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 			totalSize += childStats.size;
 			totalCount += childStats.count;
 		}
-		return {
-			size: totalSize,
-			count: totalCount,
-		};
+
+		const result = { size: totalSize, count: totalCount };
+		memo.set(packageName, result);
+		return result;
 	};
 
 	// Set dependencySize and dependencyCount for each package

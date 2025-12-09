@@ -12,6 +12,14 @@ import { printRows } from './table.js';
 const orange = ansis.hex('#FFAA30');
 const amberEarth = ansis.hex('#E57C04');
 
+// Link icons (extracted for potential --no-emoji mode support)
+const LINK_ICONS = {
+	unpkg: '📦',
+	repository: '😺',
+	homepage: '🌐',
+	funding: '♥️',
+} as const;
+
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
 const formatAuthor = (author: string): string | null => {
@@ -26,24 +34,24 @@ const formatAuthor = (author: string): string | null => {
 };
 
 const formatEmojiLinks = (pkg: InstalledPackage): string => {
-	// 📦 unpkg.com (always present)
+	// unpkg.com (always present)
 	const links = [
-		(terminalLink('📦', `https://unpkg.com/browse/${pkg.name}@${pkg.version}/`)),
+		terminalLink(LINK_ICONS.unpkg, `https://unpkg.com/browse/${pkg.name}@${pkg.version}/`),
 	];
 
-	// 😺 GitHub repo
+	// GitHub repo
 	if (pkg.repository) {
-		links.push((terminalLink('😺', pkg.repository)));
+		links.push(terminalLink(LINK_ICONS.repository, pkg.repository));
 	}
 
-	// 🌐 Homepage
+	// Homepage
 	if (pkg.homepage) {
-		links.push((terminalLink('🌐', pkg.homepage)));
+		links.push(terminalLink(LINK_ICONS.homepage, pkg.homepage));
 	}
 
-	// ♥️ Funding
+	// Funding
 	if (pkg.funding) {
-		links.push((terminalLink('♥️', pkg.funding)));
+		links.push(terminalLink(LINK_ICONS.funding, pkg.funding));
 	}
 
 	return links.join(' ');

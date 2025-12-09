@@ -1,13 +1,18 @@
 import ansis from 'ansis';
 
+// Using .length instead of string-width because our aligned columns contain
+// only ASCII content (sizes, percentages, package names). Emojis and author
+// names appear at the end of lines, not in fixed-width columns.
+const getTextWidth = (text: string): number => ansis.strip(text).length;
+
 export const padLeft = (text: string, width: number): string => {
-	const textWidth = ansis.strip(text).length;
+	const textWidth = getTextWidth(text);
 	const padding = Math.max(0, width - textWidth);
 	return ' '.repeat(padding) + text;
 };
 
 export const padRight = (text: string, width: number): string => {
-	const textWidth = ansis.strip(text).length;
+	const textWidth = getTextWidth(text);
 	const padding = Math.max(0, width - textWidth);
 	return text + ' '.repeat(padding);
 };
@@ -25,7 +30,7 @@ export const printRows = (rows: string[][], options: PrintRowsOptions = {}): voi
 	const columnWidths: number[] = [];
 	for (const row of rows) {
 		for (let i = 0; i < row.length; i += 1) {
-			const width = ansis.strip(row[i]).length;
+			const width = getTextWidth(row[i]);
 			if (!columnWidths[i] || width > columnWidths[i]) {
 				columnWidths[i] = width;
 			}
