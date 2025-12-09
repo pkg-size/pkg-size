@@ -1,7 +1,6 @@
 import byteSize from 'byte-size';
 import ansis, {
 	green, bold, dim, yellow,
-	bgYellowBright,
 	underline,
 } from 'ansis';
 import terminalLink from 'terminal-link';
@@ -237,7 +236,9 @@ export const renderPackagesTable = (
 		}
 
 		rows.push([
-			bold(formatPercentage(pkg.size, totalSize)),
+			options.verbose
+				? bold(formatPercentage(pkg.size, totalSize))
+				: formatSize(pkg.size),
 			formatPackageName(pkg, options.verbose),
 		]);
 
@@ -305,7 +306,9 @@ export const renderGroupedPackagesTable = (
 			}
 
 			rows.push([
-				formatPercentage(pkg.size, totalSize),
+				options.verbose
+					? formatPercentage(pkg.size, totalSize)
+					: formatSize(pkg.size),
 				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
 			]);
 
