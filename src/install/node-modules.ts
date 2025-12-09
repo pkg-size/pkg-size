@@ -43,13 +43,19 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 
 		// Prevent cycles
 		if (visited.has(packageName)) {
-			return { size: 0, count: 0 };
+			return {
+				size: 0,
+				count: 0,
+			};
 		}
 		visited.add(packageName);
 
 		const children = childrenMap.get(packageName);
 		if (!children || children.length === 0) {
-			const result = { size: 0, count: 0 };
+			const result = {
+				size: 0,
+				count: 0,
+			};
 			memo.set(packageName, result);
 			return result;
 		}
@@ -64,7 +70,10 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 			totalCount += childStats.count;
 		}
 
-		const result = { size: totalSize, count: totalCount };
+		const result = {
+			size: totalSize,
+			count: totalCount,
+		};
 		memo.set(packageName, result);
 		return result;
 	};
@@ -86,11 +95,15 @@ export const getNodeModulesPackages = async (
 		return [];
 	}
 
+	// Derive install directory from node_modules path for lockfile parsing
+	const installDirectory = path.dirname(nodeModulesPath);
+
 	let packages: InstalledPackage[];
 
 	// If package manager is known, use the appropriate strategy
 	if (packageManager === 'npm') {
-		packages = await getNpmNestedPackages(nodeModulesPath);
+		// npm uses flat/hoisted install by default, parse package-lock.json for paths
+		packages = await getFlatPackages(nodeModulesPath, installDirectory);
 	} else if (packageManager === 'pnpm') {
 		const pnpmPath = path.join(nodeModulesPath, '.pnpm');
 		packages = await getPnpmPackages(pnpmPath);
@@ -115,7 +128,7 @@ export const getNodeModulesPackages = async (
 
 			packages = hasNested
 				? await getNpmNestedPackages(nodeModulesPath)
-				: await getFlatPackages(nodeModulesPath);
+				: await getFlatPackages(nodeModulesPath, installDirectory);
 		}
 	}
 

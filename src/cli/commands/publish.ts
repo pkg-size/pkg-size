@@ -61,7 +61,6 @@ const getSortProperty = (
 	return 'path';
 };
 
-
 export const publishCommand = command({
 	name: 'publish',
 	parameters: ['[path]'],

@@ -106,7 +106,7 @@ const formatPackageName = (
 	if (pkg.license) {
 		parts.push(yellow(pkg.license));
 	}
-	parts.push('| ' + (formatEmojiLinks(pkg)));
+	parts.push(`| ${formatEmojiLinks(pkg)}`);
 	return parts.join(' ');
 };
 
@@ -195,7 +195,6 @@ const formatPercentage = (size: number, totalSize: number): string => {
 
 	return '0%';
 };
-
 
 export const renderPackagesTable = (
 	packages: InstalledPackage[],

@@ -76,14 +76,20 @@ const buildDependencyPath = (
 ): DependencyPathResult => {
 	// Prevent cycles
 	if (visited.has(packageName)) {
-		return { path: [], additionalParentCount: 0 };
+		return {
+			path: [],
+			additionalParentCount: 0,
+		};
 	}
 	visited.add(packageName);
 
 	const parents = dependencyMap.get(packageName);
 	if (!parents || parents.length === 0) {
 		// Root package - no parent
-		return { path: [], additionalParentCount: 0 };
+		return {
+			path: [],
+			additionalParentCount: 0,
+		};
 	}
 
 	// Take first parent and recursively build its path

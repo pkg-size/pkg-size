@@ -1,73 +1,49 @@
-import fsp from 'node:fs/promises';
 import path from 'node:path';
-import type { InstalledPackage } from '../types.js';
-import { getDirectorySizeExcludingNodeModules, getPackageMetadata } from '../package-utils.js';
-
-// Collect packages from a directory without recursion (for flat/hoisted structures)
-const collectPackagesFlat = async (
-	directory: string,
-	packages: InstalledPackage[],
-): Promise<void> => {
-	const entries = await fsp.readdir(directory, { withFileTypes: true });
-
-	for (const entry of entries) {
-		if (!entry.isDirectory()) {
-			continue;
-		}
-
-		// Skip hidden folders
-		if (entry.name.startsWith('.')) {
-			continue;
-		}
-
-		const fullPath = path.join(directory, entry.name);
-
-		// Handle scoped packages (@org/pkg)
-		if (entry.name.startsWith('@')) {
-			const scopedEntries = await fsp.readdir(fullPath, { withFileTypes: true });
-			for (const scopedEntry of scopedEntries) {
-				if (scopedEntry.isDirectory()) {
-					const scopedPath = path.join(fullPath, scopedEntry.name);
-					const [{ size, files }, metadata] = await Promise.all([
-						getDirectorySizeExcludingNodeModules(scopedPath),
-						getPackageMetadata(scopedPath),
-					]);
-					packages.push({
-						name: `${entry.name}/${scopedEntry.name}`,
-						size,
-						files,
-						path: [],
-						additionalParentCount: 0,
-						dependencySize: 0,
-						dependencyCount: 0,
-						...metadata,
-					});
-				}
-			}
-		} else {
-			const [{ size, files }, metadata] = await Promise.all([
-				getDirectorySizeExcludingNodeModules(fullPath),
-				getPackageMetadata(fullPath),
-			]);
-			packages.push({
-				name: entry.name,
-				size,
-				files,
-				path: [],
-				additionalParentCount: 0,
-				dependencySize: 0,
-				dependencyCount: 0,
-				...metadata,
-			});
-		}
-	}
-};
+import type { InstalledPackage, PackageReference } from '../types.js';
+import { crawlNodeModulesOnce, getPackageMetadata } from '../package-utils.js';
+import { parseLockfile, buildDependencyPathFromGraph } from '../lockfile-parser.js';
 
 // Get packages from flat node_modules (yarn or npm hoisted)
+// Uses single-crawl optimization: O(DiskLatency + Packages) instead of O(Packages * DiskLatency)
+// Parses lockfile (npm/yarn/pnpm) to build dependency paths for verbose mode
 export const getFlatPackages = async (
 	nodeModulesPath: string,
+	installDirectory?: string,
 ): Promise<InstalledPackage[]> => {
+	// Crawl entire node_modules once and bucket files by package
+	const packageSizes = await crawlNodeModulesOnce(nodeModulesPath);
+
+	// Try to parse lockfile for dependency graph
+	const graph = installDirectory
+		? await parseLockfile(installDirectory)
+		: undefined;
+
+	// Build package list with metadata
 	const packages: InstalledPackage[] = [];
-	await collectPackagesFlat(nodeModulesPath, packages);
+
+	for (const [packageName, { size, files }] of packageSizes) {
+		const packagePath = path.join(nodeModulesPath, packageName);
+		const metadata = await getPackageMetadata(packagePath);
+
+		// Build dependency path from lockfile graph if available
+		const { path: depPath, additionalParentCount } = graph
+			? buildDependencyPathFromGraph(packageName, graph)
+			: {
+				path: [] as PackageReference[],
+				additionalParentCount: 0,
+			};
+
+		packages.push({
+			name: packageName,
+			size,
+			files,
+			path: depPath,
+			additionalParentCount,
+			dependencySize: 0,
+			dependencyCount: 0,
+			...metadata,
+		});
+	}
+
 	return packages;
 };

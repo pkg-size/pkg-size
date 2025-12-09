@@ -66,6 +66,7 @@
 		"nano-spawn": "^2.0.0",
 		"npm-packlist": "^10.0.3",
 		"p-map": "^7.0.4",
+		"parse-lock-files": "^0.1.0",
 		"pkgroll": "^2.21.4",
 		"tar-fs": "^3.1.1",
 		"terminal-link": "^5.0.0",

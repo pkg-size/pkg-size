@@ -68,6 +68,9 @@ importers:
       p-map:
         specifier: ^7.0.4
         version: 7.0.4
+      parse-lock-files:
+        specifier: ^0.1.0
+        version: 0.1.0
       pkgroll:
         specifier: ^2.21.4
         version: 2.21.4(typescript@5.9.3)
@@ -2546,6 +2549,9 @@ packages:
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
+
+  parse-lock-files@0.1.0:
+    resolution: {integrity: sha512-osCGdZ9NuCnz2XIAuaCdM6RRmh7bRdrzp27ppNRXJKIXFGcm3uit7JHwuBj1TPnO+4OOrocjmcQyjmOjMHzsjA==}
 
   path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
@@ -5851,6 +5857,10 @@ snapshots:
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
+
+  parse-lock-files@0.1.0:
+    dependencies:
+      yaml: 2.8.2
 
   path-exists@4.0.0: {}
 
