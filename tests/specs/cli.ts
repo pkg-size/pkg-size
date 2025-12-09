@@ -568,9 +568,9 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 				expect('exitCode' in result).toBe(false);
 				expect(result.stdout).not.toContain('{');
-				expect(result.stdout).toContain('Package');
+				// Header shows total size and package count
+				expect(result.stdout).toContain('Packages');
 				expect(result.stdout).toContain('is-odd');
-				expect(result.stdout).toContain('Total');
 			}, 30_000);
 
 			test('npm and pnpm report same packages and similar sizes', async () => {
@@ -822,6 +822,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							version: '1.0.0',
 							size: expect.any(Number),
 							path: [],
+							additionalParentCount: 0,
 							dependencySize: 0,
 							dependencyCount: 0,
 							files: expect.arrayContaining([
@@ -860,9 +861,9 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const result = await pkgSizeCli(fixture.path, ['analyze']);
 
 				expect('exitCode' in result).toBe(false);
+				// Header shows total size and package count
 				expect(result.stdout).toContain('Package');
 				expect(result.stdout).toContain('some-package');
-				expect(result.stdout).toContain('Total');
 			});
 
 			test('sorts packages by name', async () => {

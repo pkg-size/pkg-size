@@ -648,7 +648,8 @@ export default testSuite(({ describe }) => {
 				expect(pkg?.author).toBeUndefined();
 			});
 
-			test('builds path array from nested node_modules (npm strategy)', async () => {
+			test('builds path array from nested node_modules (auto-detected)', async () => {
+				// Creates nested node_modules structure - auto-detection finds it
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -674,14 +675,17 @@ export default testSuite(({ describe }) => {
 					},
 				});
 
-				const result = await analyzeNodeModules(fixture.path, 'npm');
+				// No package manager specified - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
 
 				const parentPkg = result.packages.find(p => p.name === 'parent-pkg');
 				const childPkg = result.packages.find(p => p.name === 'child-pkg');
 
+				// Parent is direct dependency (path is empty)
 				expect(parentPkg).toBeDefined();
 				expect(parentPkg!.path).toEqual([]);
 
+				// Child is transitive dependency of parent
 				expect(childPkg).toBeDefined();
 				expect(childPkg!.path).toEqual([
 					{
@@ -692,6 +696,7 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('builds deep path array for deeply nested packages', async () => {
+				// 3 levels of nesting: level-1 → level-2 → level-3
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -726,19 +731,23 @@ export default testSuite(({ describe }) => {
 					},
 				});
 
-				const result = await analyzeNodeModules(fixture.path, 'npm');
+				// No package manager - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
 
 				const level1 = result.packages.find(p => p.name === 'level-1');
 				const level2 = result.packages.find(p => p.name === 'level-2');
 				const level3 = result.packages.find(p => p.name === 'level-3');
 
+				// level-1: direct dependency (empty path)
 				expect(level1!.path).toEqual([]);
+				// level-2: transitive via level-1
 				expect(level2!.path).toEqual([
 					{
 						name: 'level-1',
 						version: '1.0.0',
 					},
 				]);
+				// level-3: transitive via level-1 → level-2
 				expect(level3!.path).toEqual([
 					{
 						name: 'level-1',
@@ -752,6 +761,7 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('handles nested scoped packages', async () => {
+				// Scoped package @scope/parent-pkg with nested child-pkg
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -779,14 +789,17 @@ export default testSuite(({ describe }) => {
 					},
 				});
 
-				const result = await analyzeNodeModules(fixture.path, 'npm');
+				// No package manager - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
 
 				const parentPkg = result.packages.find(p => p.name === '@scope/parent-pkg');
 				const childPkg = result.packages.find(p => p.name === 'child-pkg');
 
+				// Scoped parent is direct dependency
 				expect(parentPkg).toBeDefined();
 				expect(parentPkg!.path).toEqual([]);
 
+				// Child is transitive dependency of scoped parent
 				expect(childPkg).toBeDefined();
 				expect(childPkg!.path).toEqual([
 					{
@@ -797,6 +810,8 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('excludes nested node_modules from package size', async () => {
+				// Parent has 100 bytes, child has 10,000 bytes
+				// Parent size should NOT include child's size
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -822,14 +837,15 @@ export default testSuite(({ describe }) => {
 					},
 				});
 
-				const result = await analyzeNodeModules(fixture.path, 'npm');
+				// No package manager - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
 
 				const parentPkg = result.packages.find(p => p.name === 'parent-pkg');
 				const childPkg = result.packages.find(p => p.name === 'child-pkg');
 
-				// Parent should not include child's size
+				// Parent should NOT include child's size (only ~100 bytes + package.json)
 				expect(parentPkg!.size).toBeLessThan(500);
-				// Child should include the large file
+				// Child should include the large file (~10,000 bytes)
 				expect(childPkg!.size).toBeGreaterThan(9000);
 			});
 		});

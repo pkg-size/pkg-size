@@ -86,6 +86,39 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 	}
 };
 
+// Check if any package has nested node_modules (indicates npm nested install)
+const hasNestedNodeModules = async (nodeModulesPath: string): Promise<boolean> => {
+	const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
+
+	for (const entry of entries) {
+		if (!entry.isDirectory() || entry.name.startsWith('.')) {
+			continue;
+		}
+
+		// Check scoped packages (@scope/name)
+		if (entry.name.startsWith('@')) {
+			const scopePath = path.join(nodeModulesPath, entry.name);
+			const scopedEntries = await fsp.readdir(scopePath, { withFileTypes: true });
+			for (const scopedEntry of scopedEntries) {
+				if (scopedEntry.isDirectory()) {
+					const nestedPath = path.join(scopePath, scopedEntry.name, 'node_modules');
+					if (await fsExists(nestedPath)) {
+						return true;
+					}
+				}
+			}
+		} else {
+			// Check regular packages
+			const nestedPath = path.join(nodeModulesPath, entry.name, 'node_modules');
+			if (await fsExists(nestedPath)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+};
+
 export const getNodeModulesPackages = async (
 	nodeModulesPath: string,
 	packageManager?: string,
@@ -116,15 +149,7 @@ export const getNodeModulesPackages = async (
 			packages = await getPnpmPackages(pnpmPath);
 		} else {
 			// Check for nested node_modules (npm nested strategy)
-			const entries = await fsp.readdir(nodeModulesPath, { withFileTypes: true });
-			let hasNested = false;
-			for (const entry of entries) {
-				if (entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.startsWith('@')) {
-					const nestedPath = path.join(nodeModulesPath, entry.name, 'node_modules');
-					hasNested = await fsExists(nestedPath);
-					break; // Only check first package
-				}
-			}
+			const hasNested = await hasNestedNodeModules(nodeModulesPath);
 
 			packages = hasNested
 				? await getNpmNestedPackages(nodeModulesPath)
