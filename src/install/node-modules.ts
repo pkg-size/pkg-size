@@ -222,6 +222,7 @@ const collectNestedPackages = async (
 						size,
 						files,
 						path: parentPath,
+						additionalParentCount: 0,
 						dependencySize: 0,
 						dependencyCount: 0,
 						...metadata,
@@ -248,6 +249,7 @@ const collectNestedPackages = async (
 				size,
 				files,
 				path: parentPath,
+				additionalParentCount: 0,
 				dependencySize: 0,
 				dependencyCount: 0,
 				...metadata,
@@ -309,6 +311,7 @@ const collectPackagesFlat = async (
 						size,
 						files,
 						path: [],
+						additionalParentCount: 0,
 						dependencySize: 0,
 						dependencyCount: 0,
 						...metadata,
@@ -325,6 +328,7 @@ const collectPackagesFlat = async (
 				size,
 				files,
 				path: [],
+				additionalParentCount: 0,
 				dependencySize: 0,
 				dependencyCount: 0,
 				...metadata,
@@ -380,29 +384,39 @@ const parsePnpmDirName = (
 	};
 };
 
+type DependencyPathResult = {
+	path: PackageReference[];
+	additionalParentCount: number;
+};
+
 // Recursively build the full dependency path from root to a package
+// Also returns count of additional parents not shown in the path
 const buildDependencyPath = (
 	packageName: string,
 	dependencyMap: Map<string, PackageReference[]>,
 	visited: Set<string> = new Set(),
-): PackageReference[] => {
+): DependencyPathResult => {
 	// Prevent cycles
 	if (visited.has(packageName)) {
-		return [];
+		return { path: [], additionalParentCount: 0 };
 	}
 	visited.add(packageName);
 
 	const parents = dependencyMap.get(packageName);
 	if (!parents || parents.length === 0) {
 		// Root package - no parent
-		return [];
+		return { path: [], additionalParentCount: 0 };
 	}
 
 	// Take first parent and recursively build its path
 	const parent = parents[0];
-	const parentPath = buildDependencyPath(parent.name, dependencyMap, visited);
+	const parentResult = buildDependencyPath(parent.name, dependencyMap, visited);
 
-	return [...parentPath, parent];
+	return {
+		path: [...parentResult.path, parent],
+		// Count additional parents for this package (not the parents up the chain)
+		additionalParentCount: parents.length - 1,
+	};
 };
 
 // Get packages from pnpm's .pnpm directory (content-addressable store)
@@ -503,13 +517,14 @@ const getPnpmPackages = async (
 						]);
 
 						// Build full dependency path from root to this package
-						const dependencyPath = buildDependencyPath(packageName, dependencyMap);
+						const { path: dependencyPath, additionalParentCount } = buildDependencyPath(packageName, dependencyMap);
 
 						packages.push({
 							name: packageName,
 							size,
 							files,
 							path: dependencyPath,
+							additionalParentCount,
 							dependencySize: 0,
 							dependencyCount: 0,
 							...metadata,
@@ -525,13 +540,14 @@ const getPnpmPackages = async (
 				]);
 
 				// Build full dependency path from root to this package
-				const dependencyPath = buildDependencyPath(innerEntry.name, dependencyMap);
+				const { path: dependencyPath, additionalParentCount } = buildDependencyPath(innerEntry.name, dependencyMap);
 
 				packages.push({
 					name: innerEntry.name,
 					size,
 					files,
 					path: dependencyPath,
+					additionalParentCount,
 					dependencySize: 0,
 					dependencyCount: 0,
 					...metadata,

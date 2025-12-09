@@ -19,6 +19,8 @@ export type InstalledPackage = {
 	homepage?: string;
 	funding?: string;
 	path: PackageReference[];
+	// Number of additional parent packages not shown in path (when multiple packages depend on this)
+	additionalParentCount: number;
 	dependencySize: number;
 	dependencyCount: number;
 };

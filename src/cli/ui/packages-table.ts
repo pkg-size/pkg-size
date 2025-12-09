@@ -78,7 +78,13 @@ const formatPath = (
 		parts.push(`${parent.name} v${parent.version}`);
 	}
 
-	return parts.join(' → ');
+	const pathString = parts.join(' → ');
+
+	if (pkg.additionalParentCount > 0) {
+		return `${pathString} ${dim(`(+ ${pkg.additionalParentCount} others)`)}`;
+	}
+
+	return pathString;
 };
 
 const formatPackageName = (
@@ -121,7 +127,13 @@ const formatGroupedPath = (
 		parts.push(formatPackageRef(getDisplayName(parent.name), parent.version));
 	}
 
-	return parts.join(' → ');
+	const pathString = parts.join(' → ');
+
+	if (pkg.additionalParentCount > 0) {
+		return `${pathString} ${dim(`(+ ${pkg.additionalParentCount} others)`)}`;
+	}
+
+	return pathString;
 };
 
 const formatGroupedPackageName = (
