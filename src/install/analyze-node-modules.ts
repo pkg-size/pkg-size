@@ -5,9 +5,10 @@ import type { InstalledPackage, NodeModulesAnalysis } from './types.js';
 export const analyzeNodeModules = async (
 	directory: string,
 	packageManager?: string,
+	verbose?: boolean,
 ): Promise<NodeModulesAnalysis> => {
 	const nodeModulesPath = path.join(directory, 'node_modules');
-	const allPackages = await getNodeModulesPackages(nodeModulesPath, packageManager);
+	const allPackages = await getNodeModulesPackages(nodeModulesPath, packageManager, verbose);
 
 	// Deduplicate by name@version for accurate reporting
 	// (nested npm installs create physical duplicates that wouldn't exist in hoisted installs)

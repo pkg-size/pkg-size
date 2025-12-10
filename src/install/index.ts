@@ -47,6 +47,7 @@ export const getInstallSize = async (
 	} = await analyzeNodeModules(
 		installedDirectory.path,
 		packageManager,
+		true, // Always get full path data for install - overhead is negligible vs install time
 	);
 
 	return {

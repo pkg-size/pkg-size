@@ -16,10 +16,7 @@ export default testSuite(({ describe }) => {
 
 				const result = buildDependencyPathFromGraph('is-odd', graph);
 
-				expect(result).toEqual({
-					path: [],
-					additionalParentCount: 0,
-				});
+				expect(result).toEqual([]);
 			});
 
 			test('returns empty path for package not in graph', () => {
@@ -27,10 +24,7 @@ export default testSuite(({ describe }) => {
 
 				const result = buildDependencyPathFromGraph('unknown-pkg', graph);
 
-				expect(result).toEqual({
-					path: [],
-					additionalParentCount: 0,
-				});
+				expect(result).toEqual([]);
 			});
 
 			test('builds single-level path for transitive dependency', () => {
@@ -45,13 +39,10 @@ export default testSuite(({ describe }) => {
 
 				const result = buildDependencyPathFromGraph('is-number', graph);
 
-				expect(result).toEqual({
-					path: [{
-						name: 'is-odd',
-						version: '3.0.1',
-					}],
-					additionalParentCount: 0,
-				});
+				expect(result).toEqual([{
+					name: 'is-odd',
+					version: '3.0.1',
+				}]);
 			});
 
 			test('builds multi-level path for deeply nested dependency', () => {
@@ -71,22 +62,19 @@ export default testSuite(({ describe }) => {
 				const result = buildDependencyPathFromGraph('level-3', graph);
 
 				// Path should be from root to parent: [level-1, level-2]
-				expect(result).toEqual({
-					path: [
-						{
-							name: 'level-1',
-							version: '1.0.0',
-						},
-						{
-							name: 'level-2',
-							version: '2.0.0',
-						},
-					],
-					additionalParentCount: 0,
-				});
+				expect(result).toEqual([
+					{
+						name: 'level-1',
+						version: '1.0.0',
+					},
+					{
+						name: 'level-2',
+						version: '2.0.0',
+					},
+				]);
 			});
 
-			test('returns additionalParentCount when package has multiple parents', () => {
+			test('uses first parent when package has multiple parents', () => {
 				// shared-dep is required by both pkg-a and pkg-b
 				const graph: DependencyGraph = new Map([
 					['pkg-a', []],
@@ -105,14 +93,11 @@ export default testSuite(({ describe }) => {
 
 				const result = buildDependencyPathFromGraph('shared-dep', graph);
 
-				// Uses first parent, reports 1 additional
-				expect(result).toEqual({
-					path: [{
-						name: 'pkg-a',
-						version: '1.0.0',
-					}],
-					additionalParentCount: 1,
-				});
+				// Uses first parent
+				expect(result).toEqual([{
+					name: 'pkg-a',
+					version: '1.0.0',
+				}]);
 			});
 
 			test('handles cycles gracefully', () => {
@@ -131,7 +116,7 @@ export default testSuite(({ describe }) => {
 				const result = buildDependencyPathFromGraph('pkg-a', graph);
 
 				// Should not infinite loop, returns partial path
-				expect(result.path.length).toBeLessThanOrEqual(2);
+				expect(result.length).toBeLessThanOrEqual(2);
 			});
 
 			test('handles scoped package names', () => {
@@ -145,13 +130,10 @@ export default testSuite(({ describe }) => {
 
 				const result = buildDependencyPathFromGraph('child', graph);
 
-				expect(result).toEqual({
-					path: [{
-						name: '@scope/parent',
-						version: '1.0.0',
-					}],
-					additionalParentCount: 0,
-				});
+				expect(result).toEqual([{
+					name: '@scope/parent',
+					version: '1.0.0',
+				}]);
 			});
 		});
 

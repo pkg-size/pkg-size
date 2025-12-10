@@ -54,7 +54,7 @@ export const analyzeCommand = command({
 		verbose,
 	} = argv.flags;
 
-	const data = await analyzeNodeModules(projectPath);
+	const data = await analyzeNodeModules(projectPath, undefined, verbose);
 
 	const sortProperty = sortBy === 'name' ? 'name' : 'size';
 	data.packages.sort(comparePackages(sortProperty));

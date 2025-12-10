@@ -1007,7 +1007,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							version: '1.0.0',
 							size: expect.any(Number),
 							path: [],
-							additionalParentCount: 0,
 							dependencySize: 0,
 							dependencyCount: 0,
 							files: expect.arrayContaining([
@@ -1678,8 +1677,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 			/**
 			 * Verbose output should show full dependency path without truncation.
-			 * Even when a package has multiple parents (additionalParentCount > 0),
-			 * the output should NOT show "(+ X others)" - it should show full paths.
+			 * When a package has multiple parents, we show the first parent's path.
+			 * The output should NOT show "(+ X others)" - it should show full paths.
 			 */
 			test('verbose output: shows full path without truncation', async () => {
 				await using fixture = await createFixture({

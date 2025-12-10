@@ -159,6 +159,10 @@ type RenderOptions = {
 };
 
 const formatPercentage = (size: number, totalSize: number): string => {
+	if (totalSize === 0) {
+		return '0%';
+	}
+
 	const percentage = (size / totalSize) * 100;
 
 	// ≥ 1% → no decimals
@@ -201,8 +205,8 @@ export const renderPackagesTable = (
 	const packageLabel = packages.length === 1 ? 'Package' : 'Packages';
 	rows.push(
 		[
-			underline(bold(amberEarth(formatSize(totalSize)))),
-			underline(bold(amberEarth(`${packageCount} ${packageLabel}`))),
+			underline((amberEarth(formatSize(totalSize)))),
+			underline((amberEarth(`${packageCount} ${packageLabel}`))),
 		],
 		['', ''],
 	);

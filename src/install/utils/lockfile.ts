@@ -58,41 +58,27 @@ export const parseLockfile = async (
 	}
 };
 
-type DependencyPathResult = {
-	path: PackageReference[];
-	additionalParentCount: number;
-};
-
 // Build the full dependency path from root to a package
 export const buildDependencyPathFromGraph = (
 	packageName: string,
 	graph: DependencyGraph,
 	visited: Set<string> = new Set(),
-): DependencyPathResult => {
+): PackageReference[] => {
 	// Prevent cycles
 	if (visited.has(packageName)) {
-		return {
-			path: [],
-			additionalParentCount: 0,
-		};
+		return [];
 	}
 	visited.add(packageName);
 
 	const parents = graph.get(packageName);
 	if (!parents || parents.length === 0) {
 		// Root package - no parent (direct dependency of package.json)
-		return {
-			path: [],
-			additionalParentCount: 0,
-		};
+		return [];
 	}
 
 	// Take first parent and recursively build its path
 	const parent = parents[0];
-	const parentResult = buildDependencyPathFromGraph(parent.name, graph, visited);
+	const parentPath = buildDependencyPathFromGraph(parent.name, graph, visited);
 
-	return {
-		path: [...parentResult.path, parent],
-		additionalParentCount: parents.length - 1,
-	};
+	return [...parentPath, parent];
 };

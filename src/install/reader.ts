@@ -122,6 +122,7 @@ const hasNestedNodeModules = async (nodeModulesPath: string): Promise<boolean> =
 export const getNodeModulesPackages = async (
 	nodeModulesPath: string,
 	packageManager?: string,
+	verbose?: boolean,
 ): Promise<InstalledPackage[]> => {
 	const exists = await fsExists(nodeModulesPath);
 	if (!exists) {
@@ -136,7 +137,7 @@ export const getNodeModulesPackages = async (
 	// If package manager is known, use the appropriate strategy
 	if (packageManager === 'npm') {
 		// npm uses flat/hoisted install by default, parse package-lock.json for paths
-		packages = await getFlatPackages(nodeModulesPath, installDirectory);
+		packages = await getFlatPackages(nodeModulesPath, installDirectory, verbose);
 	} else if (packageManager === 'pnpm') {
 		const pnpmPath = path.join(nodeModulesPath, '.pnpm');
 		packages = await getPnpmPackages(pnpmPath);
@@ -153,7 +154,7 @@ export const getNodeModulesPackages = async (
 
 			packages = hasNested
 				? await getNpmNestedPackages(nodeModulesPath)
-				: await getFlatPackages(nodeModulesPath, installDirectory);
+				: await getFlatPackages(nodeModulesPath, installDirectory, verbose);
 		}
 	}
 

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { InstalledPackage, PackageReference } from '../types.js';
+import type { InstalledPackage } from '../types.js';
 import { crawlNodeModulesOnce } from '../utils/scanner.js';
 import { getPackageMetadata } from '../utils/metadata.js';
 import { parseLockfile, buildDependencyPathFromGraph } from '../utils/lockfile.js';
@@ -10,12 +10,14 @@ import { parseLockfile, buildDependencyPathFromGraph } from '../utils/lockfile.j
 export const getFlatPackages = async (
 	nodeModulesPath: string,
 	installDirectory?: string,
+	verbose?: boolean,
 ): Promise<InstalledPackage[]> => {
 	// Crawl entire node_modules once and bucket files by package
 	const packageSizes = await crawlNodeModulesOnce(nodeModulesPath);
 
-	// Try to parse lockfile for dependency graph
-	const graph = installDirectory
+	// Only parse lockfile for dependency graph when verbose mode is enabled
+	// Lockfile parsing can be expensive on large monorepos (50MB+ lockfiles)
+	const graph = (verbose && installDirectory)
 		? await parseLockfile(installDirectory)
 		: undefined;
 
@@ -27,19 +29,15 @@ export const getFlatPackages = async (
 		const metadata = await getPackageMetadata(packagePath);
 
 		// Build dependency path from lockfile graph if available
-		const { path: depPath, additionalParentCount } = graph
+		const depPath = graph
 			? buildDependencyPathFromGraph(packageName, graph)
-			: {
-				path: [] as PackageReference[],
-				additionalParentCount: 0,
-			};
+			: [];
 
 		packages.push({
 			name: packageName,
 			size,
 			files,
 			path: depPath,
-			additionalParentCount,
 			dependencySize: 0,
 			dependencyCount: 0,
 			...metadata,
