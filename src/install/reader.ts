@@ -17,9 +17,9 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 	const childrenMap = new Map<string, InstalledPackage[]>();
 
 	for (const pkg of packages) {
-		if (pkg.path.length > 0) {
-			// Immediate parent is the last element in path
-			const parent = pkg.path.at(-1)!.name;
+		if (pkg.installedBy.length > 0) {
+			// Immediate parent is the last element in installedBy
+			const parent = pkg.installedBy.at(-1)!.name;
 			if (!childrenMap.has(parent)) {
 				childrenMap.set(parent, []);
 			}

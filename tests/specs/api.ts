@@ -280,13 +280,13 @@ export default testSuite(({ describe }) => {
 				expect(isOdd!.version).toBeDefined();
 				expect(isOdd!.size).toBeGreaterThan(0);
 				expect(isOdd!.license).toBe('MIT');
-				expect(isOdd!.path).toEqual([]);
+				expect(isOdd!.installedBy).toEqual([]);
 
 				expect(isNumber).toBeDefined();
 				expect(isNumber!.version).toBeDefined();
 				expect(isNumber!.size).toBeGreaterThan(0);
 				expect(isNumber!.license).toBe('MIT');
-				expect(isNumber!.path).toEqual([
+				expect(isNumber!.installedBy).toEqual([
 					{
 						name: 'is-odd',
 						version: expect.any(String),
@@ -351,10 +351,10 @@ export default testSuite(({ describe }) => {
 				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
 
 				expect(isOdd).toBeDefined();
-				expect(isOdd!.path).toEqual([]);
+				expect(isOdd!.installedBy).toEqual([]);
 
 				expect(isNumber).toBeDefined();
-				expect(isNumber!.path).toEqual([
+				expect(isNumber!.installedBy).toEqual([
 					{
 						name: 'is-odd',
 						version: expect.any(String),
@@ -372,10 +372,10 @@ export default testSuite(({ describe }) => {
 				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
 
 				expect(isOdd).toBeDefined();
-				expect(isOdd!.path).toEqual([]);
+				expect(isOdd!.installedBy).toEqual([]);
 
 				expect(isNumber).toBeDefined();
-				expect(isNumber!.path).toEqual([
+				expect(isNumber!.installedBy).toEqual([
 					{
 						name: 'is-odd',
 						version: expect.any(String),
@@ -681,13 +681,13 @@ export default testSuite(({ describe }) => {
 				const parentPkg = result.packages.find(p => p.name === 'parent-pkg');
 				const childPkg = result.packages.find(p => p.name === 'child-pkg');
 
-				// Parent is direct dependency (path is empty)
+				// Parent is direct dependency (installedBy is empty)
 				expect(parentPkg).toBeDefined();
-				expect(parentPkg!.path).toEqual([]);
+				expect(parentPkg!.installedBy).toEqual([]);
 
 				// Child is transitive dependency of parent
 				expect(childPkg).toBeDefined();
-				expect(childPkg!.path).toEqual([
+				expect(childPkg!.installedBy).toEqual([
 					{
 						name: 'parent-pkg',
 						version: '1.0.0',
@@ -738,17 +738,17 @@ export default testSuite(({ describe }) => {
 				const level2 = result.packages.find(p => p.name === 'level-2');
 				const level3 = result.packages.find(p => p.name === 'level-3');
 
-				// level-1: direct dependency (empty path)
-				expect(level1!.path).toEqual([]);
+				// level-1: direct dependency (empty installedBy)
+				expect(level1!.installedBy).toEqual([]);
 				// level-2: transitive via level-1
-				expect(level2!.path).toEqual([
+				expect(level2!.installedBy).toEqual([
 					{
 						name: 'level-1',
 						version: '1.0.0',
 					},
 				]);
 				// level-3: transitive via level-1 → level-2
-				expect(level3!.path).toEqual([
+				expect(level3!.installedBy).toEqual([
 					{
 						name: 'level-1',
 						version: '1.0.0',
@@ -797,11 +797,11 @@ export default testSuite(({ describe }) => {
 
 				// Scoped parent is direct dependency
 				expect(parentPkg).toBeDefined();
-				expect(parentPkg!.path).toEqual([]);
+				expect(parentPkg!.installedBy).toEqual([]);
 
 				// Child is transitive dependency of scoped parent
 				expect(childPkg).toBeDefined();
-				expect(childPkg!.path).toEqual([
+				expect(childPkg!.installedBy).toEqual([
 					{
 						name: '@scope/parent-pkg',
 						version: '1.0.0',

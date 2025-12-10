@@ -69,12 +69,12 @@ const formatPackageRef = (name: string, version: string): string => {
 	return terminalLink(nameWithVersion, `https://www.npmjs.com/package/${name}/v/${version}`);
 };
 
-const formatPath = (
+const formatInstalledBy = (
 	pkg: InstalledPackage,
 ): string => {
 	const parts: string[] = [];
 
-	for (const parent of pkg.path) {
+	for (const parent of pkg.installedBy) {
 		parts.push(`${parent.name} v${parent.version}`);
 	}
 
@@ -87,7 +87,8 @@ const formatPackageName = (
 ): string => {
 	const base = formatPackageRef(pkg.name, pkg.version);
 	if (!verbose) {
-		return base;
+		// Show filesystem path on same line in non-verbose mode
+		return `${base} ${dim(pkg.path)}`;
 	}
 
 	const parts = [base];
@@ -104,7 +105,7 @@ const formatPackageName = (
 	return parts.join(' ');
 };
 
-const formatGroupedPath = (
+const formatGroupedInstalledBy = (
 	pkg: InstalledPackage,
 	groupKey: string,
 	groupBy: GroupBy,
@@ -117,7 +118,7 @@ const formatGroupedPath = (
 
 	const parts: string[] = [];
 
-	for (const parent of pkg.path) {
+	for (const parent of pkg.installedBy) {
 		parts.push(formatPackageRef(getDisplayName(parent.name), parent.version));
 	}
 
@@ -136,7 +137,8 @@ const formatGroupedPackageName = (
 
 	const base = formatPackageRef(displayName, pkg.version);
 	if (!verbose) {
-		return `  ${base}`;
+		// Show filesystem path on same line in non-verbose mode
+		return `  ${base} ${dim(pkg.path)}`;
 	}
 
 	const parts = [base];
@@ -226,12 +228,12 @@ export const renderPackagesTable = (
 			formatPackageName(pkg, options.verbose),
 		]);
 
-		// Show size and path underneath package when verbose
+		// Show size and installed-by chain underneath package when verbose
 		if (options.verbose) {
-			const pathPart = pkg.path.length > 0
-				? `${bold('Installed by:')} ${dim(formatPath(pkg))}`
+			const installedByPart = pkg.installedBy.length > 0
+				? `${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
 				: `${bold('Installed by:')} ${dim('package.json')}`;
-			rows.push([formatSize(pkg.size), pathPart]);
+			rows.push([formatSize(pkg.size), installedByPart]);
 		}
 
 		// Show dependency info underneath package when verbose
@@ -296,12 +298,12 @@ export const renderGroupedPackagesTable = (
 				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
 			]);
 
-			// Show size and path underneath package when verbose
+			// Show size and installed-by chain underneath package when verbose
 			if (options.verbose) {
-				const pathPart = pkg.path.length > 0
-					? `  ${bold('Installed by:')} ${formatGroupedPath(pkg, groupKey, groupBy)}`
+				const installedByPart = pkg.installedBy.length > 0
+					? `  ${bold('Installed by:')} ${formatGroupedInstalledBy(pkg, groupKey, groupBy)}`
 					: `  ${bold('Installed by:')} ${dim('package.json')}`;
-				rows.push([formatSize(pkg.size), pathPart]);
+				rows.push([formatSize(pkg.size), installedByPart]);
 			}
 
 			// Show dependency info underneath package when verbose

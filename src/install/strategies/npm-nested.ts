@@ -10,6 +10,7 @@ const collectNestedPackages = async (
 	directory: string,
 	packages: InstalledPackage[],
 	parentPath: PackageReference[],
+	pathPrefix: string,
 ): Promise<void> => {
 	const exists = await fsExists(directory);
 	if (!exists) {
@@ -47,7 +48,8 @@ const collectNestedPackages = async (
 						name: packageName,
 						size,
 						files,
-						path: parentPath,
+						installedBy: parentPath,
+						path: `${pathPrefix}/${packageName}`,
 						dependencySize: 0,
 						dependencyCount: 0,
 						...metadata,
@@ -60,7 +62,12 @@ const collectNestedPackages = async (
 						name: packageName,
 						version: metadata.version,
 					};
-					await collectNestedPackages(nestedNodeModules, packages, [...parentPath, currentRef]);
+					await collectNestedPackages(
+						nestedNodeModules,
+						packages,
+						[...parentPath, currentRef],
+						`${pathPrefix}/${packageName}/node_modules`,
+					);
 				}
 			}
 		} else {
@@ -73,7 +80,8 @@ const collectNestedPackages = async (
 				name: entry.name,
 				size,
 				files,
-				path: parentPath,
+				installedBy: parentPath,
+				path: `${pathPrefix}/${entry.name}`,
 				dependencySize: 0,
 				dependencyCount: 0,
 				...metadata,
@@ -86,7 +94,12 @@ const collectNestedPackages = async (
 				name: entry.name,
 				version: metadata.version,
 			};
-			await collectNestedPackages(nestedNodeModules, packages, [...parentPath, currentRef]);
+			await collectNestedPackages(
+				nestedNodeModules,
+				packages,
+				[...parentPath, currentRef],
+				`${pathPrefix}/${entry.name}/node_modules`,
+			);
 		}
 	}
 };
@@ -96,6 +109,6 @@ export const getNpmNestedPackages = async (
 	nodeModulesPath: string,
 ): Promise<InstalledPackage[]> => {
 	const packages: InstalledPackage[] = [];
-	await collectNestedPackages(nodeModulesPath, packages, []);
+	await collectNestedPackages(nodeModulesPath, packages, [], 'node_modules');
 	return packages;
 };

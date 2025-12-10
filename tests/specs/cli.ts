@@ -469,10 +469,10 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const isNumber = json.packages.find((p: { name: string }) => p.name === 'is-number');
 
 				expect(isOdd).toBeDefined();
-				expect(isOdd.path).toEqual([]);
+				expect(isOdd.installedBy).toEqual([]);
 
 				expect(isNumber).toBeDefined();
-				expect(isNumber.path).toEqual([
+				expect(isNumber.installedBy).toEqual([
 					{
 						name: 'is-odd',
 						version: expect.any(String),
@@ -642,8 +642,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const isOdd = json.packages.find((p: { name: string }) => p.name === 'is-odd');
 				const isNumber = json.packages.find((p: { name: string }) => p.name === 'is-number');
 
-				expect(isOdd.path).toEqual([]);
-				expect(isNumber.path).toEqual([
+				expect(isOdd.installedBy).toEqual([]);
+				expect(isNumber.installedBy).toEqual([
 					{
 						name: 'is-odd',
 						version: expect.any(String),
@@ -684,8 +684,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const isOdd = json.packages.find((p: { name: string }) => p.name === 'is-odd');
 				const isNumber = json.packages.find((p: { name: string }) => p.name === 'is-number');
 
-				expect(isOdd.path).toEqual([]);
-				expect(isNumber.path).toEqual([
+				expect(isOdd.installedBy).toEqual([]);
+				expect(isNumber.installedBy).toEqual([
 					{
 						name: 'is-odd',
 						version: expect.any(String),
@@ -1006,7 +1006,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							name: 'some-package',
 							version: '1.0.0',
 							size: expect.any(Number),
-							path: [],
+							installedBy: [],
+							path: 'node_modules/some-package',
 							dependencySize: 0,
 							dependencyCount: 0,
 							files: expect.arrayContaining([

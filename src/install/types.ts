@@ -18,7 +18,10 @@ export type InstalledPackage = {
 	repository?: string;
 	homepage?: string;
 	funding?: string;
-	path: PackageReference[];
+	// Dependency chain showing how this package was installed
+	installedBy: PackageReference[];
+	// Filesystem path to the package directory (relative to cwd)
+	path: string;
 	dependencySize: number;
 	dependencyCount: number;
 };
