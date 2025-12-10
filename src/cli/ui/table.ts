@@ -43,8 +43,13 @@ export const printRows = (rows: string[][], options: PrintRowsOptions = {}): voi
 		if (row.every(cell => !cell)) {
 			console.log('');
 		} else {
+			const lastIndex = row.length - 1;
 			const formatted = row.map((cell, i) => {
 				const colAlign = Array.isArray(align) ? (align[i] ?? 'right') : align;
+				// Don't pad the last column - no need for trailing spaces
+				if (i === lastIndex) {
+					return colAlign === 'right' ? padLeft(cell, columnWidths[i]) : cell;
+				}
 				return colAlign === 'left'
 					? padRight(cell, columnWidths[i])
 					: padLeft(cell, columnWidths[i]);

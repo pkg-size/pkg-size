@@ -790,6 +790,191 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				// Should NOT show license without verbose (check for MIT not preceded by test-pkg)
 				expect(result.stdout).not.toMatch(/\bby\b/);
 			});
+
+			/**
+			 * Non-verbose install output format documentation:
+			 *
+			 * Line 1: (empty)
+			 * Line 2: "Installing with <pm>..." (progress message)
+			 * Line 3: "Completed in Xms" (completion time)
+			 * Line 4: (empty)
+			 * Line 5: <total size>  <package count> Packages
+			 * Line 6: (empty separator)
+			 * Line 7: <size>  <package-a name+version>
+			 * Line 8: <size>  <package-b name+version>
+			 * Line 9: (empty at end)
+			 *
+			 * Key: packages on consecutive lines, NO empty lines between them
+			 */
+			test('non-verbose install output: packages on consecutive lines without empty lines', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--sort-by', 'name']);
+
+				expect('exitCode' in result).toBe(false);
+
+				const lines = result.stdout.split('\n');
+
+				// Line 0: empty (leading newline)
+				expect(lines[0]).toBe('');
+
+				// Line 1: progress message "Installing with pnpm..."
+				expect(lines[1]).toContain('Installing with pnpm');
+
+				// Line 2: completion time "Completed in Xms"
+				expect(lines[2]).toContain('Completed in');
+
+				// Line 3: empty separator after progress messages
+				expect(lines[3]).toBe('');
+
+				// Line 4: header with total size and package count
+				expect(lines[4]).toMatch(/\d.*2 Packages/);
+
+				// Line 5: empty separator after header
+				expect(lines[5]).toBe('');
+
+				// Lines 6-7: packages on consecutive lines (no empty lines between them)
+				// is-number comes before is-odd alphabetically
+				expect(lines[6]).toContain('is-number');
+				expect(lines[7]).toContain('is-odd');
+
+				// Line 8: trailing empty line
+				expect(lines[8]).toBe('');
+
+				// Total lines: exactly 9
+				expect(lines.length).toBe(9);
+			}, 30_000);
+
+			/**
+			 * Verbose install output format documentation:
+			 *
+			 * Line 1: (empty)
+			 * Line 2: "Installing with <pm>..." (progress message)
+			 * Line 3: "Completed in Xms" (completion time)
+			 * Line 4: (empty)
+			 * Line 5: <total size>  <package count> Packages
+			 * Line 6: (empty separator)
+			 * --- Package 1 block (is-number, transitive dep) ---
+			 * Line 7: <percentage>  <is-number name+version+links>
+			 * Line 8: <size>        Installed by: is-odd v<version>
+			 * Line 9:               Dependencies: 0
+			 * --- Empty line between packages ---
+			 * Line 10: (empty)
+			 * --- Package 2 block (is-odd, direct dep) ---
+			 * Line 11: <percentage>  <is-odd name+version+links>
+			 * Line 12: <size>        Installed by: package.json
+			 * Line 13:              Dependencies: 1 (Xkb)
+			 * Line 14: (empty at end)
+			 *
+			 * Key: 3 lines per package, empty line ONLY between packages (not within)
+			 */
+			test('verbose install output: 3 lines per package, empty lines only between packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--sort-by', 'name', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+
+				const lines = result.stdout.split('\n');
+
+				// Line 0: empty (leading newline)
+				expect(lines[0]).toBe('');
+
+				// Line 1: progress message "Installing with pnpm..."
+				expect(lines[1]).toContain('Installing with pnpm');
+
+				// Line 2: completion time "Completed in Xms"
+				expect(lines[2]).toContain('Completed in');
+
+				// Line 3: empty separator after progress messages
+				expect(lines[3]).toBe('');
+
+				// Line 4: header with total size and package count
+				expect(lines[4]).toMatch(/\d.*2 Packages/);
+
+				// Line 5: empty separator after header
+				expect(lines[5]).toBe('');
+
+				// --- Package 1 (is-number, transitive dep, comes first alphabetically) ---
+				// Line 6: percentage + name/version
+				expect(lines[6]).toContain('is-number');
+
+				// Line 7: size + "Installed by:" showing is-odd
+				expect(lines[7]).toContain('Installed by:');
+				expect(lines[7]).toContain('is-odd');
+
+				// Line 8: Dependencies count
+				expect(lines[8]).toContain('Dependencies:');
+
+				// --- Empty line between packages ---
+				// Line 9: empty separator between packages
+				expect(lines[9]).toBe('');
+
+				// --- Package 2 (is-odd, direct dep) ---
+				// Line 10: percentage + name/version
+				expect(lines[10]).toContain('is-odd');
+
+				// Line 11: size + "Installed by:" showing package.json (direct dep)
+				expect(lines[11]).toContain('Installed by:');
+				expect(lines[11]).toContain('package.json');
+
+				// Line 12: Dependencies count
+				expect(lines[12]).toContain('Dependencies:');
+
+				// Line 13: trailing empty line
+				expect(lines[13]).toBe('');
+
+				// Total lines: exactly 14
+				expect(lines.length).toBe(14);
+			}, 30_000);
+
+			/**
+			 * Verbose install with transitive dependencies documentation:
+			 *
+			 * For is-odd -> is-number chain:
+			 * - is-number shows "Installed by: is-odd v<version>" since it's transitive
+			 * - is-odd shows "Installed by: package.json" since it's direct
+			 */
+			test('verbose install output: shows dependency path for transitive deps', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'pnpm', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+
+				const lines = result.stdout.split('\n');
+
+				// Find is-number line (transitive dep of is-odd)
+				const isNumberLineIndex = lines.findIndex(line => line.includes('is-number') && !line.includes('Installed by'));
+				expect(isNumberLineIndex).toBeGreaterThan(-1);
+
+				// Next line should show "Installed by:" with is-odd info
+				expect(lines[isNumberLineIndex + 1]).toContain('Installed by:');
+				expect(lines[isNumberLineIndex + 1]).toContain('is-odd');
+
+				// Find is-odd line (direct dep)
+				const isOddLineIndex = lines.findIndex(line => line.includes('is-odd') && !line.includes('is-number') && !line.includes('Installed by'));
+				expect(isOddLineIndex).toBeGreaterThan(-1);
+
+				// Next line should show "Installed by: package.json" since it's direct
+				expect(lines[isOddLineIndex + 1]).toContain('Installed by:');
+				expect(lines[isOddLineIndex + 1]).toContain('package.json');
+			}, 30_000);
 		});
 
 		describe('analyze', ({ test }) => {
@@ -1270,6 +1455,281 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 
 				expect(json.packages[0].license).toBe('MIT');
 				expect(json.packages[0].author).toBe('Test Author');
+			});
+
+			/**
+			 * Non-verbose output format documentation:
+			 *
+			 * Line 1: (empty)
+			 * Line 2: <total size>  <package count> Packages
+			 * Line 3: (empty separator)
+			 * Line 4: <size>  <package-a name+version>
+			 * Line 5: <size>  <package-b name+version>
+			 * Line 6: (empty at end)
+			 *
+			 * Key: packages on consecutive lines, NO empty lines between them
+			 */
+			test('non-verbose output: packages on consecutive lines without empty lines', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'package-a': {
+							'package.json': definePackageJson({
+								name: 'package-a',
+								version: '1.0.0',
+							}),
+							'index.js': 'a',
+						},
+						'package-b': {
+							'package.json': definePackageJson({
+								name: 'package-b',
+								version: '2.0.0',
+							}),
+							'index.js': 'b',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by', 'name']);
+
+				expect('exitCode' in result).toBe(false);
+
+				const lines = result.stdout.split('\n');
+
+				// Line 0: empty (leading newline)
+				expect(lines[0]).toBe('');
+
+				// Line 1: header with total size and package count
+				expect(lines[1]).toMatch(/\d.*2 Packages/);
+
+				// Line 2: empty separator after header
+				expect(lines[2]).toBe('');
+
+				// Lines 3-4: packages on consecutive lines (no empty lines between them)
+				expect(lines[3]).toContain('package-a');
+				expect(lines[3]).toContain('v1.0.0');
+				expect(lines[4]).toContain('package-b');
+				expect(lines[4]).toContain('v2.0.0');
+
+				// Line 5: trailing empty line
+				expect(lines[5]).toBe('');
+
+				// Total lines: exactly 6
+				expect(lines.length).toBe(6);
+			});
+
+			/**
+			 * Verbose output format documentation:
+			 *
+			 * Line 1: (empty)
+			 * Line 2: <total size>  <package count> Packages
+			 * Line 3: (empty separator)
+			 * --- Package 1 block ---
+			 * Line 4: <percentage>  <package-a name+version+author+license+links>
+			 * Line 5: <size>        Installed by: <path or "package.json">
+			 * Line 6:               Dependencies: <count>
+			 * --- Empty line between packages ---
+			 * Line 7: (empty)
+			 * --- Package 2 block ---
+			 * Line 8: <percentage>  <package-b name+version+author+license+links>
+			 * Line 9: <size>        Installed by: <path or "package.json">
+			 * Line 10:              Dependencies: <count>
+			 * Line 11: (empty at end)
+			 *
+			 * Key: 3 lines per package, empty line ONLY between packages (not within)
+			 */
+			test('verbose output: 3 lines per package, empty lines only between packages', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'package-a': {
+							'package.json': definePackageJson({
+								name: 'package-a',
+								version: '1.0.0',
+								author: 'Author A',
+								license: 'MIT',
+							}),
+							'index.js': 'a',
+						},
+						'package-b': {
+							'package.json': definePackageJson({
+								name: 'package-b',
+								version: '2.0.0',
+								author: 'Author B',
+								license: 'ISC',
+							}),
+							'index.js': 'b',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by', 'name', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+
+				const lines = result.stdout.split('\n');
+
+				// Line 0: empty (leading newline)
+				expect(lines[0]).toBe('');
+
+				// Line 1: header with total size and package count
+				expect(lines[1]).toMatch(/\d.*2 Packages/);
+
+				// Line 2: empty separator after header
+				expect(lines[2]).toBe('');
+
+				// --- Package 1 (package-a) ---
+				// Line 3: percentage + name/version/author/license
+				expect(lines[3]).toContain('package-a');
+				expect(lines[3]).toContain('v1.0.0');
+				expect(lines[3]).toContain('Author A');
+				expect(lines[3]).toContain('MIT');
+
+				// Line 4: size + "Installed by:"
+				expect(lines[4]).toContain('Installed by:');
+
+				// Line 5: Dependencies count
+				expect(lines[5]).toContain('Dependencies:');
+
+				// --- Empty line between packages ---
+				// Line 6: empty separator between packages
+				expect(lines[6]).toBe('');
+
+				// --- Package 2 (package-b) ---
+				// Line 7: percentage + name/version/author/license
+				expect(lines[7]).toContain('package-b');
+				expect(lines[7]).toContain('v2.0.0');
+				expect(lines[7]).toContain('Author B');
+				expect(lines[7]).toContain('ISC');
+
+				// Line 8: size + "Installed by:"
+				expect(lines[8]).toContain('Installed by:');
+
+				// Line 9: Dependencies count
+				expect(lines[9]).toContain('Dependencies:');
+
+				// Line 10: trailing empty line
+				expect(lines[10]).toBe('');
+
+				// Total lines: exactly 11
+				expect(lines.length).toBe(11);
+			});
+
+			/**
+			 * Verbose output with transitive dependencies documentation:
+			 *
+			 * For a transitive dependency (has parent in path):
+			 * Line N:   <percentage>  <name+version+links>
+			 * Line N+1: <size>        Installed by: <parent name> v<parent version>
+			 * Line N+2:               Dependencies: <count>
+			 *
+			 * The "Installed by:" line shows the dependency chain
+			 */
+			test('verbose output: shows dependency path for transitive deps', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'parent-pkg': {
+							'package.json': definePackageJson({
+								name: 'parent-pkg',
+								version: '1.0.0',
+							}),
+							'index.js': 'parent',
+							node_modules: {
+								'child-pkg': {
+									'package.json': definePackageJson({
+										name: 'child-pkg',
+										version: '2.0.0',
+									}),
+									'index.js': 'child',
+								},
+							},
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by', 'name', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+
+				const lines = result.stdout.split('\n');
+
+				// Find the child-pkg lines
+				const childLineIndex = lines.findIndex(line => line.includes('child-pkg'));
+				expect(childLineIndex).toBeGreaterThan(-1);
+
+				// Next line should show "Installed by:" with parent info
+				expect(lines[childLineIndex + 1]).toContain('Installed by:');
+				expect(lines[childLineIndex + 1]).toContain('parent-pkg');
+				expect(lines[childLineIndex + 1]).toContain('v1.0.0');
+
+				// Following line should show Dependencies
+				expect(lines[childLineIndex + 2]).toContain('Dependencies:');
+			});
+
+			/**
+			 * Verbose output should show full dependency path without truncation.
+			 * Even when a package has multiple parents (additionalParentCount > 0),
+			 * the output should NOT show "(+ X others)" - it should show full paths.
+			 */
+			test('verbose output: shows full path without truncation', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'parent-a': {
+							'package.json': definePackageJson({
+								name: 'parent-a',
+								version: '1.0.0',
+							}),
+							'index.js': 'a',
+							node_modules: {
+								'shared-dep': {
+									'package.json': definePackageJson({
+										name: 'shared-dep',
+										version: '1.0.0',
+									}),
+									'index.js': 'shared',
+								},
+							},
+						},
+						'parent-b': {
+							'package.json': definePackageJson({
+								name: 'parent-b',
+								version: '2.0.0',
+							}),
+							'index.js': 'b',
+							node_modules: {
+								'shared-dep': {
+									'package.json': definePackageJson({
+										name: 'shared-dep',
+										version: '1.0.0',
+									}),
+									'index.js': 'shared',
+								},
+							},
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+
+				// Output should NOT contain truncation markers
+				expect(result.stdout).not.toContain('(+');
+				expect(result.stdout).not.toContain('others)');
 			});
 		});
 	});
