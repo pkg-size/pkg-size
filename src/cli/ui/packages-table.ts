@@ -228,16 +228,15 @@ export const renderPackagesTable = (
 			formatPackageName(pkg, options.verbose),
 		]);
 
-		// Show size and installed-by chain underneath package when verbose
+		// Show path, installed-by, and dependency info underneath package when verbose
 		if (options.verbose) {
+			rows.push([formatSize(pkg.size), dim(pkg.path)]);
+
 			const installedByPart = pkg.installedBy.length > 0
 				? `${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
 				: `${bold('Installed by:')} ${dim('package.json')}`;
-			rows.push([formatSize(pkg.size), installedByPart]);
-		}
+			rows.push(['', installedByPart]);
 
-		// Show dependency info underneath package when verbose
-		if (options.verbose) {
 			rows.push(['', formatDependencyInfo(pkg)]);
 		}
 	}
@@ -298,16 +297,15 @@ export const renderGroupedPackagesTable = (
 				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
 			]);
 
-			// Show size and installed-by chain underneath package when verbose
+			// Show path, installed-by, and dependency info underneath package when verbose
 			if (options.verbose) {
+				rows.push([formatSize(pkg.size), `  ${dim(pkg.path)}`]);
+
 				const installedByPart = pkg.installedBy.length > 0
 					? `  ${bold('Installed by:')} ${formatGroupedInstalledBy(pkg, groupKey, groupBy)}`
 					: `  ${bold('Installed by:')} ${dim('package.json')}`;
-				rows.push([formatSize(pkg.size), installedByPart]);
-			}
+				rows.push(['', installedByPart]);
 
-			// Show dependency info underneath package when verbose
-			if (options.verbose) {
 				rows.push(['', `  ${formatDependencyInfo(pkg)}`]);
 			}
 		}

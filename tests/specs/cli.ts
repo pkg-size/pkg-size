@@ -861,19 +861,21 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			 * Line 6: (empty separator)
 			 * --- Package 1 block (is-number, transitive dep) ---
 			 * Line 7: <percentage>  <is-number name+version+links>
-			 * Line 8: <size>        Installed by: is-odd v<version>
-			 * Line 9:               Dependencies: 0
+			 * Line 8: <size>        <path>
+			 * Line 9:               Installed by: is-odd v<version>
+			 * Line 10:              Dependencies: 0
 			 * --- Empty line between packages ---
-			 * Line 10: (empty)
+			 * Line 11: (empty)
 			 * --- Package 2 block (is-odd, direct dep) ---
-			 * Line 11: <percentage>  <is-odd name+version+links>
-			 * Line 12: <size>        Installed by: package.json
-			 * Line 13:              Dependencies: 1 (Xkb)
-			 * Line 14: (empty at end)
+			 * Line 12: <percentage>  <is-odd name+version+links>
+			 * Line 13: <size>        <path>
+			 * Line 14:              Installed by: package.json
+			 * Line 15:              Dependencies: 1 (Xkb)
+			 * Line 16: (empty at end)
 			 *
-			 * Key: 3 lines per package, empty line ONLY between packages (not within)
+			 * Key: 4 lines per package, empty line ONLY between packages (not within)
 			 */
-			test('verbose install output: 3 lines per package, empty lines only between packages', async () => {
+			test('verbose install output: 4 lines per package, empty lines only between packages', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -909,33 +911,39 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				// Line 6: percentage + name/version
 				expect(lines[6]).toContain('is-number');
 
-				// Line 7: size + "Installed by:" showing is-odd
-				expect(lines[7]).toContain('Installed by:');
-				expect(lines[7]).toContain('is-odd');
+				// Line 7: size + path
+				expect(lines[7]).toContain('node_modules');
 
-				// Line 8: Dependencies count
-				expect(lines[8]).toContain('Dependencies:');
+				// Line 8: "Installed by:" showing is-odd
+				expect(lines[8]).toContain('Installed by:');
+				expect(lines[8]).toContain('is-odd');
+
+				// Line 9: Dependencies count
+				expect(lines[9]).toContain('Dependencies:');
 
 				// --- Empty line between packages ---
-				// Line 9: empty separator between packages
-				expect(lines[9]).toBe('');
+				// Line 10: empty separator between packages
+				expect(lines[10]).toBe('');
 
 				// --- Package 2 (is-odd, direct dep) ---
-				// Line 10: percentage + name/version
-				expect(lines[10]).toContain('is-odd');
+				// Line 11: percentage + name/version
+				expect(lines[11]).toContain('is-odd');
 
-				// Line 11: size + "Installed by:" showing package.json (direct dep)
-				expect(lines[11]).toContain('Installed by:');
-				expect(lines[11]).toContain('package.json');
+				// Line 12: size + path
+				expect(lines[12]).toContain('node_modules');
 
-				// Line 12: Dependencies count
-				expect(lines[12]).toContain('Dependencies:');
+				// Line 13: "Installed by:" showing package.json (direct dep)
+				expect(lines[13]).toContain('Installed by:');
+				expect(lines[13]).toContain('package.json');
 
-				// Line 13: trailing empty line
-				expect(lines[13]).toBe('');
+				// Line 14: Dependencies count
+				expect(lines[14]).toContain('Dependencies:');
 
-				// Total lines: exactly 14
-				expect(lines.length).toBe(14);
+				// Line 15: trailing empty line
+				expect(lines[15]).toBe('');
+
+				// Total lines: exactly 16
+				expect(lines.length).toBe(16);
 			}, 30_000);
 
 			/**
@@ -963,17 +971,19 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const isNumberLineIndex = lines.findIndex(line => line.includes('is-number') && !line.includes('Installed by'));
 				expect(isNumberLineIndex).toBeGreaterThan(-1);
 
-				// Next line should show "Installed by:" with is-odd info
-				expect(lines[isNumberLineIndex + 1]).toContain('Installed by:');
-				expect(lines[isNumberLineIndex + 1]).toContain('is-odd');
+				// Next line shows path, line after that shows "Installed by:" with is-odd info
+				expect(lines[isNumberLineIndex + 1]).toContain('node_modules');
+				expect(lines[isNumberLineIndex + 2]).toContain('Installed by:');
+				expect(lines[isNumberLineIndex + 2]).toContain('is-odd');
 
 				// Find is-odd line (direct dep)
 				const isOddLineIndex = lines.findIndex(line => line.includes('is-odd') && !line.includes('is-number') && !line.includes('Installed by'));
 				expect(isOddLineIndex).toBeGreaterThan(-1);
 
-				// Next line should show "Installed by: package.json" since it's direct
-				expect(lines[isOddLineIndex + 1]).toContain('Installed by:');
-				expect(lines[isOddLineIndex + 1]).toContain('package.json');
+				// Next line shows path, line after that shows "Installed by: package.json" since it's direct
+				expect(lines[isOddLineIndex + 1]).toContain('node_modules');
+				expect(lines[isOddLineIndex + 2]).toContain('Installed by:');
+				expect(lines[isOddLineIndex + 2]).toContain('package.json');
 			}, 30_000);
 		});
 
@@ -1529,19 +1539,21 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			 * Line 3: (empty separator)
 			 * --- Package 1 block ---
 			 * Line 4: <percentage>  <package-a name+version+author+license+links>
-			 * Line 5: <size>        Installed by: <path or "package.json">
-			 * Line 6:               Dependencies: <count>
+			 * Line 5: <size>        <path>
+			 * Line 6:               Installed by: <path or "package.json">
+			 * Line 7:               Dependencies: <count>
 			 * --- Empty line between packages ---
-			 * Line 7: (empty)
+			 * Line 8: (empty)
 			 * --- Package 2 block ---
-			 * Line 8: <percentage>  <package-b name+version+author+license+links>
-			 * Line 9: <size>        Installed by: <path or "package.json">
-			 * Line 10:              Dependencies: <count>
-			 * Line 11: (empty at end)
+			 * Line 9: <percentage>  <package-b name+version+author+license+links>
+			 * Line 10: <size>       <path>
+			 * Line 11:              Installed by: <path or "package.json">
+			 * Line 12:              Dependencies: <count>
+			 * Line 13: (empty at end)
 			 *
-			 * Key: 3 lines per package, empty line ONLY between packages (not within)
+			 * Key: 4 lines per package, empty line ONLY between packages (not within)
 			 */
-			test('verbose output: 3 lines per package, empty lines only between packages', async () => {
+			test('verbose output: 4 lines per package, empty lines only between packages', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -1591,34 +1603,40 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(lines[3]).toContain('Author A');
 				expect(lines[3]).toContain('MIT');
 
-				// Line 4: size + "Installed by:"
-				expect(lines[4]).toContain('Installed by:');
+				// Line 4: size + path
+				expect(lines[4]).toContain('node_modules');
 
-				// Line 5: Dependencies count
-				expect(lines[5]).toContain('Dependencies:');
+				// Line 5: "Installed by:"
+				expect(lines[5]).toContain('Installed by:');
+
+				// Line 6: Dependencies count
+				expect(lines[6]).toContain('Dependencies:');
 
 				// --- Empty line between packages ---
-				// Line 6: empty separator between packages
-				expect(lines[6]).toBe('');
+				// Line 7: empty separator between packages
+				expect(lines[7]).toBe('');
 
 				// --- Package 2 (package-b) ---
-				// Line 7: percentage + name/version/author/license
-				expect(lines[7]).toContain('package-b');
-				expect(lines[7]).toContain('v2.0.0');
-				expect(lines[7]).toContain('Author B');
-				expect(lines[7]).toContain('ISC');
+				// Line 8: percentage + name/version/author/license
+				expect(lines[8]).toContain('package-b');
+				expect(lines[8]).toContain('v2.0.0');
+				expect(lines[8]).toContain('Author B');
+				expect(lines[8]).toContain('ISC');
 
-				// Line 8: size + "Installed by:"
-				expect(lines[8]).toContain('Installed by:');
+				// Line 9: size + path
+				expect(lines[9]).toContain('node_modules');
 
-				// Line 9: Dependencies count
-				expect(lines[9]).toContain('Dependencies:');
+				// Line 10: "Installed by:"
+				expect(lines[10]).toContain('Installed by:');
 
-				// Line 10: trailing empty line
-				expect(lines[10]).toBe('');
+				// Line 11: Dependencies count
+				expect(lines[11]).toContain('Dependencies:');
 
-				// Total lines: exactly 11
-				expect(lines.length).toBe(11);
+				// Line 12: trailing empty line
+				expect(lines[12]).toBe('');
+
+				// Total lines: exactly 13
+				expect(lines.length).toBe(13);
 			});
 
 			/**
@@ -1626,8 +1644,9 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			 *
 			 * For a transitive dependency (has parent in path):
 			 * Line N:   <percentage>  <name+version+links>
-			 * Line N+1: <size>        Installed by: <parent name> v<parent version>
-			 * Line N+2:               Dependencies: <count>
+			 * Line N+1: <size>        <path>
+			 * Line N+2:               Installed by: <parent name> v<parent version>
+			 * Line N+3:               Dependencies: <count>
 			 *
 			 * The "Installed by:" line shows the dependency chain
 			 */
@@ -1667,13 +1686,16 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const childLineIndex = lines.findIndex(line => line.includes('child-pkg'));
 				expect(childLineIndex).toBeGreaterThan(-1);
 
-				// Next line should show "Installed by:" with parent info
-				expect(lines[childLineIndex + 1]).toContain('Installed by:');
-				expect(lines[childLineIndex + 1]).toContain('parent-pkg');
-				expect(lines[childLineIndex + 1]).toContain('v1.0.0');
+				// Next line shows path
+				expect(lines[childLineIndex + 1]).toContain('node_modules');
+
+				// Line after path shows "Installed by:" with parent info
+				expect(lines[childLineIndex + 2]).toContain('Installed by:');
+				expect(lines[childLineIndex + 2]).toContain('parent-pkg');
+				expect(lines[childLineIndex + 2]).toContain('v1.0.0');
 
 				// Following line should show Dependencies
-				expect(lines[childLineIndex + 2]).toContain('Dependencies:');
+				expect(lines[childLineIndex + 3]).toContain('Dependencies:');
 			});
 
 			/**
