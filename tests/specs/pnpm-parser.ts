@@ -1,5 +1,5 @@
 import { testSuite, expect } from 'manten';
-import { parsePnpmDirName } from '../../src/install/strategies/pnpm.js';
+import { parsePnpmDirName } from '../../src/install/utils/pnpm-parser.js';
 
 export default testSuite(({ describe }) => {
 	describe('pnpm-parser', ({ describe }) => {

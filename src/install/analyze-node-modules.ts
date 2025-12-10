@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { getNodeModulesPackages } from './node-modules.js';
+import { getNodeModulesPackages } from './reader.js';
 import type { InstalledPackage, NodeModulesAnalysis } from './types.js';
 
 export const analyzeNodeModules = async (

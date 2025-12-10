@@ -1,6 +1,6 @@
 import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
-import { crawlNodeModulesOnce } from '../../src/install/package-utils.js';
+import { crawlNodeModulesOnce } from '../../src/install/utils/scanner.js';
 
 export default testSuite(({ describe }) => {
 	describe('package-utils', ({ describe }) => {

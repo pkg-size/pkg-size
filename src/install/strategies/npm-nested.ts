@@ -2,7 +2,8 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fsExists } from '../../utils/fs-exists.js';
 import type { InstalledPackage, PackageReference } from '../types.js';
-import { getDirectorySizeExcludingNodeModules, getPackageMetadata } from '../package-utils.js';
+import { getDirectorySizeExcludingNodeModules } from '../utils/scanner.js';
+import { getPackageMetadata } from '../utils/metadata.js';
 
 // Recursively collect packages from nested node_modules (npm --install-strategy=nested)
 const collectNestedPackages = async (

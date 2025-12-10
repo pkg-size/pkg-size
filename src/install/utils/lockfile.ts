@@ -1,5 +1,5 @@
 import { findAndParseLockfile } from 'parse-lock-files';
-import type { PackageReference } from './types.js';
+import type { PackageReference } from '../types.js';
 
 type DependencyGraph = Map<string, PackageReference[]>;
 

@@ -1,7 +1,8 @@
 import path from 'node:path';
 import type { InstalledPackage, PackageReference } from '../types.js';
-import { crawlNodeModulesOnce, getPackageMetadata } from '../package-utils.js';
-import { parseLockfile, buildDependencyPathFromGraph } from '../lockfile-parser.js';
+import { crawlNodeModulesOnce } from '../utils/scanner.js';
+import { getPackageMetadata } from '../utils/metadata.js';
+import { parseLockfile, buildDependencyPathFromGraph } from '../utils/lockfile.js';
 
 // Get packages from flat node_modules (yarn or npm hoisted)
 // Uses single-crawl optimization: O(DiskLatency + Packages) instead of O(Packages * DiskLatency)
