@@ -20,7 +20,7 @@ export const analyzeCommand = command({
 			description: 'Sort list by (name, size)',
 			default: 'size',
 		},
-		group: {
+		groupBy: {
 			type: GroupByType,
 			alias: 'g',
 			description: 'Group packages by (scope, license, author)',
@@ -41,7 +41,7 @@ export const analyzeCommand = command({
 			'pkg-size analyze',
 			'pkg-size analyze ./path/to/project',
 			'pkg-size analyze --sort-by=name',
-			'pkg-size analyze --group=scope',
+			'pkg-size analyze --group-by=scope',
 			'pkg-size analyze --json',
 		],
 	},
@@ -49,7 +49,7 @@ export const analyzeCommand = command({
 	const projectPath = argv._.path ?? process.cwd();
 	const {
 		sortBy,
-		group,
+		groupBy,
 		json,
 		verbose,
 	} = argv.flags;
@@ -59,8 +59,8 @@ export const analyzeCommand = command({
 	const sortProperty = sortBy === 'name' ? 'name' : 'size';
 	data.packages.sort(comparePackages(sortProperty));
 
-	if (group) {
-		const groups = groupPackages(data.packages, group);
+	if (groupBy) {
+		const groups = groupPackages(data.packages, groupBy);
 
 		if (json) {
 			console.log(JSON.stringify({
@@ -70,7 +70,7 @@ export const analyzeCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, { verbose });
+		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, groupBy, { verbose });
 		return;
 	}
 

@@ -45,7 +45,7 @@ export const installCommand = command({
 			description: 'Sort list by (name, size)',
 			default: 'size',
 		},
-		group: {
+		groupBy: {
 			type: GroupByType,
 			alias: 'g',
 			description: 'Group packages by (scope, license, author)',
@@ -67,7 +67,7 @@ export const installCommand = command({
 			'pkg-size install react react-dom',
 			'pkg-size install @babel/core typescript',
 			'pkg-size install lodash --package-manager=pnpm',
-			'pkg-size install @babel/core --group=scope',
+			'pkg-size install @babel/core --group-by=scope',
 			'pkg-size install lodash --json',
 		],
 	},
@@ -75,7 +75,7 @@ export const installCommand = command({
 	const { packages } = argv._;
 	const {
 		sortBy,
-		group,
+		groupBy,
 		json,
 		verbose,
 	} = argv.flags;
@@ -93,8 +93,8 @@ export const installCommand = command({
 
 	const statusMessage = `Completed in ${formatTime(data.installTime)}`;
 
-	if (group) {
-		const groups = groupPackages(data.packages, group);
+	if (groupBy) {
+		const groups = groupPackages(data.packages, groupBy);
 
 		if (json) {
 			console.log(JSON.stringify({
@@ -104,7 +104,7 @@ export const installCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, {
+		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, groupBy, {
 			statusMessage,
 			verbose,
 		});

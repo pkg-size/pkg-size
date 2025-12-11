@@ -1165,7 +1165,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(json.totalSize).toBe(0);
 			});
 
-			test('groups scoped packages by scope with --group=scope', async () => {
+			test('groups scoped packages by scope with --group-by=scope', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -1207,7 +1207,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=scope', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=scope', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -1222,7 +1222,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(json.groups['(unscoped)'].packages).toHaveLength(1);
 			});
 
-			test('displays grouped output in table format with --group=scope', async () => {
+			test('displays grouped output in table format with --group-by=scope', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -1248,7 +1248,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=scope']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=scope']);
 
 				expect('exitCode' in result).toBe(false);
 				// Group headers should be shown
@@ -1260,7 +1260,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('lodash');
 			});
 
-			test('groups packages by license with --group=license', async () => {
+			test('groups packages by license with --group-by=license', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -1301,7 +1301,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=license', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -1315,7 +1315,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(json.groups['(unknown)'].packages).toHaveLength(1);
 			});
 
-			test('displays grouped output in table format with --group=license', async () => {
+			test('displays grouped output in table format with --group-by=license', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -1341,7 +1341,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=license']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license']);
 
 				expect('exitCode' in result).toBe(false);
 				expect(result.stdout).toContain('MIT');
@@ -1350,7 +1350,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('apache-pkg');
 			});
 
-			test('groups packages by author with --group=author', async () => {
+			test('groups packages by author with --group-by=author', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -1394,7 +1394,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=author', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=author', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -1408,7 +1408,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(json.groups['(unknown)'].packages).toHaveLength(1);
 			});
 
-			test('displays grouped output in table format with --group=author', async () => {
+			test('displays grouped output in table format with --group-by=author', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -1434,13 +1434,40 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['analyze', '--group=author']);
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=author']);
 
 				expect('exitCode' in result).toBe(false);
 				expect(result.stdout).toContain('John Doe');
 				expect(result.stdout).toContain('Jane Smith');
 				expect(result.stdout).toContain('john-pkg');
 				expect(result.stdout).toContain('jane-pkg');
+			});
+
+			test('--group-by=author shows only author name, not email', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'test-pkg': {
+							'package.json': definePackageJson({
+								name: 'test-pkg',
+								version: '1.0.0',
+								author: 'John Doe <john@example.com> (https://example.com)',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=author']);
+
+				expect('exitCode' in result).toBe(false);
+				// Group header should show just the name
+				expect(result.stdout).toContain('John Doe');
+				// Email should not appear in output
+				expect(result.stdout).not.toContain('john@example.com');
 			});
 
 			test('includes metadata in JSON output', async () => {

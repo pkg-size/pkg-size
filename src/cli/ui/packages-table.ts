@@ -5,7 +5,7 @@ import ansis, {
 } from 'ansis';
 import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
-import { comparePackages, type PackageGroup } from '../../utils/grouping.js';
+import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
 import { parseAuthor } from '../../utils/parse-author.js';
 import { printRows } from './table.js';
 
@@ -201,6 +201,7 @@ export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
 	sortProperty: string,
+	groupBy: GroupBy,
 	options: RenderOptions = {},
 ): void => {
 	if (options.statusMessage) {
@@ -227,8 +228,14 @@ export const renderGroupedPackagesTable = (
 	);
 
 	for (const [groupKey, groupData] of sortedGroups) {
-		// Group header
-		rows.push([dim(formatPercentage(groupData.totalSize, totalSize)), bold(groupKey)]);
+		// Group header - format as author name when grouping by author
+		const groupLabel = groupBy === 'author'
+			? (formatAuthor(groupKey) ?? groupKey)
+			: groupKey;
+		rows.push([
+			underline(bold(formatPercentage(groupData.totalSize, totalSize))),
+			underline(bold(groupLabel)),
+		]);
 
 		// Sort packages within group
 		groupData.packages.sort(comparePackages(sortProperty));
