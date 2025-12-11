@@ -1,66 +1,153 @@
-import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
-import {
-	green, cyan, bold, underline, dim,
-} from 'yoctocolors';
+import ansis, {
+	green, bold, dim, yellow,
+	underline,
+} from 'ansis';
+import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
-import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
+import { comparePackages, type PackageGroup } from '../../utils/grouping.js';
+import { parseAuthor } from '../../utils/parse-author.js';
+import { printRows } from './table.js';
+
+const orange = ansis.hex('#FFAA30');
+const amberEarth = ansis.hex('#E57C04');
+
+// Link icons (extracted for potential --no-emoji mode support)
+const LINK_ICONS = {
+	unpkg: '📦',
+	repository: '😺',
+	homepage: '🌐',
+	funding: '♥️',
+} as const;
 
 const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
-const formatPackageName = (
-	pkg: InstalledPackage,
-): string => {
-	const versionSuffix = pkg.version ? ` ${dim(pkg.version)}` : '';
-	return `${cyan(pkg.name)}${versionSuffix}`;
+const formatAuthor = (author: string): string | null => {
+	const parsed = parseAuthor(author);
+	if (!parsed) {
+		return null;
+	}
+	if (parsed.url) {
+		return terminalLink(parsed.name, parsed.url);
+	}
+	return parsed.name;
 };
 
-const formatGroupedPackageName = (
+const formatEmojiLinks = (pkg: InstalledPackage): string => {
+	// unpkg.com (always present)
+	const links = [
+		terminalLink(LINK_ICONS.unpkg, `https://unpkg.com/browse/${pkg.name}@${pkg.version}/`),
+	];
+
+	// GitHub repo
+	if (pkg.repository) {
+		links.push(terminalLink(LINK_ICONS.repository, pkg.repository));
+	}
+
+	// Homepage
+	if (pkg.homepage) {
+		links.push(terminalLink(LINK_ICONS.homepage, pkg.homepage));
+	}
+
+	// Funding
+	if (pkg.funding) {
+		links.push(terminalLink(LINK_ICONS.funding, pkg.funding));
+	}
+
+	return links.join(' ');
+};
+
+const formatDependencyInfo = (pkg: InstalledPackage): string => {
+	if (pkg.dependencyCount === 0) {
+		return `${bold('Dependencies:')} ${dim('0')}`;
+	}
+	return `${bold('Dependencies:')} ${dim(`${pkg.dependencyCount} (${formatSize(pkg.dependencySize)})`)}`;
+};
+
+// Version may not exist for symlinked packages or manually edited package.json
+const formatNameVersion = (name: string, version: string): string => (
+	version ? `${name} v${version}` : name
+);
+
+const formatPackageRef = (name: string, version: string): string => terminalLink(
+	orange(formatNameVersion(name, version)),
+	`https://www.npmjs.com/package/${name}/v/${version}`,
+);
+
+const formatInstalledBy = (
 	pkg: InstalledPackage,
-	groupKey: string,
-	groupBy: GroupBy,
+): string => pkg.installedBy
+	.map(parent => formatNameVersion(parent.name, parent.version))
+	.join(' → ');
+
+const formatPackageName = (
+	pkg: InstalledPackage,
+	verbose = false,
+	indent = '',
 ): string => {
-	// For scope grouping, show shortened names for scoped packages
-	const displayName = groupBy === 'scope' && pkg.name.startsWith('@')
-		? pkg.name.slice(groupKey.length + 1)
-		: pkg.name;
-	const versionSuffix = pkg.version ? ` ${dim(pkg.version)}` : '';
-	return `  ${cyan(displayName)}${versionSuffix}`;
+	const base = formatPackageRef(pkg.name, pkg.version);
+	if (!verbose) {
+		return `${indent}${base} ${dim(pkg.path)}`;
+	}
+
+	const parts = [base];
+	if (pkg.author) {
+		const formattedAuthor = formatAuthor(pkg.author);
+		if (formattedAuthor) {
+			parts.push(`${dim('by')} ${formattedAuthor}`);
+		}
+	}
+	if (pkg.license) {
+		parts.push(yellow(pkg.license));
+	}
+	parts.push(`| ${formatEmojiLinks(pkg)}`);
+	return `${indent}${parts.join(' ')}`;
+};
+
+const formatVerboseDetails = (pkg: InstalledPackage, indent = ''): string[][] => {
+	const installedByPart = pkg.installedBy.length > 0
+		? `${indent}${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
+		: `${indent}${bold('Installed by:')} ${dim('package.json')}`;
+	return [
+		[formatSize(pkg.size), `${indent}${dim(pkg.path)}`],
+		['', installedByPart],
+		['', `${indent}${formatDependencyInfo(pkg)}`],
+	];
 };
 
 type RenderOptions = {
 	statusMessage?: string;
+	verbose?: boolean;
 };
 
-const createTable = (): SimpleTable => {
-	const table = new SimpleTable();
-	table.header(
-		green('Package'),
-		{
-			text: green('Size'),
-			align: 'right' as const,
-		},
-	);
-	return table;
-};
-
-const printTable = (
-	table: SimpleTable,
-	totalSize: number,
-	options: RenderOptions,
-): void => {
-	if (options.statusMessage) {
-		console.log(dim(options.statusMessage));
+const formatPercentage = (size: number, totalSize: number): string => {
+	if (totalSize === 0) {
+		return '0%';
 	}
-	console.log('');
 
-	table.row();
-	table.row(
-		bold('Total'),
-		underline(formatSize(totalSize)),
-	);
+	const percentage = (size / totalSize) * 100;
 
-	console.log(`${table.toString()}\n`);
+	// ≥ 1% → no decimals
+	if (percentage >= 1) {
+		return `${Math.round(percentage)}%`;
+	}
+
+	// 0.1% to 0.9%
+	if (percentage >= 0.05) {
+		return `${Number(percentage.toFixed(1))}%`;
+	}
+
+	// 0.01% to 0.04%
+	if (percentage >= 0.005) {
+		return `${Number(percentage.toFixed(2))}%`;
+	}
+
+	// Truly tiny
+	if (percentage > 0) {
+		return '<0.01%';
+	}
+
+	return '0%';
 };
 
 export const renderPackagesTable = (
@@ -68,26 +155,71 @@ export const renderPackagesTable = (
 	totalSize: number,
 	options: RenderOptions = {},
 ): void => {
-	const table = createTable();
+	if (options.statusMessage) {
+		console.log(dim(options.statusMessage));
+	}
+	console.log('');
 
-	for (const pkg of packages) {
-		table.row(
-			formatPackageName(pkg),
-			formatSize(pkg.size),
-		);
+	const rows: string[][] = [];
+
+	// Header with total size and package count
+	const packageCount = packages.length.toLocaleString();
+	const packageLabel = packages.length === 1 ? 'Package' : 'Packages';
+	rows.push(
+		[
+			underline((amberEarth(formatSize(totalSize)))),
+			underline((amberEarth(`${packageCount} ${packageLabel}`))),
+		],
+		['', ''],
+	);
+
+	for (let i = 0; i < packages.length; i += 1) {
+		const pkg = packages[i];
+
+		// Empty line above each package only in verbose mode (skip first)
+		if (options.verbose && i > 0) {
+			rows.push(['', '']);
+		}
+
+		rows.push([
+			options.verbose
+				? bold(formatPercentage(pkg.size, totalSize))
+				: formatSize(pkg.size),
+			formatPackageName(pkg, options.verbose),
+		]);
+
+		if (options.verbose) {
+			rows.push(...formatVerboseDetails(pkg));
+		}
 	}
 
-	printTable(table, totalSize, options);
+	printRows(rows, { align: ['right', 'left'] });
+	console.log('');
 };
 
 export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
-	groupBy: GroupBy,
 	sortProperty: string,
 	options: RenderOptions = {},
 ): void => {
-	const table = createTable();
+	if (options.statusMessage) {
+		console.log(dim(options.statusMessage));
+	}
+	console.log('');
+
+	const rows: string[][] = [];
+
+	// Count total packages across all groups
+	let totalPackages = 0;
+	for (const groupData of Object.values(groups)) {
+		totalPackages += groupData.packages.length;
+	}
+
+	// Header with total size and package count
+	const packageCount = totalPackages.toLocaleString();
+	const packageLabel = totalPackages === 1 ? 'Package' : 'Packages';
+	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)], ['', '']);
 
 	// Sort groups by total size descending
 	const sortedGroups = Object.entries(groups).sort(
@@ -96,21 +228,36 @@ export const renderGroupedPackagesTable = (
 
 	for (const [groupKey, groupData] of sortedGroups) {
 		// Group header
-		table.row(bold(groupKey), dim(formatSize(groupData.totalSize)));
+		rows.push([dim(formatPercentage(groupData.totalSize, totalSize)), bold(groupKey)]);
 
 		// Sort packages within group
 		groupData.packages.sort(comparePackages(sortProperty));
 
-		for (const pkg of groupData.packages) {
-			table.row(
-				formatGroupedPackageName(pkg, groupKey, groupBy),
-				formatSize(pkg.size),
-			);
+		const indent = '  ';
+		for (let i = 0; i < groupData.packages.length; i += 1) {
+			const pkg = groupData.packages[i];
+
+			// Empty line above each package only in verbose mode (skip first)
+			if (options.verbose && i > 0) {
+				rows.push(['', '']);
+			}
+
+			rows.push([
+				options.verbose
+					? formatPercentage(pkg.size, totalSize)
+					: formatSize(pkg.size),
+				formatPackageName(pkg, options.verbose, indent),
+			]);
+
+			if (options.verbose) {
+				rows.push(...formatVerboseDetails(pkg, indent));
+			}
 		}
 
 		// Empty row after each group
-		table.row();
+		rows.push(['', '']);
 	}
 
-	printTable(table, totalSize, options);
+	printRows(rows, { align: ['right', 'left'] });
+	console.log('');
 };

@@ -1,11 +1,11 @@
 import { command } from 'cleye';
-import SimpleTable from 'cli-simple-table';
 import byteSize from 'byte-size';
 import {
 	green, cyan, bold, underline, yellow,
-} from 'yoctocolors';
+} from 'ansis';
 import { getPackageSize } from '../../local/index.js';
 import type { FileEntry } from '../../local/types.js';
+import { printRows } from '../ui/table.js';
 
 const compressions = ['gzip', 'brotli'] as const;
 
@@ -125,29 +125,14 @@ export const publishCommand = command({
 	console.log(green(bold('Tarball size')));
 	console.log(`${getSize(distData.tarballSize)}\n`);
 
-	const table = new SimpleTable();
-
+	// Header
 	const headers = compression
-		? [
-			green('File'),
-			{
-				text: green('Size'),
-				align: 'right' as const,
-			},
-			{
-				text: green(compressionToLabel[compression]),
-				align: 'right' as const,
-			},
-		]
-		: [
-			green('File'),
-			{
-				text: green('Size'),
-				align: 'right' as const,
-			},
-		];
-
-	table.header(...headers);
+		? [green('File'), green('Size'), green(compressionToLabel[compression])]
+		: [green('File'), green('Size')];
+	const rows: string[][] = [
+		headers,
+		headers.map(() => ''),
+	];
 
 	let totalSize = 0;
 	let totalCompressed = 0;
@@ -159,7 +144,7 @@ export const publishCommand = command({
 		const row = compression
 			? [cyan(file.path), getSize(file.size), getSize(file[compressionToProperty[compression]])]
 			: [cyan(file.path), getSize(file.size)];
-		table.row(...row);
+		rows.push(row);
 
 		totalSize += file.size;
 		if (compression) {
@@ -167,12 +152,13 @@ export const publishCommand = command({
 		}
 	}
 
-	table.row();
+	rows.push(headers.map(() => ''));
 
 	const totalsRow = compression
 		? ['', underline(getSize(totalSize)), underline(getSize(totalCompressed))]
 		: ['', underline(getSize(totalSize))];
-	table.row(...totalsRow);
+	rows.push(totalsRow);
 
-	console.log(`${table.toString()}\n`);
+	printRows(rows, { align: ['left', 'right', 'right'] });
+	console.log('');
 });

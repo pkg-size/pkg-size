@@ -25,6 +25,11 @@ export const analyzeCommand = command({
 			alias: 'g',
 			description: 'Group packages by (scope, license, author)',
 		},
+		verbose: {
+			type: Boolean,
+			alias: 'v',
+			description: 'Show dependency paths for transitive dependencies',
+		},
 		json: {
 			type: Boolean,
 			description: 'JSON output',
@@ -42,9 +47,14 @@ export const analyzeCommand = command({
 	},
 }, async (argv) => {
 	const projectPath = argv._.path ?? process.cwd();
-	const { sortBy, group, json } = argv.flags;
+	const {
+		sortBy,
+		group,
+		json,
+		verbose,
+	} = argv.flags;
 
-	const data = await analyzeNodeModules(projectPath);
+	const data = await analyzeNodeModules(projectPath, undefined, verbose);
 
 	const sortProperty = sortBy === 'name' ? 'name' : 'size';
 	data.packages.sort(comparePackages(sortProperty));
@@ -60,7 +70,7 @@ export const analyzeCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, group, sortProperty);
+		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, { verbose });
 		return;
 	}
 
@@ -69,5 +79,5 @@ export const analyzeCommand = command({
 		return;
 	}
 
-	renderPackagesTable(data.packages, data.totalSize);
+	renderPackagesTable(data.packages, data.totalSize, { verbose });
 });

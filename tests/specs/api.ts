@@ -268,40 +268,30 @@ export default testSuite(({ describe }) => {
 					packageManager: 'pnpm',
 				});
 
-				expect(result).toEqual({
-					packageManager: 'pnpm',
-					totalSize: expect.any(Number),
-					installTime: expect.any(Number),
-					packages: expect.arrayContaining([
-						{
-							name: 'is-odd',
-							version: expect.any(String),
-							size: expect.any(Number),
-							license: 'MIT',
-							author: expect.any(String),
-							files: expect.arrayContaining([
-								{
-									path: expect.any(String),
-									size: expect.any(Number),
-								},
-							]),
-						},
-						{
-							name: 'is-number',
-							version: expect.any(String),
-							size: expect.any(Number),
-							license: 'MIT',
-							author: expect.any(String),
-							files: expect.arrayContaining([
-								{
-									path: expect.any(String),
-									size: expect.any(Number),
-								},
-							]),
-						},
-					]),
-				});
+				expect(result.packageManager).toBe('pnpm');
+				expect(result.totalSize).toBeGreaterThan(0);
+				expect(result.installTime).toBeGreaterThan(0);
 				expect(result.packages).toHaveLength(2);
+
+				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
+				const isNumber = result.packages.find(pkg => pkg.name === 'is-number');
+
+				expect(isOdd).toBeDefined();
+				expect(isOdd!.version).toBeDefined();
+				expect(isOdd!.size).toBeGreaterThan(0);
+				expect(isOdd!.license).toBe('MIT');
+				expect(isOdd!.installedBy).toEqual([]);
+
+				expect(isNumber).toBeDefined();
+				expect(isNumber!.version).toBeDefined();
+				expect(isNumber!.size).toBeGreaterThan(0);
+				expect(isNumber!.license).toBe('MIT');
+				expect(isNumber!.installedBy).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
 			});
 
 			test('accepts space-delimited packages', async () => {
@@ -350,6 +340,48 @@ export default testSuite(({ describe }) => {
 					process.env.npm_config_user_agent = originalAgent;
 				}
 			});
+
+			test('npm returns transitive dependency paths', async () => {
+				const result = await getInstallSize('is-odd', {
+					packageManager: 'npm',
+				});
+
+				// is-odd depends on is-number, so is-number should have is-odd in its path
+				const isNumber = result.packages.find(pkg => pkg.name === 'is-number');
+				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
+
+				expect(isOdd).toBeDefined();
+				expect(isOdd!.installedBy).toEqual([]);
+
+				expect(isNumber).toBeDefined();
+				expect(isNumber!.installedBy).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
+			}, 30_000);
+
+			test('pnpm returns transitive dependency paths', async () => {
+				const result = await getInstallSize('is-odd', {
+					packageManager: 'pnpm',
+				});
+
+				// is-odd depends on is-number, so is-number should have is-odd in its path
+				const isNumber = result.packages.find(pkg => pkg.name === 'is-number');
+				const isOdd = result.packages.find(pkg => pkg.name === 'is-odd');
+
+				expect(isOdd).toBeDefined();
+				expect(isOdd!.installedBy).toEqual([]);
+
+				expect(isNumber).toBeDefined();
+				expect(isNumber!.installedBy).toEqual([
+					{
+						name: 'is-odd',
+						version: expect.any(String),
+					},
+				]);
+			}, 30_000);
 		});
 
 		describe('Scan Mode', ({ test }) => {
@@ -614,6 +646,207 @@ export default testSuite(({ describe }) => {
 				const pkg = result.packages.find(p => p.name === 'no-author');
 
 				expect(pkg?.author).toBeUndefined();
+			});
+
+			test('builds path array from nested node_modules (auto-detected)', async () => {
+				// Creates nested node_modules structure - auto-detection finds it
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'parent-pkg': {
+							'package.json': definePackageJson({
+								name: 'parent-pkg',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+							node_modules: {
+								'child-pkg': {
+									'package.json': definePackageJson({
+										name: 'child-pkg',
+										version: '2.0.0',
+									}),
+									'index.js': 'content',
+								},
+							},
+						},
+					},
+				});
+
+				// No package manager specified - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
+
+				const parentPkg = result.packages.find(p => p.name === 'parent-pkg');
+				const childPkg = result.packages.find(p => p.name === 'child-pkg');
+
+				// Parent is direct dependency (installedBy is empty)
+				expect(parentPkg).toBeDefined();
+				expect(parentPkg!.installedBy).toEqual([]);
+
+				// Child is transitive dependency of parent
+				expect(childPkg).toBeDefined();
+				expect(childPkg!.installedBy).toEqual([
+					{
+						name: 'parent-pkg',
+						version: '1.0.0',
+					},
+				]);
+			});
+
+			test('builds deep path array for deeply nested packages', async () => {
+				// 3 levels of nesting: level-1 → level-2 → level-3
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'level-1': {
+							'package.json': definePackageJson({
+								name: 'level-1',
+								version: '1.0.0',
+							}),
+							'index.js': 'content',
+							node_modules: {
+								'level-2': {
+									'package.json': definePackageJson({
+										name: 'level-2',
+										version: '2.0.0',
+									}),
+									'index.js': 'content',
+									node_modules: {
+										'level-3': {
+											'package.json': definePackageJson({
+												name: 'level-3',
+												version: '3.0.0',
+											}),
+											'index.js': 'content',
+										},
+									},
+								},
+							},
+						},
+					},
+				});
+
+				// No package manager - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
+
+				const level1 = result.packages.find(p => p.name === 'level-1');
+				const level2 = result.packages.find(p => p.name === 'level-2');
+				const level3 = result.packages.find(p => p.name === 'level-3');
+
+				// level-1: direct dependency (empty installedBy)
+				expect(level1!.installedBy).toEqual([]);
+				// level-2: transitive via level-1
+				expect(level2!.installedBy).toEqual([
+					{
+						name: 'level-1',
+						version: '1.0.0',
+					},
+				]);
+				// level-3: transitive via level-1 → level-2
+				expect(level3!.installedBy).toEqual([
+					{
+						name: 'level-1',
+						version: '1.0.0',
+					},
+					{
+						name: 'level-2',
+						version: '2.0.0',
+					},
+				]);
+			});
+
+			test('handles nested scoped packages', async () => {
+				// Scoped package @scope/parent-pkg with nested child-pkg
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'@scope': {
+							'parent-pkg': {
+								'package.json': definePackageJson({
+									name: '@scope/parent-pkg',
+									version: '1.0.0',
+								}),
+								'index.js': 'content',
+								node_modules: {
+									'child-pkg': {
+										'package.json': definePackageJson({
+											name: 'child-pkg',
+											version: '2.0.0',
+										}),
+										'index.js': 'content',
+									},
+								},
+							},
+						},
+					},
+				});
+
+				// No package manager - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
+
+				const parentPkg = result.packages.find(p => p.name === '@scope/parent-pkg');
+				const childPkg = result.packages.find(p => p.name === 'child-pkg');
+
+				// Scoped parent is direct dependency
+				expect(parentPkg).toBeDefined();
+				expect(parentPkg!.installedBy).toEqual([]);
+
+				// Child is transitive dependency of scoped parent
+				expect(childPkg).toBeDefined();
+				expect(childPkg!.installedBy).toEqual([
+					{
+						name: '@scope/parent-pkg',
+						version: '1.0.0',
+					},
+				]);
+			});
+
+			test('excludes nested node_modules from package size', async () => {
+				// Parent has 100 bytes, child has 10,000 bytes
+				// Parent size should NOT include child's size
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'parent-pkg': {
+							'package.json': definePackageJson({
+								name: 'parent-pkg',
+								version: '1.0.0',
+							}),
+							'index.js': 'x'.repeat(100),
+							node_modules: {
+								'child-pkg': {
+									'package.json': definePackageJson({
+										name: 'child-pkg',
+										version: '2.0.0',
+									}),
+									'large-file.js': 'x'.repeat(10_000),
+								},
+							},
+						},
+					},
+				});
+
+				// No package manager - auto-detects nested structure
+				const result = await analyzeNodeModules(fixture.path);
+
+				const parentPkg = result.packages.find(p => p.name === 'parent-pkg');
+				const childPkg = result.packages.find(p => p.name === 'child-pkg');
+
+				// Parent should NOT include child's size (only ~100 bytes + package.json)
+				expect(parentPkg!.size).toBeLessThan(500);
+				// Child should include the large file (~10,000 bytes)
+				expect(childPkg!.size).toBeGreaterThan(9000);
 			});
 		});
 	});

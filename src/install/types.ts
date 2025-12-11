@@ -3,6 +3,11 @@ export type PackageFile = {
 	size: number;
 };
 
+export type PackageReference = {
+	name: string;
+	version: string;
+};
+
 export type InstalledPackage = {
 	name: string;
 	version: string;
@@ -10,6 +15,15 @@ export type InstalledPackage = {
 	files: PackageFile[];
 	license?: string;
 	author?: string;
+	repository?: string;
+	homepage?: string;
+	funding?: string;
+	// Dependency chain showing how this package was installed
+	installedBy: PackageReference[];
+	// Filesystem path to the package directory (relative to cwd)
+	path: string;
+	dependencySize: number;
+	dependencyCount: number;
 };
 
 export type NodeModulesAnalysis = {

@@ -1,5 +1,5 @@
 import { command } from 'cleye';
-import { dim } from 'yoctocolors';
+import { dim } from 'ansis';
 import { getInstallSize } from '../../install/index.js';
 import { detectPackageManager } from '../../utils/package-manager.js';
 import {
@@ -50,6 +50,11 @@ export const installCommand = command({
 			alias: 'g',
 			description: 'Group packages by (scope, license, author)',
 		},
+		verbose: {
+			type: Boolean,
+			alias: 'v',
+			description: 'Show dependency paths for transitive dependencies',
+		},
 		json: {
 			type: Boolean,
 			description: 'JSON output',
@@ -68,7 +73,12 @@ export const installCommand = command({
 	},
 }, async (argv) => {
 	const { packages } = argv._;
-	const { sortBy, group, json } = argv.flags;
+	const {
+		sortBy,
+		group,
+		json,
+		verbose,
+	} = argv.flags;
 	const packageManager = argv.flags.packageManager ?? detectPackageManager();
 
 	if (!json) {
@@ -94,7 +104,10 @@ export const installCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, group, sortProperty, { statusMessage });
+		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, {
+			statusMessage,
+			verbose,
+		});
 		return;
 	}
 
@@ -103,5 +116,8 @@ export const installCommand = command({
 		return;
 	}
 
-	renderPackagesTable(data.packages, data.totalSize, { statusMessage });
+	renderPackagesTable(data.packages, data.totalSize, {
+		statusMessage,
+		verbose,
+	});
 });
