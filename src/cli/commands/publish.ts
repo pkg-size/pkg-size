@@ -1,36 +1,26 @@
 import { command } from 'cleye';
-import byteSize from 'byte-size';
-import {
-	green, cyan, bold, underline, yellow,
-} from 'ansis';
+import { underline, yellow, bold } from 'ansis';
 import { getPackageSize } from '../../local/index.js';
 import type { FileEntry } from '../../local/types.js';
+import { amberEarth, orange } from '../ui/colors.js';
+import { formatSize } from '../ui/format.js';
 import { printRows } from '../ui/table.js';
 
-const compressions = ['gzip', 'brotli'] as const;
+const sizeTypes = ['raw', 'gzip', 'brotli'] as const;
 
-type Compression = typeof compressions[number] | false;
+type SizeType = typeof sizeTypes[number];
 
-const CompressionType = (value: string): Compression => {
-	if (value === 'false') {
-		return false;
+const SizeTypeValidator = (value: string): SizeType => {
+	if (!sizeTypes.includes(value as SizeType)) {
+		throw new Error(`Invalid size type: "${value}". Must be: raw, gzip, or brotli`);
 	}
-	if (!compressions.includes(value as typeof compressions[number])) {
-		throw new Error(`Invalid compression: "${value}". Must be: gzip, brotli, or false`);
-	}
-	return value as typeof compressions[number];
+	return value as SizeType;
 };
 
-type NumericFileEntryKey = 'size' | 'sizeGzip' | 'sizeBrotli';
-
-const compressionToProperty: Record<string, NumericFileEntryKey> = {
-	brotli: 'sizeBrotli',
+const sizeTypeToProperty: Record<SizeType, keyof FileEntry> = {
+	raw: 'size',
 	gzip: 'sizeGzip',
-};
-
-const compressionToLabel: Record<string, string> = {
-	brotli: 'Brotli',
-	gzip: 'Gzip',
+	brotli: 'sizeBrotli',
 };
 
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
@@ -50,13 +40,10 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 
 const getSortProperty = (
 	sortBy: string,
-	compression: string | false,
+	sizeType: SizeType,
 ): keyof FileEntry => {
-	if (sortBy === 'compressed') {
-		return compression ? compressionToProperty[compression] : 'size';
-	}
 	if (sortBy === 'size') {
-		return 'size';
+		return sizeTypeToProperty[sizeType];
 	}
 	return 'path';
 };
@@ -65,17 +52,16 @@ export const publishCommand = command({
 	name: 'publish',
 	parameters: ['[path]'],
 	flags: {
-		compression: {
-			type: CompressionType,
-			alias: 'c',
-			description: 'Compression algorithm (gzip, brotli) or false to disable',
-			default: 'gzip',
+		size: {
+			type: SizeTypeValidator,
+			description: 'Size type to display (raw, gzip, brotli)',
+			default: 'raw',
 		},
 		sortBy: {
 			type: String,
 			alias: 's',
-			description: 'Sort list by (name, size, compressed)',
-			default: 'compressed',
+			description: 'Sort list by (name, size)',
+			default: 'size',
 		},
 		ignoreFiles: {
 			type: String,
@@ -92,19 +78,17 @@ export const publishCommand = command({
 		examples: [
 			'pkg-size publish',
 			'pkg-size publish ./path/to/package',
-			'pkg-size publish --compression=brotli',
+			'pkg-size publish --size=gzip',
 			'pkg-size publish --json',
 		],
 	},
 }, async (argv) => {
 	const packagePath = argv._.path ?? process.cwd();
-	const {
-		compression, sortBy, ignoreFiles, json,
-	} = argv.flags;
-	const sizes: string[] = compression ? ['size', compression] : ['size'];
+	const { sortBy, ignoreFiles, json } = argv.flags;
+	const size = argv.flags.size as SizeType;
 
 	const distData = await getPackageSize(packagePath, {
-		sizes,
+		sizes: size === 'raw' ? ['size'] : [size],
 		ignoreFiles,
 	});
 
@@ -113,52 +97,46 @@ export const publishCommand = command({
 		return;
 	}
 
+	console.log(`${bold('Package:')} ${distData.packagePath}`);
+
 	if (distData.privatePackage) {
 		console.log(yellow('Warning: This package is marked private in package.json.'));
 	}
 
-	const getSize = (bytes: number): string => byteSize(bytes).toString();
+	const sizeProperty = sizeTypeToProperty[size];
 
-	console.log('');
-	console.log(green(bold('Package path')));
-	console.log(`${distData.packagePath}\n`);
-	console.log(green(bold('Tarball size')));
-	console.log(`${getSize(distData.tarballSize)}\n`);
-
-	// Header
-	const headers = compression
-		? [green('File'), green('Size'), green(compressionToLabel[compression])]
-		: [green('File'), green('Size')];
-	const rows: string[][] = [
-		headers,
-		headers.map(() => ''),
-	];
-
-	let totalSize = 0;
-	let totalCompressed = 0;
-
-	const sortProperty = getSortProperty(sortBy, compression);
+	const sortProperty = getSortProperty(sortBy, size);
 	distData.files.sort(compareFiles(sortProperty));
 
+	// Calculate total
+	let totalSize = 0;
 	for (const file of distData.files) {
-		const row = compression
-			? [cyan(file.path), getSize(file.size), getSize(file[compressionToProperty[compression]])]
-			: [cyan(file.path), getSize(file.size)];
-		rows.push(row);
-
-		totalSize += file.size;
-		if (compression) {
-			totalCompressed += file[compressionToProperty[compression]];
-		}
+		totalSize += file[sizeProperty] as number;
 	}
 
-	rows.push(headers.map(() => ''));
+	// Header with total size and file count (like install/analyze)
+	const fileCount = distData.files.length;
+	const fileLabel = fileCount === 1 ? 'File' : 'Files';
 
-	const totalsRow = compression
-		? ['', underline(getSize(totalSize)), underline(getSize(totalCompressed))]
-		: ['', underline(getSize(totalSize))];
-	rows.push(totalsRow);
-
-	printRows(rows, { align: ['left', 'right', 'right'] });
 	console.log('');
+
+	printRows(
+		[
+			[
+				underline(amberEarth(`${formatSize(totalSize)}`)),
+				underline(amberEarth(`${fileCount} ${fileLabel}`)),
+			],
+			['', ''],
+			...distData.files.map(file => [
+				formatSize(file[sizeProperty] as number),
+				orange(file.path),
+			]),
+			['', ''],
+			[
+				formatSize(distData.tarballSize),
+				bold('Tarball'),
+			],
+		],
+		{ align: ['right', 'left'] },
+	);
 });

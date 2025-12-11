@@ -1,5 +1,4 @@
-import byteSize from 'byte-size';
-import ansis, {
+import {
 	green, bold, dim, yellow,
 	underline,
 } from 'ansis';
@@ -7,10 +6,9 @@ import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
 import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
 import { parseAuthor } from '../../utils/parse-author.js';
+import { orange, amberEarth } from './colors.js';
+import { formatSize } from './format.js';
 import { printRows } from './table.js';
-
-const orange = ansis.hex('#FFAA30');
-const amberEarth = ansis.hex('#E57C04');
 
 // Link icons (extracted for potential --no-emoji mode support)
 const LINK_ICONS = {
@@ -19,8 +17,6 @@ const LINK_ICONS = {
 	homepage: '🌐',
 	funding: '♥️',
 } as const;
-
-const formatSize = (bytes: number): string => byteSize(bytes).toString();
 
 const formatAuthor = (author: string): string | null => {
 	const parsed = parseAuthor(author);

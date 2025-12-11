@@ -48,7 +48,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const result = await pkgSizeCli(fixture.path, ['publish', '--help']);
 
 				expect('exitCode' in result).toBe(false);
-				expect(result.stdout).toContain('--compression');
+				expect(result.stdout).toContain('--size');
 				expect(result.stdout).toContain('--sort-by');
 				expect(result.stdout).toContain('--json');
 			});
@@ -101,8 +101,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const result = await pkgSizeCli(fixture.path, ['publish']);
 
 				expect('exitCode' in result).toBe(false);
-				expect(result.stdout).toContain('Package path');
-				expect(result.stdout).toContain('Tarball size');
+				expect(result.stdout).toContain('Files'); // Header shows file count
+				expect(result.stdout).toContain('Tarball'); // Footer shows tarball size
 				expect(result.stdout).toContain('index.js');
 				expect(result.stdout).toContain('package.json');
 			});
@@ -125,7 +125,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(Array.isArray(json.files)).toBe(true);
 			});
 
-			test('supports -c/--compression flag with gzip', async () => {
+			test('supports --size=gzip flag', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -134,17 +134,18 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					'index.js': 'content',
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['publish', '--compression', 'gzip', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['publish', '--size=gzip', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
 				const indexFile = json.files.find((file: { path: string }) => file.path === 'index.js');
-				expect(indexFile.size).toBeGreaterThan(0);
+				// Only gzip is calculated when --size=gzip
+				expect(indexFile.size).toBe(0);
 				expect(indexFile.sizeGzip).toBeGreaterThan(0);
 				expect(indexFile.sizeBrotli).toBe(0);
 			});
 
-			test('supports --compression flag with brotli', async () => {
+			test('supports --size=brotli flag', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -153,17 +154,18 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					'index.js': 'content',
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['publish', '--compression', 'brotli', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['publish', '--size=brotli', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
 				const indexFile = json.files.find((file: { path: string }) => file.path === 'index.js');
-				expect(indexFile.size).toBeGreaterThan(0);
+				// Only brotli is calculated when --size=brotli
+				expect(indexFile.size).toBe(0);
 				expect(indexFile.sizeGzip).toBe(0);
 				expect(indexFile.sizeBrotli).toBeGreaterThan(0);
 			});
 
-			test('supports --compression=false to disable compression', async () => {
+			test('--size=raw is the default (no compression calculated)', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -172,7 +174,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					'index.js': 'content',
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['publish', '--compression=false', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['publish', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
@@ -259,7 +261,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(jsFiles[1].path).toBe('zebra.js');
 			});
 
-			test('supports --sort-by compressed for compression size sorting', async () => {
+			test('--sort-by size sorts by selected size type', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
@@ -269,12 +271,12 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					'large.js': 'x'.repeat(100),
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['publish', '--sort-by', 'compressed', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['publish', '--size=gzip', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);
 				const jsFiles = json.files.filter((file: { path: string }) => file.path.endsWith('.js'));
-				// Files should be sorted by compressed size descending (large first)
+				// Files should be sorted by size descending (large first)
 				expect(jsFiles[0].path).toBe('large.js');
 				expect(jsFiles[1].path).toBe('small.js');
 			});
