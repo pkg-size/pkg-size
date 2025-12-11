@@ -49,6 +49,13 @@ export type InstallSizeOptions = {
 	 * Defaults to os.tmpdir().
 	 */
 	tempDirectory?: string;
+
+	/**
+	 * Include dependency path data (installedBy chain).
+	 * Requires parsing lockfile which adds overhead for large projects.
+	 * Defaults to false.
+	 */
+	verbose?: boolean;
 };
 
 // Internal type

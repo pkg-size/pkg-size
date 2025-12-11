@@ -86,7 +86,7 @@ export const installCommand = command({
 		console.log(dim(`Installing with ${packageManager}...`));
 	}
 
-	const data = await getInstallSize(packages, { packageManager });
+	const data = await getInstallSize(packages, { packageManager, verbose });
 
 	const sortProperty = sortBy === 'name' ? 'name' : 'size';
 	data.packages.sort(comparePackages(sortProperty));

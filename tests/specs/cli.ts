@@ -636,7 +636,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					}),
 				});
 
-				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'npm', '--json']);
+				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'npm', '--verbose', '--json']);
 
 				expect('exitCode' in result).toBe(false);
 				const json = JSON.parse(result.stdout);

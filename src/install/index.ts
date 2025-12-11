@@ -33,9 +33,11 @@ export const getInstallSize = async (
 			stderr: 'pipe',
 		});
 	} catch (error) {
-		const spawnError = error as { stderr?: string };
-		if (spawnError.stderr) {
-			process.stderr.write(spawnError.stderr);
+		if (typeof error === 'object' && error !== null && 'stderr' in error) {
+			const { stderr } = error as { stderr: string };
+			if (stderr) {
+				process.stderr.write(stderr);
+			}
 		}
 		throw error;
 	}
@@ -47,7 +49,7 @@ export const getInstallSize = async (
 	} = await analyzeNodeModules(
 		installedDirectory.path,
 		packageManager,
-		true, // Always get full path data for install - overhead is negligible vs install time
+		options.verbose,
 	);
 
 	return {

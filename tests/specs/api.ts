@@ -344,6 +344,7 @@ export default testSuite(({ describe }) => {
 			test('npm returns transitive dependency paths', async () => {
 				const result = await getInstallSize('is-odd', {
 					packageManager: 'npm',
+					verbose: true,
 				});
 
 				// is-odd depends on is-number, so is-number should have is-odd in its path

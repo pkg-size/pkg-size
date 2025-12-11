@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -10,42 +9,17 @@ export const createDisposableDirectory = async (tempDirectory = os.tmpdir()) => 
 
 	let disposed = false;
 
-	// Handle SIGINT/SIGTERM for cleanup
-	const signalHandler = () => {
-		if (!disposed) {
-			disposed = true;
-			process.off('SIGINT', signalHandler);
-			process.off('SIGTERM', signalHandler);
-			try {
-				fs.rmSync(directoryPath, {
-					recursive: true,
-					force: true,
-				});
-			} catch {
-				// Ignore cleanup errors on exit
-			}
-		}
-		process.exit(1);
-	};
-
-	process.on('SIGINT', signalHandler);
-	process.on('SIGTERM', signalHandler);
-
-	const dispose = async () => {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		process.off('SIGINT', signalHandler);
-		process.off('SIGTERM', signalHandler);
-		await fsp.rm(directoryPath, {
-			recursive: true,
-			force: true,
-		}).catch(() => {});
-	};
-
 	return {
 		path: directoryPath,
-		[Symbol.asyncDispose]: dispose,
+		[Symbol.asyncDispose]: async () => {
+			if (disposed) {
+				return;
+			}
+			disposed = true;
+			await fsp.rm(directoryPath, {
+				recursive: true,
+				force: true,
+			}).catch(() => {});
+		},
 	};
 };
