@@ -64,22 +64,21 @@ const formatDependencyInfo = (pkg: InstalledPackage): string => {
 	return `${bold('Dependencies:')} ${dim(`${pkg.dependencyCount} (${formatSize(pkg.dependencySize)})`)}`;
 };
 
-const formatPackageRef = (name: string, version: string): string => {
-	const nameWithVersion = orange(name + (version ? ` v${version}` : ''));
-	return terminalLink(nameWithVersion, `https://www.npmjs.com/package/${name}/v/${version}`);
-};
+// Version may not exist for symlinked packages or manually edited package.json
+const formatNameVersion = (name: string, version: string): string => (
+	version ? `${name} v${version}` : name
+);
+
+const formatPackageRef = (name: string, version: string): string => terminalLink(
+	orange(formatNameVersion(name, version)),
+	`https://www.npmjs.com/package/${name}/v/${version}`,
+);
 
 const formatInstalledBy = (
 	pkg: InstalledPackage,
-): string => {
-	const parts: string[] = [];
-
-	for (const parent of pkg.installedBy) {
-		parts.push(`${parent.name} v${parent.version}`);
-	}
-
-	return parts.join(' → ');
-};
+): string => pkg.installedBy
+	.map(parent => formatNameVersion(parent.name, parent.version))
+	.join(' → ');
 
 const formatPackageName = (
 	pkg: InstalledPackage,
@@ -105,37 +104,11 @@ const formatPackageName = (
 	return parts.join(' ');
 };
 
-const formatGroupedInstalledBy = (
-	pkg: InstalledPackage,
-	groupKey: string,
-	groupBy: GroupBy,
-): string => {
-	const getDisplayName = (name: string): string => (
-		groupBy === 'scope' && name.startsWith('@')
-			? name.slice(groupKey.length + 1)
-			: name
-	);
-
-	const parts: string[] = [];
-
-	for (const parent of pkg.installedBy) {
-		parts.push(formatPackageRef(getDisplayName(parent.name), parent.version));
-	}
-
-	return parts.join(' → ');
-};
-
 const formatGroupedPackageName = (
 	pkg: InstalledPackage,
-	groupKey: string,
-	groupBy: GroupBy,
 	verbose = false,
 ): string => {
-	const displayName = groupBy === 'scope' && pkg.name.startsWith('@')
-		? pkg.name.slice(groupKey.length + 1)
-		: pkg.name;
-
-	const base = formatPackageRef(displayName, pkg.version);
+	const base = formatPackageRef(pkg.name, pkg.version);
 	if (!verbose) {
 		// Show filesystem path on same line in non-verbose mode
 		return `  ${base} ${dim(pkg.path)}`;
@@ -248,7 +221,7 @@ export const renderPackagesTable = (
 export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
-	groupBy: GroupBy,
+	_groupBy: GroupBy,
 	sortProperty: string,
 	options: RenderOptions = {},
 ): void => {
@@ -294,7 +267,7 @@ export const renderGroupedPackagesTable = (
 				options.verbose
 					? formatPercentage(pkg.size, totalSize)
 					: formatSize(pkg.size),
-				formatGroupedPackageName(pkg, groupKey, groupBy, options.verbose),
+				formatGroupedPackageName(pkg, options.verbose),
 			]);
 
 			// Show path, installed-by, and dependency info underneath package when verbose
@@ -302,7 +275,7 @@ export const renderGroupedPackagesTable = (
 				rows.push([formatSize(pkg.size), `  ${dim(pkg.path)}`]);
 
 				const installedByPart = pkg.installedBy.length > 0
-					? `  ${bold('Installed by:')} ${formatGroupedInstalledBy(pkg, groupKey, groupBy)}`
+					? `  ${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
 					: `  ${bold('Installed by:')} ${dim('package.json')}`;
 				rows.push(['', installedByPart]);
 
