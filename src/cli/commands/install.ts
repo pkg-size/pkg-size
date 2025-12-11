@@ -104,7 +104,7 @@ export const installCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, group, sortProperty, {
+		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, {
 			statusMessage,
 			verbose,
 		});

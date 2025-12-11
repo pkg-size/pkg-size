@@ -5,7 +5,7 @@ import ansis, {
 } from 'ansis';
 import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
-import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
+import { comparePackages, type PackageGroup } from '../../utils/grouping.js';
 import { parseAuthor } from '../../utils/parse-author.js';
 import { printRows } from './table.js';
 
@@ -83,11 +83,11 @@ const formatInstalledBy = (
 const formatPackageName = (
 	pkg: InstalledPackage,
 	verbose = false,
+	indent = '',
 ): string => {
 	const base = formatPackageRef(pkg.name, pkg.version);
 	if (!verbose) {
-		// Show filesystem path on same line in non-verbose mode
-		return `${base} ${dim(pkg.path)}`;
+		return `${indent}${base} ${dim(pkg.path)}`;
 	}
 
 	const parts = [base];
@@ -101,31 +101,18 @@ const formatPackageName = (
 		parts.push(yellow(pkg.license));
 	}
 	parts.push(`| ${formatEmojiLinks(pkg)}`);
-	return parts.join(' ');
+	return `${indent}${parts.join(' ')}`;
 };
 
-const formatGroupedPackageName = (
-	pkg: InstalledPackage,
-	verbose = false,
-): string => {
-	const base = formatPackageRef(pkg.name, pkg.version);
-	if (!verbose) {
-		// Show filesystem path on same line in non-verbose mode
-		return `  ${base} ${dim(pkg.path)}`;
-	}
-
-	const parts = [base];
-	if (pkg.author) {
-		const formattedAuthor = formatAuthor(pkg.author);
-		if (formattedAuthor) {
-			parts.push(`${dim('by')} ${formattedAuthor}`);
-		}
-	}
-	if (pkg.license) {
-		parts.push(yellow(pkg.license));
-	}
-	parts.push(formatEmojiLinks(pkg));
-	return `  ${parts.join(' ')}`;
+const formatVerboseDetails = (pkg: InstalledPackage, indent = ''): string[][] => {
+	const installedByPart = pkg.installedBy.length > 0
+		? `${indent}${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
+		: `${indent}${bold('Installed by:')} ${dim('package.json')}`;
+	return [
+		[formatSize(pkg.size), `${indent}${dim(pkg.path)}`],
+		['', installedByPart],
+		['', `${indent}${formatDependencyInfo(pkg)}`],
+	];
 };
 
 type RenderOptions = {
@@ -201,16 +188,8 @@ export const renderPackagesTable = (
 			formatPackageName(pkg, options.verbose),
 		]);
 
-		// Show path, installed-by, and dependency info underneath package when verbose
 		if (options.verbose) {
-			const installedByPart = pkg.installedBy.length > 0
-				? `${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
-				: `${bold('Installed by:')} ${dim('package.json')}`;
-			rows.push(
-				[formatSize(pkg.size), dim(pkg.path)],
-				['', installedByPart],
-				['', formatDependencyInfo(pkg)],
-			);
+			rows.push(...formatVerboseDetails(pkg));
 		}
 	}
 
@@ -221,7 +200,6 @@ export const renderPackagesTable = (
 export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
-	_groupBy: GroupBy,
 	sortProperty: string,
 	options: RenderOptions = {},
 ): void => {
@@ -255,6 +233,7 @@ export const renderGroupedPackagesTable = (
 		// Sort packages within group
 		groupData.packages.sort(comparePackages(sortProperty));
 
+		const indent = '  ';
 		for (let i = 0; i < groupData.packages.length; i += 1) {
 			const pkg = groupData.packages[i];
 
@@ -267,19 +246,11 @@ export const renderGroupedPackagesTable = (
 				options.verbose
 					? formatPercentage(pkg.size, totalSize)
 					: formatSize(pkg.size),
-				formatGroupedPackageName(pkg, options.verbose),
+				formatPackageName(pkg, options.verbose, indent),
 			]);
 
-			// Show path, installed-by, and dependency info underneath package when verbose
 			if (options.verbose) {
-				const installedByPart = pkg.installedBy.length > 0
-					? `  ${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
-					: `  ${bold('Installed by:')} ${dim('package.json')}`;
-				rows.push(
-					[formatSize(pkg.size), `  ${dim(pkg.path)}`],
-					['', installedByPart],
-					['', `  ${formatDependencyInfo(pkg)}`],
-				);
+				rows.push(...formatVerboseDetails(pkg, indent));
 			}
 		}
 
