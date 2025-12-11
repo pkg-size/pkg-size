@@ -44,11 +44,11 @@ npx pkg-size publish ./package/path
 # Order files by name
 npx pkg-size publish --sort-by=name
 
-# Use brotli compression instead of gzip
-npx pkg-size publish --compression=brotli
+# Show gzip sizes
+npx pkg-size publish --size=gzip
 
-# Show only uncompressed size
-npx pkg-size publish --compression=false
+# Show brotli sizes
+npx pkg-size publish --size=brotli
 
 # JSON output
 npx pkg-size publish --json
@@ -69,13 +69,13 @@ npx pkg-size install lodash @babel/core typescript
 npx pkg-size install react --package-manager=pnpm
 
 # Group by scope (e.g., @babel/*)
-npx pkg-size install @babel/core --group=scope
+npx pkg-size install @babel/core --group-by=scope
 
 # Group by license
-npx pkg-size install lodash react --group=license
+npx pkg-size install lodash react --group-by=license
 
 # Group by author
-npx pkg-size install lodash react --group=author
+npx pkg-size install lodash react --group-by=author
 
 # JSON output
 npx pkg-size install lodash --json
@@ -98,13 +98,13 @@ npx pkg-size analyze ./path/to/project
 npx pkg-size analyze --sort-by=name
 
 # Group by scope (e.g., @babel/*)
-npx pkg-size analyze --group=scope
+npx pkg-size analyze --group-by=scope
 
 # Group by license
-npx pkg-size analyze --group=license
+npx pkg-size analyze --group-by=license
 
 # Group by author
-npx pkg-size analyze --group=author
+npx pkg-size analyze --group-by=author
 
 # JSON output
 npx pkg-size analyze --json
@@ -114,11 +114,11 @@ npx pkg-size analyze --json
 
 ### `publish` options
 
-#### -c, --compression \<algorithm\>
-Compression algorithm to display alongside uncompressed size. Options: `gzip`, `brotli`, or `false` to disable. (default: `gzip`)
+#### --size \<type\>
+Size type to display. Options: `raw`, `gzip`, or `brotli`. (default: `raw`)
 
 #### -s, --sort-by \<property\>
-Sort list by `name`, `size`, or `compressed` (default: `compressed`)
+Sort list by `name` or `size` (default: `size`)
 
 #### -i, --ignore-files \<glob\>
 Glob to ignore files from list. Total size will still include them.
@@ -134,7 +134,7 @@ Package manager to use. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_
 #### -s, --sort-by \<property\>
 Sort list by `name` or `size` (default: `size`)
 
-#### -g, --group \<type\>
+#### --group-by \<type\>
 Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
 
 #### --json
@@ -145,7 +145,7 @@ JSON output
 #### -s, --sort-by \<property\>
 Sort list by `name` or `size` (default: `size`)
 
-#### -g, --group \<type\>
+#### --group-by \<type\>
 Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
 
 #### --json
