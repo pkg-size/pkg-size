@@ -977,10 +977,14 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(lines[isNumberLineIndex + 2]).toContain('is-odd');
 
 				// Find is-odd line (direct dep)
-				const isOddLineIndex = lines.findIndex(line => line.includes('is-odd') && !line.includes('is-number') && !line.includes('Installed by'));
+				const isOddLineIndex = lines.findIndex(
+					line => line.includes('is-odd')
+						&& !line.includes('is-number')
+						&& !line.includes('Installed by'),
+				);
 				expect(isOddLineIndex).toBeGreaterThan(-1);
 
-				// Next line shows path, line after that shows "Installed by: package.json" since it's direct
+				// Next line shows path, line after shows "Installed by: package.json" (direct dep)
 				expect(lines[isOddLineIndex + 1]).toContain('node_modules');
 				expect(lines[isOddLineIndex + 2]).toContain('Installed by:');
 				expect(lines[isOddLineIndex + 2]).toContain('package.json');

@@ -203,14 +203,14 @@ export const renderPackagesTable = (
 
 		// Show path, installed-by, and dependency info underneath package when verbose
 		if (options.verbose) {
-			rows.push([formatSize(pkg.size), dim(pkg.path)]);
-
 			const installedByPart = pkg.installedBy.length > 0
 				? `${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
 				: `${bold('Installed by:')} ${dim('package.json')}`;
-			rows.push(['', installedByPart]);
-
-			rows.push(['', formatDependencyInfo(pkg)]);
+			rows.push(
+				[formatSize(pkg.size), dim(pkg.path)],
+				['', installedByPart],
+				['', formatDependencyInfo(pkg)],
+			);
 		}
 	}
 
@@ -272,14 +272,14 @@ export const renderGroupedPackagesTable = (
 
 			// Show path, installed-by, and dependency info underneath package when verbose
 			if (options.verbose) {
-				rows.push([formatSize(pkg.size), `  ${dim(pkg.path)}`]);
-
 				const installedByPart = pkg.installedBy.length > 0
 					? `  ${bold('Installed by:')} ${dim(formatInstalledBy(pkg))}`
 					: `  ${bold('Installed by:')} ${dim('package.json')}`;
-				rows.push(['', installedByPart]);
-
-				rows.push(['', `  ${formatDependencyInfo(pkg)}`]);
+				rows.push(
+					[formatSize(pkg.size), `  ${dim(pkg.path)}`],
+					['', installedByPart],
+					['', `  ${formatDependencyInfo(pkg)}`],
+				);
 			}
 		}
 
