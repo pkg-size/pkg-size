@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Package size report
         id: pkg-size-report
-        uses: privatenumber/pkg-size-action@v1
+        uses: privatenumber/pkg-size-action@a637fb0897b6f14f18e776d8c3dbccb34a1ad27b # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
