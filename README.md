@@ -17,96 +17,123 @@ Command-line tool to:
 - Measure the install size of any npm packages (including all dependencies)
 - Analyze your existing `node_modules` directory
 
-**Curious how big your npm package's publish size is?**
-
-Try it in your package:
-```sh
-npx pkg-size publish
-```
-
 <sub>Support this project by ⭐️ starring and sharing it. [Follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
 
 ## 🚦 Quick Usage
 
-pkg-size has three subcommands:
+### Analyze publish size
 
-### `publish` - Analyze publish size
+Curious how big your package is when published?
 
 Analyze what will be published to npm:
 
+Analyze current directory:
 ```sh
-# Analyze current directory
 npx pkg-size publish
+```
 
-# Analyze specific package path
+Analyze specific package path:
+```sh
 npx pkg-size publish ./package/path
+```
 
-# Order files by name
+Order files by name:
+```sh
 npx pkg-size publish --sort-by=name
+```
 
-# Show gzip sizes
+Show gzip sizes:
+```sh
 npx pkg-size publish --size=gzip
+```
 
-# Show brotli sizes
+Show brotli sizes:
+```sh
 npx pkg-size publish --size=brotli
+```
 
-# JSON output
+JSON output:
+```sh
 npx pkg-size publish --json
 ```
 
-### `install` - Measure install size
+### Measure install size
 
-Measure the install size of npm packages (including all transitive dependencies):
+Measure the install size of npm packages including all transitive dependencies.
 
+Packages are installed in a temporary directory.
+
+Measure install size of a package:
 ```sh
-# Measure install size of a package
 npx pkg-size install lodash
+```
 
-# Measure install size of packages
+Measure install size of multiple packages:
+```sh
 npx pkg-size install lodash @babel/core typescript
+```
 
-# Use a specific package manager
+Use a specific package manager:
+```sh
 npx pkg-size install react --package-manager=pnpm
+```
 
-# Group by scope (e.g., @babel/*)
+Group by scope:
+```sh
 npx pkg-size install @babel/core --group-by=scope
+```
 
-# Group by license
+Group by license:
+```sh
 npx pkg-size install lodash react --group-by=license
+```
 
-# Group by author
+Group by author:
+```sh
 npx pkg-size install lodash react --group-by=author
+```
 
-# JSON output
+JSON output:
+```sh
 npx pkg-size install lodash --json
 ```
 
-This mode installs the specified packages in a temporary directory and measures the total `node_modules` size.
+### Analyze existing node_modules
 
-### `analyze` - Analyze existing node_modules
+Analyze an existing `node_modules` directory.
 
-Analyze an existing `node_modules` directory:
-
+Analyze current directory's node_modules:
 ```sh
-# Analyze current directory's node_modules
 npx pkg-size analyze
+```
 
-# Analyze specific project path
+Analyze specific project path:
+```sh
 npx pkg-size analyze ./path/to/project
+```
 
-# Sort by name
+Sort by name:
+```sh
 npx pkg-size analyze --sort-by=name
+```
 
-# Group by scope (e.g., @babel/*)
+Group by scope:
+```sh
 npx pkg-size analyze --group-by=scope
+```
 
-# Group by license
+Group by license:
+```sh
 npx pkg-size analyze --group-by=license
+```
 
-# Group by author
+Group by author:
+```sh
 npx pkg-size analyze --group-by=author
+```
 
-# JSON output
+JSON output:
+```sh
 npx pkg-size analyze --json
 ```
 
