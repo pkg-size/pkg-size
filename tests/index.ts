@@ -5,6 +5,7 @@ import cliTests from './specs/cli.js';
 import lockfileParserTests from './specs/lockfile-parser.js';
 import pnpmParserTests from './specs/pnpm-parser.js';
 import packageUtilsTests from './specs/package-utils.js';
+import sortingTests from './specs/sorting.js';
 import { createPkgSizeCli } from './utils/pkg-size.js';
 
 const nodeVersions = [
@@ -35,6 +36,7 @@ const nodeVersions = [
 			runTestSuite(lockfileParserTests);
 			runTestSuite(pnpmParserTests);
 			runTestSuite(packageUtilsTests);
+			runTestSuite(sortingTests);
 		});
 	}
 })();

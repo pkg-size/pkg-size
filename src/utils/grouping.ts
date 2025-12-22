@@ -1,16 +1,5 @@
 import type { InstalledPackage } from '../install/types.js';
 
-export const comparePackages = (sortByProperty: string) => (
-	a: InstalledPackage,
-	b: InstalledPackage,
-) => {
-	if (sortByProperty === 'name') {
-		return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
-	}
-	// Default: sort by size descending
-	return b.size - a.size;
-};
-
 export const groupByOptions = ['scope', 'license', 'author'] as const;
 
 export type GroupBy = typeof groupByOptions[number];

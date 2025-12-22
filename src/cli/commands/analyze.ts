@@ -1,10 +1,12 @@
 import { command } from 'cleye';
 import { analyzeNodeModules } from '../../install/analyze-node-modules.js';
+import { GroupByType, groupPackages } from '../../utils/grouping.js';
 import {
-	GroupByType,
-	groupPackages,
+	SortByType,
+	defaultSortBy,
+	parseSortBy,
 	comparePackages,
-} from '../../utils/grouping.js';
+} from '../../utils/sorting.js';
 import {
 	renderPackagesTable,
 	renderGroupedPackagesTable,
@@ -15,10 +17,10 @@ export const analyzeCommand = command({
 	parameters: ['[path]'],
 	flags: {
 		sortBy: {
-			type: String,
+			type: SortByType,
 			alias: 's',
-			description: 'Sort list by (name, size)',
-			default: 'size',
+			description: 'Sort by property:direction (e.g., size:desc,name:asc)',
+			default: defaultSortBy,
 		},
 		groupBy: {
 			type: GroupByType,
@@ -56,8 +58,8 @@ export const analyzeCommand = command({
 
 	const data = await analyzeNodeModules(projectPath, undefined, verbose);
 
-	const sortProperty = sortBy === 'name' ? 'name' : 'size';
-	data.packages.sort(comparePackages(sortProperty));
+	const sortCriteria = parseSortBy(sortBy);
+	data.packages.sort(comparePackages(sortCriteria));
 
 	if (groupBy) {
 		const groups = groupPackages(data.packages, groupBy);
@@ -70,7 +72,7 @@ export const analyzeCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, groupBy, { verbose });
+		renderGroupedPackagesTable(groups, data.totalSize, sortCriteria, groupBy, { verbose });
 		return;
 	}
 
