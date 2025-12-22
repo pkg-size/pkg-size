@@ -5,7 +5,6 @@ import {
 import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
 import type { GroupBy, PackageGroup } from '../../utils/grouping.js';
-import { comparePackages, type SortCriteria } from '../../utils/sorting.js';
 import { parseAuthor } from '../../utils/parse-author.js';
 import { orange, amberEarth } from './colors.js';
 import { formatSize } from './format.js';
@@ -197,7 +196,6 @@ export const renderPackagesTable = (
 export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
-	sortCriteria: SortCriteria,
 	groupBy: GroupBy,
 	options: RenderOptions = {},
 ): void => {
@@ -234,8 +232,7 @@ export const renderGroupedPackagesTable = (
 			underline(bold(groupLabel)),
 		]);
 
-		// Sort packages within group
-		groupData.packages.sort(comparePackages(sortCriteria));
+		// Packages are pre-sorted by caller; grouping preserves order within each group
 
 		const indent = '  ';
 		for (let i = 0; i < groupData.packages.length; i += 1) {

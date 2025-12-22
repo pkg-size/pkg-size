@@ -263,7 +263,7 @@ export default testSuite(({ describe }) => {
 				expect(packages.map(p => p.name)).toEqual(['bravo', 'charlie', 'alpha']);
 			});
 
-			test('sorts by version as string', () => {
+			test('sorts by version with numeric awareness', () => {
 				const criteria: SortCriteria = [{
 					property: 'version',
 					direction: 'asc',
@@ -285,8 +285,8 @@ export default testSuite(({ describe }) => {
 
 				packages.sort(comparePackages(criteria));
 
-				// String sort: 1.0.0 < 10.0.0 < 2.0.0
-				expect(packages.map(p => p.version)).toEqual(['1.0.0', '10.0.0', '2.0.0']);
+				// Numeric sort: 1.0.0 < 2.0.0 < 10.0.0
+				expect(packages.map(p => p.version)).toEqual(['1.0.0', '2.0.0', '10.0.0']);
 			});
 
 			test('sorts by dependencySize', () => {
@@ -339,7 +339,7 @@ export default testSuite(({ describe }) => {
 				expect(packages.map(p => p.name)).toEqual(['many-deps', 'some-deps', 'few-deps']);
 			});
 
-			test('handles undefined string properties', () => {
+			test('handles undefined - sorts last in ascending', () => {
 				const criteria: SortCriteria = [{
 					property: 'license',
 					direction: 'asc',
@@ -361,8 +361,34 @@ export default testSuite(({ describe }) => {
 
 				packages.sort(comparePackages(criteria));
 
-				// undefined should sort last
+				// undefined should sort last regardless of direction
 				expect(packages.map(p => p.name)).toEqual(['isc', 'mit', 'none']);
+			});
+
+			test('handles undefined - sorts last in descending', () => {
+				const criteria: SortCriteria = [{
+					property: 'license',
+					direction: 'desc',
+				}];
+				const packages = [
+					createPackage({
+						name: 'mit',
+						license: 'MIT',
+					}),
+					createPackage({
+						name: 'none',
+						license: undefined,
+					}),
+					createPackage({
+						name: 'isc',
+						license: 'ISC',
+					}),
+				];
+
+				packages.sort(comparePackages(criteria));
+
+				// undefined should sort last regardless of direction (nulls last)
+				expect(packages.map(p => p.name)).toEqual(['mit', 'isc', 'none']);
 			});
 
 			test('handles three-level sort criteria', () => {

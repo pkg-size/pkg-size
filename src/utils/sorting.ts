@@ -66,15 +66,16 @@ const compareValues = (
 	a: unknown,
 	b: unknown,
 	direction: SortDirection,
+	property: string,
 ): number => {
-	// Handle undefined values - sort them last regardless of direction
-	if (a === undefined && b === undefined) {
+	// Nullish values always sort last, regardless of direction
+	if (a == null && b == null) {
 		return 0;
 	}
-	if (a === undefined) {
+	if (a == null) {
 		return 1;
 	}
-	if (b === undefined) {
+	if (b == null) {
 		return -1;
 	}
 
@@ -82,8 +83,11 @@ const compareValues = (
 
 	if (typeof a === 'number' && typeof b === 'number') {
 		result = a - b;
+	} else if (property === 'version') {
+		// Use numeric-aware comparison for semantic versions (2.0.0 > 10.0.0)
+		result = String(a).localeCompare(String(b), undefined, { numeric: true });
 	} else {
-		// String comparison
+		// Standard string comparison
 		const aString = String(a);
 		const bString = String(b);
 		result = aString < bString ? -1 : (aString > bString ? 1 : 0);
@@ -97,7 +101,7 @@ export const comparePackages = (criteria: SortCriteria) => (
 	b: InstalledPackage,
 ): number => {
 	for (const { property, direction } of criteria) {
-		const result = compareValues(a[property], b[property], direction);
+		const result = compareValues(a[property], b[property], direction, property);
 		if (result !== 0) {
 			return result;
 		}

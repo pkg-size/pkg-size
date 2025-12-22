@@ -72,7 +72,7 @@ export const analyzeCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, sortCriteria, groupBy, { verbose });
+		renderGroupedPackagesTable(groups, data.totalSize, groupBy, { verbose });
 		return;
 	}
 
