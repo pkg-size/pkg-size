@@ -11,7 +11,7 @@ export const comparePackages = (sortByProperty: string) => (
 	return b.size - a.size;
 };
 
-export const groupByOptions = ['scope', 'license', 'author'] as const;
+export const groupByOptions = ['scope', 'license', 'author', 'level'] as const;
 
 export type GroupBy = typeof groupByOptions[number];
 
@@ -49,6 +49,9 @@ const getGroupKey = (
 	}
 	if (groupBy === 'author') {
 		return pkg.author ?? '(unknown)';
+	}
+	if (groupBy === 'level') {
+		return String(pkg.level);
 	}
 	return '(unknown)';
 };

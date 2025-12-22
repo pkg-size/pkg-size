@@ -48,7 +48,7 @@ export const installCommand = command({
 		groupBy: {
 			type: GroupByType,
 			alias: 'g',
-			description: 'Group packages by (scope, license, author)',
+			description: 'Group packages by (scope, license, author, level)',
 		},
 		verbose: {
 			type: Boolean,
@@ -68,6 +68,7 @@ export const installCommand = command({
 			'pkg-size install @babel/core typescript',
 			'pkg-size install lodash --package-manager=pnpm',
 			'pkg-size install @babel/core --group-by=scope',
+			'pkg-size install vue react --group-by=level',
 			'pkg-size install lodash --json',
 		],
 	},

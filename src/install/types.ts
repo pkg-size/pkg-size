@@ -20,6 +20,8 @@ export type InstalledPackage = {
 	funding?: string;
 	// Dependency chain showing how this package was installed
 	installedBy: PackageReference[];
+	// Dependency level (0 = direct install, 1 = direct dependency, etc.)
+	readonly level: number;
 	// Filesystem path to the package directory (relative to cwd)
 	path: string;
 	dependencySize: number;
