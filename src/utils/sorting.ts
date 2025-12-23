@@ -34,7 +34,7 @@ export const defaultSortBy: SortCriteria = [
 	{ property: 'name', direction: 'asc' },
 ];
 
-export const parseSortBy = (input: string): SortCriteria => {
+export const SortByType = (input: string): SortCriteria => {
 	// Trim handles quoted args with spaces: --sort-by="size:desc, name:asc"
 	const parts = input.split(',').map(part => part.trim());
 	const criteria: SortCriteria = [];
@@ -58,9 +58,6 @@ export const parseSortBy = (input: string): SortCriteria => {
 
 	return criteria;
 };
-
-// CLI type validator - parses and returns SortCriteria
-export const SortByType = (value: string): SortCriteria => parseSortBy(value);
 
 const compareValues = (
 	a: unknown,

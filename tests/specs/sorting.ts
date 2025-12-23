@@ -1,6 +1,6 @@
 import { testSuite, expect } from 'manten';
 import {
-	parseSortBy,
+	SortByType,
 	comparePackages,
 	type SortCriteria,
 } from '../../src/utils/sorting.js';
@@ -20,9 +20,9 @@ const createPackage = (overrides: Partial<InstalledPackage>): InstalledPackage =
 
 export default testSuite(({ describe }) => {
 	describe('sorting', ({ describe }) => {
-		describe('parseSortBy', ({ test }) => {
+		describe('SortByType', ({ test }) => {
 			test('parses single property with explicit direction', () => {
-				const result = parseSortBy('size:desc');
+				const result = SortByType('size:desc');
 				expect(result).toEqual([{
 					property: 'size',
 					direction: 'desc',
@@ -30,7 +30,7 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('parses single property with asc direction', () => {
-				const result = parseSortBy('name:asc');
+				const result = SortByType('name:asc');
 				expect(result).toEqual([{
 					property: 'name',
 					direction: 'asc',
@@ -38,7 +38,7 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('defaults to asc when direction is omitted', () => {
-				const result = parseSortBy('size');
+				const result = SortByType('size');
 				expect(result).toEqual([{
 					property: 'size',
 					direction: 'asc',
@@ -46,7 +46,7 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('parses multiple properties', () => {
-				const result = parseSortBy('size:desc,name:asc');
+				const result = SortByType('size:desc,name:asc');
 				expect(result).toEqual([
 					{
 						property: 'size',
@@ -60,7 +60,7 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('parses multiple properties with mixed explicit/implicit directions', () => {
-				const result = parseSortBy('size:desc,name');
+				const result = SortByType('size:desc,name');
 				expect(result).toEqual([
 					{
 						property: 'size',
@@ -85,7 +85,7 @@ export default testSuite(({ describe }) => {
 				];
 
 				for (const property of properties) {
-					const result = parseSortBy(property);
+					const result = SortByType(property);
 					expect(result).toEqual([{
 						property,
 						direction: 'asc',
@@ -94,15 +94,15 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('throws on invalid property', () => {
-				expect(() => parseSortBy('invalid')).toThrow('Invalid sort property: "invalid"');
+				expect(() => SortByType('invalid')).toThrow('Invalid sort property: "invalid"');
 			});
 
 			test('throws on invalid direction', () => {
-				expect(() => parseSortBy('size:up')).toThrow('Invalid sort direction: "up"');
+				expect(() => SortByType('size:up')).toThrow('Invalid sort direction: "up"');
 			});
 
 			test('handles whitespace around values', () => {
-				const result = parseSortBy(' size:desc , name:asc ');
+				const result = SortByType(' size:desc , name:asc ');
 				expect(result).toEqual([
 					{
 						property: 'size',
