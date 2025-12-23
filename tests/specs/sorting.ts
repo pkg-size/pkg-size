@@ -487,33 +487,6 @@ export default testSuite(({ describe }) => {
 				]);
 			});
 
-			test('moves groupBy to first position when specified later in sortBy', () => {
-				const sortBy: SortCriteria = [
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-					{
-						property: 'license',
-						direction: 'desc',
-					},
-				];
-
-				const result = applySortByGrouping(sortBy, 'license');
-
-				// Should move license to first, keeping its direction
-				expect(result).toEqual([
-					{
-						property: 'license',
-						direction: 'desc',
-					},
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-				]);
-			});
-
 			test('returns sortBy unchanged when groupBy is undefined', () => {
 				const sortBy: SortCriteria = [
 					{

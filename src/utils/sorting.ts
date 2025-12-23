@@ -107,20 +107,10 @@ export const comparePackages = (criteria: SortCriteria) => (
 	return 0;
 };
 
-// Map groupBy to the corresponding sortable property
-const groupByToSortProperty = (groupBy: GroupBy): SortableProperty => {
-	// 'scope' groups by package name prefix, so sort by name
-	if (groupBy === 'scope') {
-		return 'name';
-	}
-	return groupBy;
-};
-
 /**
  * Adjusts sort criteria based on groupBy to ensure groups are ordered correctly.
- * - If groupBy property is not in sortBy, prepends it with 'asc' direction
- * - If groupBy property is in sortBy but not first, moves it to first position
- * - If groupBy property is already first, keeps user's direction
+ * - If groupBy property is already first in sortBy, keeps user's direction
+ * - Otherwise, prepends groupBy property with 'asc' direction
  */
 export const applySortByGrouping = (
 	sortBy: SortCriteria,
@@ -130,21 +120,15 @@ export const applySortByGrouping = (
 		return sortBy;
 	}
 
-	const sortProperty = groupByToSortProperty(groupBy);
-	const existingIndex = sortBy.findIndex(c => c.property === sortProperty);
+	// 'scope' groups by package name prefix, so sort by name
+	const sortProperty: SortableProperty = groupBy === 'scope' ? 'name' : groupBy;
 
-	// Already first - keep as is
-	if (existingIndex === 0) {
+	// Already first - keep as is (preserves user's direction)
+	if (sortBy[0]?.property === sortProperty) {
 		return sortBy;
 	}
 
-	// Found later in the list - move to first, keeping its direction
-	if (existingIndex > 0) {
-		const [existing] = sortBy.splice(existingIndex, 1);
-		return [existing, ...sortBy];
-	}
-
-	// Not found - prepend with asc direction
+	// Not first - prepend with asc direction
 	return [
 		{
 			property: sortProperty,
