@@ -5,8 +5,8 @@ import { detectPackageManager } from '../../utils/package-manager.js';
 import { GroupByType, groupPackages } from '../../utils/grouping.js';
 import {
 	SortByType,
-	defaultSortBy,
 	comparePackages,
+	defaultSortBy,
 } from '../../utils/sorting.js';
 import {
 	renderPackagesTable,
@@ -43,8 +43,8 @@ export const installCommand = command({
 		sortBy: {
 			type: SortByType,
 			alias: 's',
-			description: 'Sort by property:direction (e.g., size:desc,name:asc)',
-			default: defaultSortBy,
+			description: 'Sort by property:direction',
+			default: 'size:desc,name:asc',
 		},
 		groupBy: {
 			type: GroupByType,
@@ -75,12 +75,14 @@ export const installCommand = command({
 }, async (argv) => {
 	const { packages } = argv._;
 	const {
-		sortBy,
 		groupBy,
 		json,
 		verbose,
 	} = argv.flags;
 	const packageManager = argv.flags.packageManager ?? detectPackageManager();
+
+	// cleye doesn't parse default values through type function
+	const sortBy = typeof argv.flags.sortBy === 'string' ? defaultSortBy : argv.flags.sortBy;
 
 	if (!json) {
 		console.log('');
