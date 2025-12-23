@@ -219,11 +219,20 @@ export const renderGroupedPackagesTable = (
 	const packageLabel = totalPackages === 1 ? 'Package' : 'Packages';
 	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)], ['', '']);
 
-	// Sort groups by the first sort criterion (which matches the groupBy field)
+	// Sort groups by the first sort criterion
 	const firstCriterion = options.sortBy?.[0];
 	const direction = firstCriterion?.direction ?? 'asc';
-	const sortedGroups = Object.entries(groups).sort(([aKey], [bKey]) => {
-		const result = aKey < bKey ? -1 : (aKey > bKey ? 1 : 0);
+	const sortBySize = firstCriterion?.property === 'size';
+
+	const sortedGroups = Object.entries(groups).sort(([aKey, aData], [bKey, bData]) => {
+		let result: number;
+		if (sortBySize) {
+			// Sort by total group size
+			result = aData.totalSize - bData.totalSize;
+		} else {
+			// Sort by group key (alphabetical)
+			result = aKey < bKey ? -1 : (aKey > bKey ? 1 : 0);
+		}
 		return direction === 'desc' ? -result : result;
 	});
 

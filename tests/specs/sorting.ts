@@ -429,49 +429,19 @@ export default testSuite(({ describe }) => {
 		});
 
 		describe('applySortByGrouping', ({ test }) => {
-			test('prepends groupBy property with asc when not in sortBy', () => {
-				const result = applySortByGrouping([
+			test('returns sortBy unchanged regardless of groupBy', () => {
+				// Groups are sorted by the first criterion in renderGroupedPackagesTable
+				// This function no longer modifies sortBy
+				const sortBy: SortCriteria = [
 					{
 						property: 'size',
 						direction: 'desc',
 					},
-				], 'author');
+				];
 
-				expect(result).toEqual([
-					{
-						property: 'author',
-						direction: 'asc',
-					},
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-				]);
-			});
+				const result = applySortByGrouping(sortBy, 'author');
 
-			test('keeps user-specified direction when groupBy matches first sortBy', () => {
-				const result = applySortByGrouping([
-					{
-						property: 'author',
-						direction: 'desc',
-					},
-					{
-						property: 'name',
-						direction: 'asc',
-					},
-				], 'author');
-
-				// Should not modify - user already specified author first
-				expect(result).toEqual([
-					{
-						property: 'author',
-						direction: 'desc',
-					},
-					{
-						property: 'name',
-						direction: 'asc',
-					},
-				]);
+				expect(result).toEqual(sortBy);
 			});
 
 			test('returns sortBy unchanged when groupBy is undefined', () => {
@@ -485,27 +455,6 @@ export default testSuite(({ describe }) => {
 				const result = applySortByGrouping(sortBy, undefined);
 
 				expect(result).toEqual(sortBy);
-			});
-
-			test('works with scope grouping', () => {
-				// scope maps to 'name' for sorting (scoped packages sort by name)
-				const result = applySortByGrouping([
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-				], 'scope');
-
-				expect(result).toEqual([
-					{
-						property: 'name',
-						direction: 'asc',
-					},
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-				]);
 			});
 		});
 	});
