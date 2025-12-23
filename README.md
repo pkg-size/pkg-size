@@ -66,6 +66,7 @@ pkg-size install lodash --sort-by=size:desc,name:asc # by size desc, then name a
 pkg-size install @babel/core --group-by=scope   # by npm scope (@babel, @types, etc.)
 pkg-size install lodash react --group-by=license # by license type
 pkg-size install lodash react --group-by=author  # by package author
+pkg-size install lodash react --group-by=level   # by dependency depth (0=direct, 1=transitive, etc.)
 ```
 
 ### Analyze existing node_modules
@@ -125,7 +126,7 @@ Examples:
 - `--sort-by=size:desc,name:asc` - sort by size desc, then name asc for ties
 
 #### --group-by \<type\>
-Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
+Group packages by `scope`, `license`, `author`, or `level`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json. Level groups by dependency depth (0 = direct dependency, 1 = transitive, etc.).
 
 **How `--group-by` and `--sort-by` interact:**
 - If `--sort-by` starts with `size`, groups are sorted by their total size
@@ -229,7 +230,12 @@ type InstalledPackage = {
     size: number
     files: PackageFile[]
     license?: string
-    author?: string
+    author?: { name?: string; email?: string; url?: string }
+    installedBy: { name: string; version: string }[]
+    level: number // 0 = direct dependency, 1+ = transitive
+    path: string
+    dependencySize: number
+    dependencyCount: number
 }
 
 type InstallSizeResult = {
@@ -279,7 +285,12 @@ type InstalledPackage = {
     size: number
     files: PackageFile[]
     license?: string
-    author?: string
+    author?: { name?: string; email?: string; url?: string }
+    installedBy: { name: string; version: string }[]
+    level: number // 0 = direct dependency, 1+ = transitive
+    path: string
+    dependencySize: number
+    dependencyCount: number
 }
 
 type NodeModulesAnalysis = {

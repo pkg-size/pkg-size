@@ -24,7 +24,7 @@ export const analyzeCommand = command({
 		groupBy: {
 			type: GroupByType,
 			alias: 'g',
-			description: 'Group packages by (scope, license, author)',
+			description: 'Group packages by (scope, license, author, level)',
 		},
 		verbose: {
 			type: Boolean,
