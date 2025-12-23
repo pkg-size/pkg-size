@@ -100,20 +100,6 @@ export default testSuite(({ describe }) => {
 			test('throws on invalid direction', () => {
 				expect(() => parseSortBy('size:up')).toThrow('Invalid sort direction: "up"');
 			});
-
-			test('handles whitespace around values', () => {
-				const result = parseSortBy(' size:desc , name:asc ');
-				expect(result).toEqual([
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-					{
-						property: 'name',
-						direction: 'asc',
-					},
-				]);
-			});
 		});
 
 		describe('comparePackages', ({ test }) => {

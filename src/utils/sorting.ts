@@ -35,11 +35,11 @@ export const defaultSortBy: SortCriteria = [
 ];
 
 export const parseSortBy = (input: string): SortCriteria => {
-	const parts = input.split(',').map(part => part.trim());
+	const parts = input.split(',');
 	const criteria: SortCriteria = [];
 
 	for (const part of parts) {
-		const [property, direction = 'asc'] = part.split(':').map(s => s.trim());
+		const [property, direction = 'asc'] = part.split(':');
 
 		if (!isValidProperty(property)) {
 			throw new Error(`Invalid sort property: "${property}". Must be: ${sortableProperties.join(', ')}`);
