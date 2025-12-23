@@ -119,10 +119,6 @@ export default testSuite(({ describe }) => {
 
 		describe('comparePackages', ({ test }) => {
 			test('sorts by single property ascending', () => {
-				const criteria: SortCriteria = [{
-					property: 'size',
-					direction: 'asc',
-				}];
 				const packages = [
 					createPackage({
 						name: 'large',
@@ -138,7 +134,10 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([{
+					property: 'size',
+					direction: 'asc',
+				}]));
 
 				expect(packages.map(p => p.name)).toEqual(['small', 'medium', 'large']);
 			});
@@ -201,16 +200,6 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('uses secondary sort for ties', () => {
-				const criteria: SortCriteria = [
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-					{
-						property: 'name',
-						direction: 'asc',
-					},
-				];
 				const packages = [
 					createPackage({
 						name: 'charlie',
@@ -226,14 +215,7 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
-
-				// Same size, so sorted by name ascending
-				expect(packages.map(p => p.name)).toEqual(['alpha', 'bravo', 'charlie']);
-			});
-
-			test('primary sort takes precedence over secondary', () => {
-				const criteria: SortCriteria = [
+				packages.sort(comparePackages([
 					{
 						property: 'size',
 						direction: 'desc',
@@ -242,7 +224,13 @@ export default testSuite(({ describe }) => {
 						property: 'name',
 						direction: 'asc',
 					},
-				];
+				]));
+
+				// Same size, so sorted by name ascending
+				expect(packages.map(p => p.name)).toEqual(['alpha', 'bravo', 'charlie']);
+			});
+
+			test('primary sort takes precedence over secondary', () => {
 				const packages = [
 					createPackage({
 						name: 'alpha',
@@ -258,17 +246,22 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+					{
+						property: 'name',
+						direction: 'asc',
+					},
+				]));
 
 				// Size desc takes precedence
 				expect(packages.map(p => p.name)).toEqual(['bravo', 'charlie', 'alpha']);
 			});
 
 			test('sorts by version with numeric awareness', () => {
-				const criteria: SortCriteria = [{
-					property: 'version',
-					direction: 'asc',
-				}];
 				const packages = [
 					createPackage({
 						name: 'a',
@@ -284,17 +277,16 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([{
+					property: 'version',
+					direction: 'asc',
+				}]));
 
 				// Numeric sort: 1.0.0 < 2.0.0 < 10.0.0
 				expect(packages.map(p => p.version)).toEqual(['1.0.0', '2.0.0', '10.0.0']);
 			});
 
 			test('sorts by dependencySize', () => {
-				const criteria: SortCriteria = [{
-					property: 'dependencySize',
-					direction: 'desc',
-				}];
 				const packages = [
 					createPackage({
 						name: 'small-deps',
@@ -310,16 +302,15 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([{
+					property: 'dependencySize',
+					direction: 'desc',
+				}]));
 
 				expect(packages.map(p => p.name)).toEqual(['large-deps', 'medium-deps', 'small-deps']);
 			});
 
 			test('sorts by dependencyCount', () => {
-				const criteria: SortCriteria = [{
-					property: 'dependencyCount',
-					direction: 'desc',
-				}];
 				const packages = [
 					createPackage({
 						name: 'few-deps',
@@ -335,16 +326,15 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([{
+					property: 'dependencyCount',
+					direction: 'desc',
+				}]));
 
 				expect(packages.map(p => p.name)).toEqual(['many-deps', 'some-deps', 'few-deps']);
 			});
 
 			test('handles undefined - sorts last in ascending', () => {
-				const criteria: SortCriteria = [{
-					property: 'license',
-					direction: 'asc',
-				}];
 				const packages = [
 					createPackage({
 						name: 'mit',
@@ -360,17 +350,16 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([{
+					property: 'license',
+					direction: 'asc',
+				}]));
 
 				// undefined should sort last regardless of direction
 				expect(packages.map(p => p.name)).toEqual(['isc', 'mit', 'none']);
 			});
 
 			test('handles undefined - sorts last in descending', () => {
-				const criteria: SortCriteria = [{
-					property: 'license',
-					direction: 'desc',
-				}];
 				const packages = [
 					createPackage({
 						name: 'mit',
@@ -386,27 +375,16 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([{
+					property: 'license',
+					direction: 'desc',
+				}]));
 
 				// undefined should sort last regardless of direction (nulls last)
 				expect(packages.map(p => p.name)).toEqual(['mit', 'isc', 'none']);
 			});
 
 			test('handles three-level sort criteria', () => {
-				const criteria: SortCriteria = [
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-					{
-						property: 'dependencyCount',
-						direction: 'asc',
-					},
-					{
-						property: 'name',
-						direction: 'asc',
-					},
-				];
 				const packages = [
 					createPackage({
 						name: 'c',
@@ -430,7 +408,20 @@ export default testSuite(({ describe }) => {
 					}),
 				];
 
-				packages.sort(comparePackages(criteria));
+				packages.sort(comparePackages([
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+					{
+						property: 'dependencyCount',
+						direction: 'asc',
+					},
+					{
+						property: 'name',
+						direction: 'asc',
+					},
+				]));
 
 				// All same size, so by dependencyCount asc, then name asc
 				expect(packages.map(p => p.name)).toEqual(['d', 'a', 'b', 'c']);
@@ -439,14 +430,12 @@ export default testSuite(({ describe }) => {
 
 		describe('applySortByGrouping', ({ test }) => {
 			test('prepends groupBy property with asc when not in sortBy', () => {
-				const sortBy: SortCriteria = [
+				const result = applySortByGrouping([
 					{
 						property: 'size',
 						direction: 'desc',
 					},
-				];
-
-				const result = applySortByGrouping(sortBy, 'author');
+				], 'author');
 
 				expect(result).toEqual([
 					{
@@ -461,7 +450,7 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('keeps user-specified direction when groupBy matches first sortBy', () => {
-				const sortBy: SortCriteria = [
+				const result = applySortByGrouping([
 					{
 						property: 'author',
 						direction: 'desc',
@@ -470,9 +459,7 @@ export default testSuite(({ describe }) => {
 						property: 'name',
 						direction: 'asc',
 					},
-				];
-
-				const result = applySortByGrouping(sortBy, 'author');
+				], 'author');
 
 				// Should not modify - user already specified author first
 				expect(result).toEqual([
@@ -501,15 +488,13 @@ export default testSuite(({ describe }) => {
 			});
 
 			test('works with scope grouping', () => {
-				const sortBy: SortCriteria = [
+				// scope maps to 'name' for sorting (scoped packages sort by name)
+				const result = applySortByGrouping([
 					{
 						property: 'size',
 						direction: 'desc',
 					},
-				];
-
-				// scope maps to 'name' for sorting (scoped packages sort by name)
-				const result = applySortByGrouping(sortBy, 'scope');
+				], 'scope');
 
 				expect(result).toEqual([
 					{
