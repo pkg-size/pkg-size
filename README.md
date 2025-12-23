@@ -81,7 +81,16 @@ Supports the same `--sort-by` and `--group-by` options as the `install` command.
 
 ## ⚙️ CLI Options
 
-### `publish` options
+### Global options
+
+#### -h, --help
+Display help message
+
+#### --version
+Display version number
+
+<details>
+<summary><h3><code>publish</code> options</h3></summary>
 
 #### --size \<type\>
 Size type to display. Options: `raw`, `gzip`, or `brotli`. (default: `raw`)
@@ -95,10 +104,11 @@ Glob to ignore files from list. Total size will still include them.
 #### --json
 JSON output
 
-### `install` options
+<hr>
+</details>
 
-#### -p, --package-manager \<manager\>
-Package manager to use. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_config_user_agent` by default.
+<details>
+<summary><h3><code>analyze</code> options</h3></summary>
 
 #### -s, --sort-by \<criteria\>
 Sort by one or more properties with optional direction. Format: `property:direction` (comma-separated).
@@ -117,33 +127,32 @@ Examples:
 #### --group-by \<type\>
 Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
 
-#### --json
-JSON output
+**How `--group-by` and `--sort-by` interact:**
+- If `--sort-by` starts with `size`, groups are sorted by their total size
+- Otherwise, groups are sorted alphabetically by group name
+- Packages within each group are always sorted by the full `--sort-by` criteria
 
-### `analyze` options
-
-#### -s, --sort-by \<criteria\>
-Sort by one or more properties with optional direction. Format: `property:direction` (comma-separated).
-
-Properties: `name`, `version`, `size`, `license`, `author`, `dependencySize`, `dependencyCount`
-
-Directions: `asc` (ascending), `desc` (descending). Default direction is `asc` when omitted.
-
-Default: `size:desc,name:asc`
-
-#### --group-by \<type\>
-Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
+```sh
+--group-by=author --sort-by=size:desc  # Groups by total size, packages by size
+--group-by=license --sort-by=name      # Groups alphabetically, packages by name
+```
 
 #### --json
 JSON output
 
-### Global options
+<hr>
+</details>
 
-#### -h, --help
-Display help message
+<details>
+<summary><h3><code>install</code> options</h3></summary>
 
-#### --version
-Display version number
+Supports the same options as `analyze`, plus:
+
+#### -p, --package-manager \<manager\>
+Package manager to use. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_config_user_agent` by default.
+
+<hr>
+</details>
 
 
 ## 👷‍♂️ Node.js API
