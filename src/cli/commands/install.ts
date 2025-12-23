@@ -2,11 +2,13 @@ import { command } from 'cleye';
 import { dim } from 'ansis';
 import { getInstallSize } from '../../install/index.js';
 import { detectPackageManager } from '../../utils/package-manager.js';
+import { GroupByType, groupPackages } from '../../utils/grouping.js';
 import {
-	GroupByType,
-	groupPackages,
+	SortByType,
+	defaultSortBy,
 	comparePackages,
-} from '../../utils/grouping.js';
+	applySortByGrouping,
+} from '../../utils/sorting.js';
 import {
 	renderPackagesTable,
 	renderGroupedPackagesTable,
@@ -40,10 +42,10 @@ export const installCommand = command({
 			description: 'Package manager to use (npm, pnpm, yarn). Auto-detected by default.',
 		},
 		sortBy: {
-			type: String,
+			type: SortByType,
 			alias: 's',
-			description: 'Sort list by (name, size)',
-			default: 'size',
+			description: 'Sort by property:direction (e.g., size:desc,name:asc)',
+			default: defaultSortBy,
 		},
 		groupBy: {
 			type: GroupByType,
@@ -86,10 +88,13 @@ export const installCommand = command({
 		console.log(dim(`Installing with ${packageManager}...`));
 	}
 
-	const data = await getInstallSize(packages, { packageManager, verbose });
+	const data = await getInstallSize(packages, {
+		packageManager,
+		verbose,
+	});
 
-	const sortProperty = sortBy === 'name' ? 'name' : 'size';
-	data.packages.sort(comparePackages(sortProperty));
+	const effectiveSortBy = applySortByGrouping(sortBy, groupBy);
+	data.packages.sort(comparePackages(effectiveSortBy));
 
 	const statusMessage = `Completed in ${formatTime(data.installTime)}`;
 
@@ -104,9 +109,10 @@ export const installCommand = command({
 			return;
 		}
 
-		renderGroupedPackagesTable(groups, data.totalSize, sortProperty, groupBy, {
+		renderGroupedPackagesTable(groups, data.totalSize, groupBy, {
 			statusMessage,
 			verbose,
+			sortBy: effectiveSortBy,
 		});
 		return;
 	}

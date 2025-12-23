@@ -78,6 +78,16 @@ Use a specific package manager:
 npx pkg-size install react --package-manager=pnpm
 ```
 
+Sort by size descending, then name:
+```sh
+npx pkg-size install lodash --sort-by=size:desc,name:asc
+```
+
+Sort by name only:
+```sh
+npx pkg-size install lodash --sort-by=name
+```
+
 Group by scope:
 ```sh
 npx pkg-size install @babel/core --group-by=scope
@@ -115,6 +125,11 @@ npx pkg-size analyze ./path/to/project
 Sort by name:
 ```sh
 npx pkg-size analyze --sort-by=name
+```
+
+Sort by multiple properties:
+```sh
+npx pkg-size analyze --sort-by=size:desc,name:asc
 ```
 
 Group by scope:
@@ -158,8 +173,19 @@ JSON output
 #### -p, --package-manager \<manager\>
 Package manager to use. Options: `npm`, `pnpm`, `yarn`. Auto-detected from `npm_config_user_agent` by default.
 
-#### -s, --sort-by \<property\>
-Sort list by `name` or `size` (default: `size`)
+#### -s, --sort-by \<criteria\>
+Sort by one or more properties with optional direction. Format: `property:direction` (comma-separated).
+
+Properties: `name`, `version`, `size`, `license`, `author`, `dependencySize`, `dependencyCount`
+
+Directions: `asc` (ascending), `desc` (descending). Default direction is `asc` when omitted.
+
+Default: `size:desc,name:asc`
+
+Examples:
+- `--sort-by=name` - sort by name ascending
+- `--sort-by=size:desc` - sort by size descending
+- `--sort-by=size:desc,name:asc` - sort by size desc, then name asc for ties
 
 #### --group-by \<type\>
 Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.
@@ -169,8 +195,14 @@ JSON output
 
 ### `analyze` options
 
-#### -s, --sort-by \<property\>
-Sort list by `name` or `size` (default: `size`)
+#### -s, --sort-by \<criteria\>
+Sort by one or more properties with optional direction. Format: `property:direction` (comma-separated).
+
+Properties: `name`, `version`, `size`, `license`, `author`, `dependencySize`, `dependencyCount`
+
+Directions: `asc` (ascending), `desc` (descending). Default direction is `asc` when omitted.
+
+Default: `size:desc,name:asc`
 
 #### --group-by \<type\>
 Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babel/core`) are grouped under their organization. License and author information is extracted from package.json.

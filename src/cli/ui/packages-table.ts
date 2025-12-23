@@ -4,7 +4,8 @@ import {
 } from 'ansis';
 import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
-import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
+import type { GroupBy, PackageGroup } from '../../utils/grouping.js';
+import type { SortCriteria } from '../../utils/sorting.js';
 import { parseAuthor } from '../../utils/parse-author.js';
 import { orange, amberEarth } from './colors.js';
 import { formatSize } from './format.js';
@@ -114,6 +115,7 @@ const formatVerboseDetails = (pkg: InstalledPackage, indent = ''): string[][] =>
 type RenderOptions = {
 	statusMessage?: string;
 	verbose?: boolean;
+	sortBy?: SortCriteria;
 };
 
 const formatPercentage = (size: number, totalSize: number): string => {
@@ -196,7 +198,6 @@ export const renderPackagesTable = (
 export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
-	sortProperty: string,
 	groupBy: GroupBy,
 	options: RenderOptions = {},
 ): void => {
@@ -218,10 +219,13 @@ export const renderGroupedPackagesTable = (
 	const packageLabel = totalPackages === 1 ? 'Package' : 'Packages';
 	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)], ['', '']);
 
-	// Sort groups by total size descending
-	const sortedGroups = Object.entries(groups).sort(
-		([, a], [, b]) => b.totalSize - a.totalSize,
-	);
+	// Sort groups by the first sort criterion (which matches the groupBy field)
+	const firstCriterion = options.sortBy?.[0];
+	const direction = firstCriterion?.direction ?? 'asc';
+	const sortedGroups = Object.entries(groups).sort(([aKey], [bKey]) => {
+		const result = aKey < bKey ? -1 : (aKey > bKey ? 1 : 0);
+		return direction === 'desc' ? -result : result;
+	});
 
 	for (const [groupKey, groupData] of sortedGroups) {
 		// Group header - format as author name when grouping by author
@@ -233,8 +237,7 @@ export const renderGroupedPackagesTable = (
 			underline(bold(groupLabel)),
 		]);
 
-		// Sort packages within group
-		groupData.packages.sort(comparePackages(sortProperty));
+		// Packages are pre-sorted by caller; grouping preserves order within each group
 
 		const indent = '  ';
 		for (let i = 0; i < groupData.packages.length; i += 1) {
