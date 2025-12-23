@@ -84,7 +84,7 @@ const compareValues = (
 	if (typeof a === 'number' && typeof b === 'number') {
 		result = a - b;
 	} else if (property === 'version') {
-		// Use numeric-aware comparison for semantic versions (2.0.0 > 10.0.0)
+		// Numeric-aware comparison: 2.0.0 < 10.0.0 (string sort would incorrectly order as 10 < 2)
 		result = String(a).localeCompare(String(b), undefined, { numeric: true });
 	} else {
 		// Standard string comparison
