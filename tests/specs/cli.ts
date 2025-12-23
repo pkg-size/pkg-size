@@ -1472,6 +1472,159 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).not.toContain('john@example.com');
 			});
 
+			test('--group-by implicitly sorts groups by group field ascending', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						// Packages with licenses that sort differently by size vs alphabetically
+						'zebra-license': {
+							'package.json': definePackageJson({
+								name: 'zebra-license',
+								version: '1.0.0',
+								license: 'Zlib',
+							}),
+							// Large file to make Zlib have biggest total size
+							'index.js': 'x'.repeat(10_000),
+						},
+						'alpha-license': {
+							'package.json': definePackageJson({
+								name: 'alpha-license',
+								version: '1.0.0',
+								license: 'Apache-2.0',
+							}),
+							'index.js': 'small',
+						},
+						'mit-license': {
+							'package.json': definePackageJson({
+								name: 'mit-license',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'medium content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license']);
+
+				expect('exitCode' in result).toBe(false);
+				// Groups should appear alphabetically: Apache-2.0, MIT, Zlib
+				// (NOT by size which would be: Zlib, MIT, Apache-2.0)
+				const apacheIndex = result.stdout.indexOf('Apache-2.0');
+				const mitIndex = result.stdout.indexOf('MIT');
+				const zlibIndex = result.stdout.indexOf('Zlib');
+
+				expect(apacheIndex).toBeGreaterThan(-1);
+				expect(mitIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeGreaterThan(-1);
+				expect(apacheIndex).toBeLessThan(mitIndex);
+				expect(mitIndex).toBeLessThan(zlibIndex);
+			});
+
+			test('--group-by with --sort-by allows descending group order', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'zlib-pkg': {
+							'package.json': definePackageJson({
+								name: 'zlib-pkg',
+								version: '1.0.0',
+								license: 'Zlib',
+							}),
+							'index.js': 'content',
+						},
+						'apache-pkg': {
+							'package.json': definePackageJson({
+								name: 'apache-pkg',
+								version: '1.0.0',
+								license: 'Apache-2.0',
+							}),
+							'index.js': 'content',
+						},
+						'mit-pkg': {
+							'package.json': definePackageJson({
+								name: 'mit-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				// Explicitly sort by license descending
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--sort-by=license:desc']);
+
+				expect('exitCode' in result).toBe(false);
+				// Groups should appear in reverse alphabetical order: Zlib, MIT, Apache-2.0
+				const apacheIndex = result.stdout.indexOf('Apache-2.0');
+				const mitIndex = result.stdout.indexOf('MIT');
+				const zlibIndex = result.stdout.indexOf('Zlib');
+
+				expect(apacheIndex).toBeGreaterThan(-1);
+				expect(mitIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeLessThan(mitIndex);
+				expect(mitIndex).toBeLessThan(apacheIndex);
+			});
+
+			test('--group-by with unrelated --sort-by prepends group field', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'zlib-pkg': {
+							'package.json': definePackageJson({
+								name: 'zlib-pkg',
+								version: '1.0.0',
+								license: 'Zlib',
+							}),
+							'index.js': 'x'.repeat(100),
+						},
+						'apache-pkg': {
+							'package.json': definePackageJson({
+								name: 'apache-pkg',
+								version: '1.0.0',
+								license: 'Apache-2.0',
+							}),
+							'index.js': 'x'.repeat(1000),
+						},
+						'mit-pkg': {
+							'package.json': definePackageJson({
+								name: 'mit-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'x'.repeat(500),
+						},
+					},
+				});
+
+				// Sort by size:desc but group by license - should implicitly prepend license:asc
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--sort-by=size:desc']);
+
+				expect('exitCode' in result).toBe(false);
+				// Groups should still appear alphabetically (license:asc prepended)
+				// NOT by total size (Apache > MIT > Zlib)
+				const apacheIndex = result.stdout.indexOf('Apache-2.0');
+				const mitIndex = result.stdout.indexOf('MIT');
+				const zlibIndex = result.stdout.indexOf('Zlib');
+
+				expect(apacheIndex).toBeGreaterThan(-1);
+				expect(mitIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeGreaterThan(-1);
+				expect(apacheIndex).toBeLessThan(mitIndex);
+				expect(mitIndex).toBeLessThan(zlibIndex);
+			});
+
 			test('includes metadata in JSON output', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({

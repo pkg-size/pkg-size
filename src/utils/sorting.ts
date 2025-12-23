@@ -1,4 +1,5 @@
 import type { InstalledPackage } from '../install/types.js';
+import type { GroupBy } from './grouping.js';
 
 const sortableProperties = [
 	'name',
@@ -22,8 +23,14 @@ type SortCriterion = {
 export type SortCriteria = SortCriterion[];
 
 export const defaultSortBy: SortCriteria = [
-	{ property: 'size', direction: 'desc' },
-	{ property: 'name', direction: 'asc' },
+	{
+		property: 'size',
+		direction: 'desc',
+	},
+	{
+		property: 'name',
+		direction: 'asc',
+	},
 ];
 
 export const SortByType = (input: string): SortCriteria => {
@@ -58,13 +65,15 @@ const compareValues = (
 	property: string,
 ): number => {
 	// Nullish values always sort last, regardless of direction
-	if (a == null && b == null) {
+	const aIsNullish = a === null || a === undefined;
+	const bIsNullish = b === null || b === undefined;
+	if (aIsNullish && bIsNullish) {
 		return 0;
 	}
-	if (a == null) {
+	if (aIsNullish) {
 		return 1;
 	}
-	if (b == null) {
+	if (bIsNullish) {
 		return -1;
 	}
 
@@ -96,4 +105,51 @@ export const comparePackages = (criteria: SortCriteria) => (
 		}
 	}
 	return 0;
+};
+
+// Map groupBy to the corresponding sortable property
+const groupByToSortProperty = (groupBy: GroupBy): SortableProperty => {
+	// 'scope' groups by package name prefix, so sort by name
+	if (groupBy === 'scope') {
+		return 'name';
+	}
+	return groupBy;
+};
+
+/**
+ * Adjusts sort criteria based on groupBy to ensure groups are ordered correctly.
+ * - If groupBy property is not in sortBy, prepends it with 'asc' direction
+ * - If groupBy property is in sortBy but not first, moves it to first position
+ * - If groupBy property is already first, keeps user's direction
+ */
+export const applySortByGrouping = (
+	sortBy: SortCriteria,
+	groupBy: GroupBy | undefined,
+): SortCriteria => {
+	if (!groupBy) {
+		return sortBy;
+	}
+
+	const sortProperty = groupByToSortProperty(groupBy);
+	const existingIndex = sortBy.findIndex(c => c.property === sortProperty);
+
+	// Already first - keep as is
+	if (existingIndex === 0) {
+		return sortBy;
+	}
+
+	// Found later in the list - move to first, keeping its direction
+	if (existingIndex > 0) {
+		const [existing] = sortBy.splice(existingIndex, 1);
+		return [existing, ...sortBy];
+	}
+
+	// Not found - prepend with asc direction
+	return [
+		{
+			property: sortProperty,
+			direction: 'asc',
+		},
+		...sortBy,
+	];
 };

@@ -2,6 +2,7 @@ import { testSuite, expect } from 'manten';
 import {
 	SortByType,
 	comparePackages,
+	applySortByGrouping,
 	type SortCriteria,
 } from '../../src/utils/sorting.js';
 import type { InstalledPackage } from '../../src/install/types.js';
@@ -433,6 +434,120 @@ export default testSuite(({ describe }) => {
 
 				// All same size, so by dependencyCount asc, then name asc
 				expect(packages.map(p => p.name)).toEqual(['d', 'a', 'b', 'c']);
+			});
+		});
+
+		describe('applySortByGrouping', ({ test }) => {
+			test('prepends groupBy property with asc when not in sortBy', () => {
+				const sortBy: SortCriteria = [
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+				];
+
+				const result = applySortByGrouping(sortBy, 'author');
+
+				expect(result).toEqual([
+					{
+						property: 'author',
+						direction: 'asc',
+					},
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+				]);
+			});
+
+			test('keeps user-specified direction when groupBy matches first sortBy', () => {
+				const sortBy: SortCriteria = [
+					{
+						property: 'author',
+						direction: 'desc',
+					},
+					{
+						property: 'name',
+						direction: 'asc',
+					},
+				];
+
+				const result = applySortByGrouping(sortBy, 'author');
+
+				// Should not modify - user already specified author first
+				expect(result).toEqual([
+					{
+						property: 'author',
+						direction: 'desc',
+					},
+					{
+						property: 'name',
+						direction: 'asc',
+					},
+				]);
+			});
+
+			test('moves groupBy to first position when specified later in sortBy', () => {
+				const sortBy: SortCriteria = [
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+					{
+						property: 'license',
+						direction: 'desc',
+					},
+				];
+
+				const result = applySortByGrouping(sortBy, 'license');
+
+				// Should move license to first, keeping its direction
+				expect(result).toEqual([
+					{
+						property: 'license',
+						direction: 'desc',
+					},
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+				]);
+			});
+
+			test('returns sortBy unchanged when groupBy is undefined', () => {
+				const sortBy: SortCriteria = [
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+				];
+
+				const result = applySortByGrouping(sortBy, undefined);
+
+				expect(result).toEqual(sortBy);
+			});
+
+			test('works with scope grouping', () => {
+				const sortBy: SortCriteria = [
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+				];
+
+				// scope maps to 'name' for sorting (scoped packages sort by name)
+				const result = applySortByGrouping(sortBy, 'scope');
+
+				expect(result).toEqual([
+					{
+						property: 'name',
+						direction: 'asc',
+					},
+					{
+						property: 'size',
+						direction: 'desc',
+					},
+				]);
 			});
 		});
 	});

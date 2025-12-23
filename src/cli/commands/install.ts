@@ -7,6 +7,7 @@ import {
 	SortByType,
 	defaultSortBy,
 	comparePackages,
+	applySortByGrouping,
 } from '../../utils/sorting.js';
 import {
 	renderPackagesTable,
@@ -92,7 +93,8 @@ export const installCommand = command({
 		verbose,
 	});
 
-	data.packages.sort(comparePackages(sortBy));
+	const effectiveSortBy = applySortByGrouping(sortBy, groupBy);
+	data.packages.sort(comparePackages(effectiveSortBy));
 
 	const statusMessage = `Completed in ${formatTime(data.installTime)}`;
 
@@ -110,6 +112,7 @@ export const installCommand = command({
 		renderGroupedPackagesTable(groups, data.totalSize, groupBy, {
 			statusMessage,
 			verbose,
+			sortBy: effectiveSortBy,
 		});
 		return;
 	}
