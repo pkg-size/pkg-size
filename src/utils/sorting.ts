@@ -8,6 +8,7 @@ const sortableProperties = [
 	'author',
 	'dependencySize',
 	'dependencyCount',
+	'level',
 ] as const;
 
 type SortableProperty = typeof sortableProperties[number];

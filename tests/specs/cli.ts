@@ -102,7 +102,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect('exitCode' in result).toBe(true);
 				if ('exitCode' in result) {
 					expect(result.exitCode).toBe(1);
-					expect(result.stderr).toBe('Error: Invalid sort property: "invalid". Must be: name, version, size, license, author, dependencySize, dependencyCount');
+					expect(result.stderr).toBe('Error: Invalid sort property: "invalid". Must be: name, version, size, license, author, dependencySize, dependencyCount, level');
 				}
 			});
 
@@ -136,7 +136,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect('exitCode' in result).toBe(true);
 				if ('exitCode' in result) {
 					expect(result.exitCode).toBe(1);
-					expect(result.stderr).toBe('Error: Invalid group: "invalid". Must be: scope, license, author');
+					expect(result.stderr).toBe('Error: Invalid group: "invalid". Must be: scope, license, author, level');
 				}
 			});
 
@@ -1093,6 +1093,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 							version: '1.0.0',
 							size: expect.any(Number),
 							installedBy: [],
+							level: 0,
 							path: 'node_modules/some-package',
 							dependencySize: 0,
 							dependencyCount: 0,
