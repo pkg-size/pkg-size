@@ -89,6 +89,9 @@ Display help message
 #### --version
 Display version number
 
+#### --json
+JSON output
+
 <details>
 <summary><h3><code>publish</code> options</h3></summary>
 
@@ -100,9 +103,6 @@ Sort list by `name` or `size` (default: `size`)
 
 #### -i, --ignore-files \<glob\>
 Glob to ignore files from list. Total size will still include them.
-
-#### --json
-JSON output
 
 <hr>
 </details>
@@ -136,9 +136,6 @@ Group packages by `scope`, `license`, or `author`. Scoped packages (e.g., `@babe
 --group-by=author --sort-by=size:desc  # Groups by total size, packages by size
 --group-by=license --sort-by=name      # Groups alphabetically, packages by name
 ```
-
-#### --json
-JSON output
 
 <hr>
 </details>
