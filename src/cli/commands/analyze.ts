@@ -3,8 +3,8 @@ import { analyzeNodeModules } from '../../install/analyze-node-modules.js';
 import { GroupByType, groupPackages } from '../../utils/grouping.js';
 import {
 	SortByType,
-	defaultSortBy,
 	comparePackages,
+	defaultSortBy,
 } from '../../utils/sorting.js';
 import {
 	renderPackagesTable,
@@ -18,8 +18,8 @@ export const analyzeCommand = command({
 		sortBy: {
 			type: SortByType,
 			alias: 's',
-			description: 'Sort by property:direction (e.g., size:desc,name:asc)',
-			default: defaultSortBy,
+			description: 'Sort by property:direction',
+			default: 'size:desc,name:asc',
 		},
 		groupBy: {
 			type: GroupByType,
@@ -49,11 +49,13 @@ export const analyzeCommand = command({
 }, async (argv) => {
 	const projectPath = argv._.path ?? process.cwd();
 	const {
-		sortBy,
 		groupBy,
 		json,
 		verbose,
 	} = argv.flags;
+
+	// cleye doesn't parse default values through type function
+	const sortBy = typeof argv.flags.sortBy === 'string' ? defaultSortBy : argv.flags.sortBy;
 
 	const data = await analyzeNodeModules(projectPath, undefined, verbose);
 

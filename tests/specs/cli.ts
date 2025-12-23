@@ -53,6 +53,34 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).toContain('--json');
 			});
 
+			test('shows analyze help with human-readable --sort-by default', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--help']);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).toContain('(default: "size:desc,name:asc")');
+			});
+
+			test('shows install help with human-readable --sort-by default', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', '--help']);
+
+				expect('exitCode' in result).toBe(false);
+				expect(result.stdout).toContain('(default: "size:desc,name:asc")');
+			});
+
 			test('shows help when no subcommand provided', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
