@@ -1,5 +1,4 @@
 import type { InstalledPackage } from '../install/types.js';
-import type { GroupBy } from './grouping.js';
 
 const sortableProperties = [
 	'name',
@@ -105,35 +104,4 @@ export const comparePackages = (criteria: SortCriteria) => (
 		}
 	}
 	return 0;
-};
-
-/**
- * Adjusts sort criteria based on groupBy to ensure groups are ordered correctly.
- * - If groupBy property is already first in sortBy, keeps user's direction
- * - Otherwise, prepends groupBy property with 'asc' direction
- */
-export const applySortByGrouping = (
-	sortBy: SortCriteria,
-	groupBy: GroupBy | undefined,
-): SortCriteria => {
-	if (!groupBy) {
-		return sortBy;
-	}
-
-	// 'scope' groups by package name prefix, so sort by name
-	const sortProperty: SortableProperty = groupBy === 'scope' ? 'name' : groupBy;
-
-	// Already first - keep as is (preserves user's direction)
-	if (sortBy[0]?.property === sortProperty) {
-		return sortBy;
-	}
-
-	// Not first - prepend with asc direction
-	return [
-		{
-			property: sortProperty,
-			direction: 'asc',
-		},
-		...sortBy,
-	];
 };
