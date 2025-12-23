@@ -1,7 +1,7 @@
 import type { InstalledPackage } from '../install/types.js';
 import { getAuthorDisplayName } from './parse-author.js';
 
-export const groupByOptions = ['scope', 'license', 'author'] as const;
+export const groupByOptions = ['scope', 'license', 'author', 'level'] as const;
 
 export type GroupBy = typeof groupByOptions[number];
 
@@ -39,6 +39,9 @@ const getGroupKey = (
 	}
 	if (groupBy === 'author') {
 		return getAuthorDisplayName(pkg.author) ?? '(unknown)';
+	}
+	if (groupBy === 'level') {
+		return `Level ${pkg.level}`;
 	}
 	return '(unknown)';
 };

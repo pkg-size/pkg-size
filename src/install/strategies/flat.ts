@@ -38,6 +38,7 @@ export const getFlatPackages = async (
 			size,
 			files,
 			installedBy: depPath,
+			get level() { return this.installedBy.length; },
 			path: `node_modules/${packageName}`,
 			dependencySize: 0,
 			dependencyCount: 0,
