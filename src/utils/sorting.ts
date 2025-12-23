@@ -1,5 +1,4 @@
 import type { InstalledPackage } from '../install/types.js';
-import type { GroupBy } from './grouping.js';
 
 const sortableProperties = [
 	'name',
@@ -107,12 +106,3 @@ export const comparePackages = (criteria: SortCriteria) => (
 	return 0;
 };
 
-/**
- * Returns sort criteria for use with groupBy.
- * Sort criteria is used as-is - groups are sorted by the first criterion
- * (by totalSize if 'size', otherwise by group key).
- */
-export const applySortByGrouping = (
-	sortBy: SortCriteria,
-	_groupBy: GroupBy | undefined,
-): SortCriteria => sortBy;

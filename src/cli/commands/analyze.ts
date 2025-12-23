@@ -5,7 +5,6 @@ import {
 	SortByType,
 	defaultSortBy,
 	comparePackages,
-	applySortByGrouping,
 } from '../../utils/sorting.js';
 import {
 	renderPackagesTable,
@@ -58,8 +57,7 @@ export const analyzeCommand = command({
 
 	const data = await analyzeNodeModules(projectPath, undefined, verbose);
 
-	const effectiveSortBy = applySortByGrouping(sortBy, groupBy);
-	data.packages.sort(comparePackages(effectiveSortBy));
+	data.packages.sort(comparePackages(sortBy));
 
 	if (groupBy) {
 		const groups = groupPackages(data.packages, groupBy);
@@ -74,7 +72,7 @@ export const analyzeCommand = command({
 
 		renderGroupedPackagesTable(groups, data.totalSize, groupBy, {
 			verbose,
-			sortBy: effectiveSortBy,
+			sortBy,
 		});
 		return;
 	}

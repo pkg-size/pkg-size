@@ -2,7 +2,6 @@ import { testSuite, expect } from 'manten';
 import {
 	SortByType,
 	comparePackages,
-	applySortByGrouping,
 	type SortCriteria,
 } from '../../src/utils/sorting.js';
 import type { InstalledPackage } from '../../src/install/types.js';
@@ -428,34 +427,5 @@ export default testSuite(({ describe }) => {
 			});
 		});
 
-		describe('applySortByGrouping', ({ test }) => {
-			test('returns sortBy unchanged regardless of groupBy', () => {
-				// Groups are sorted by the first criterion in renderGroupedPackagesTable
-				// This function no longer modifies sortBy
-				const sortBy: SortCriteria = [
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-				];
-
-				const result = applySortByGrouping(sortBy, 'author');
-
-				expect(result).toEqual(sortBy);
-			});
-
-			test('returns sortBy unchanged when groupBy is undefined', () => {
-				const sortBy: SortCriteria = [
-					{
-						property: 'size',
-						direction: 'desc',
-					},
-				];
-
-				const result = applySortByGrouping(sortBy, undefined);
-
-				expect(result).toEqual(sortBy);
-			});
-		});
 	});
 });
