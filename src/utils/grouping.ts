@@ -1,15 +1,5 @@
 import type { InstalledPackage } from '../install/types.js';
-
-export const comparePackages = (sortByProperty: string) => (
-	a: InstalledPackage,
-	b: InstalledPackage,
-) => {
-	if (sortByProperty === 'name') {
-		return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
-	}
-	// Default: sort by size descending
-	return b.size - a.size;
-};
+import { getAuthorDisplayName } from './parse-author.js';
 
 export const groupByOptions = ['scope', 'license', 'author', 'level'] as const;
 
@@ -48,7 +38,7 @@ const getGroupKey = (
 		return pkg.license ?? '(unknown)';
 	}
 	if (groupBy === 'author') {
-		return pkg.author ?? '(unknown)';
+		return getAuthorDisplayName(pkg.author) ?? '(unknown)';
 	}
 	if (groupBy === 'level') {
 		return String(pkg.level);

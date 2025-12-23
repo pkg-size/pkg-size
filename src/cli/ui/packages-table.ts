@@ -4,8 +4,9 @@ import {
 } from 'ansis';
 import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
-import { comparePackages, type GroupBy, type PackageGroup } from '../../utils/grouping.js';
-import { parseAuthor } from '../../utils/parse-author.js';
+import type { GroupBy, PackageGroup } from '../../utils/grouping.js';
+import type { SortCriteria } from '../../utils/sorting.js';
+import { getAuthorDisplayName, type ParsedAuthor } from '../../utils/parse-author.js';
 import { orange, amberEarth } from './colors.js';
 import { formatSize } from './format.js';
 import { printRows } from './table.js';
@@ -18,15 +19,15 @@ const LINK_ICONS = {
 	funding: '♥️',
 } as const;
 
-const formatAuthor = (author: string): string | null => {
-	const parsed = parseAuthor(author);
-	if (!parsed) {
+const formatAuthor = (author: ParsedAuthor | undefined): string | null => {
+	const displayName = getAuthorDisplayName(author);
+	if (!displayName) {
 		return null;
 	}
-	if (parsed.url) {
-		return terminalLink(parsed.name, parsed.url);
+	if (author?.url) {
+		return terminalLink(displayName, author.url);
 	}
-	return parsed.name;
+	return displayName;
 };
 
 const formatEmojiLinks = (pkg: InstalledPackage): string => {
@@ -114,6 +115,7 @@ const formatVerboseDetails = (pkg: InstalledPackage, indent = ''): string[][] =>
 type RenderOptions = {
 	statusMessage?: string;
 	verbose?: boolean;
+	sortBy?: SortCriteria;
 };
 
 const formatPercentage = (size: number, totalSize: number): string => {
@@ -196,7 +198,6 @@ export const renderPackagesTable = (
 export const renderGroupedPackagesTable = (
 	groups: Record<string, PackageGroup>,
 	totalSize: number,
-	sortProperty: string,
 	groupBy: GroupBy,
 	options: RenderOptions = {},
 ): void => {
@@ -218,25 +219,33 @@ export const renderGroupedPackagesTable = (
 	const packageLabel = totalPackages === 1 ? 'Package' : 'Packages';
 	rows.push([green(formatSize(totalSize)), green(`${packageCount} ${packageLabel}`)], ['', '']);
 
-	// Sort groups by total size descending
-	const sortedGroups = Object.entries(groups).sort(
-		([, a], [, b]) => b.totalSize - a.totalSize,
-	);
+	// Sort groups by the first sort criterion
+	const firstCriterion = options.sortBy?.[0];
+	const direction = firstCriterion?.direction ?? 'asc';
+	const sortBySize = firstCriterion?.property === 'size';
+
+	const sortedGroups = Object.entries(groups).sort(([aKey, aData], [bKey, bData]) => {
+		let result: number;
+		if (sortBySize) {
+			// Sort by total group size
+			result = aData.totalSize - bData.totalSize;
+		} else {
+			// Sort by group key (alphabetical)
+			result = aKey < bKey ? -1 : (aKey > bKey ? 1 : 0);
+		}
+		return direction === 'desc' ? -result : result;
+	});
 
 	for (const [groupKey, groupData] of sortedGroups) {
-		// Group header - format as author name when grouping by author
-		const groupLabel = groupBy === 'author'
-			? (formatAuthor(groupKey) ?? groupKey)
-			: groupKey;
+		// Group header - groupKey is already the display name (from getAuthorDisplayName for authors)
 		rows.push([
 			underline(bold(formatPercentage(groupData.totalSize, totalSize))),
-			underline(bold(groupLabel)),
+			underline(bold(groupKey)),
 		]);
 
-		// Sort packages within group
-		groupData.packages.sort(comparePackages(sortProperty));
+		// Packages are pre-sorted by caller; grouping preserves order within each group
 
-		const indent = '  ';
+		const indent = options.verbose ? '  ' : '';
 		for (let i = 0; i < groupData.packages.length; i += 1) {
 			const pkg = groupData.packages[i];
 

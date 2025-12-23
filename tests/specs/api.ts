@@ -584,7 +584,10 @@ export default testSuite(({ describe }) => {
 				const result = await analyzeNodeModules(fixture.path);
 				const pkg = result.packages.find(p => p.name === 'string-author');
 
-				expect(pkg?.author).toBe('John Doe <john@example.com>');
+				expect(pkg?.author).toEqual({
+					name: 'John Doe',
+					email: 'john@example.com',
+				});
 			});
 
 			test('extracts author metadata from package.json object format', async () => {
@@ -622,8 +625,11 @@ export default testSuite(({ describe }) => {
 				const withEmail = result.packages.find(p => p.name === 'object-author');
 				const noEmail = result.packages.find(p => p.name === 'object-author-no-email');
 
-				expect(withEmail?.author).toBe('Jane Smith <jane@example.com>');
-				expect(noEmail?.author).toBe('Bob');
+				expect(withEmail?.author).toEqual({
+					name: 'Jane Smith',
+					email: 'jane@example.com',
+				});
+				expect(noEmail?.author).toEqual({ name: 'Bob' });
 			});
 
 			test('handles missing author metadata', async () => {

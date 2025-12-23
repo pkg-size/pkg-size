@@ -88,6 +88,93 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			});
 		});
 
+		describe('Error handling', ({ test }) => {
+			test('invalid --sort-by property', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid sort property: "invalid". Must be: name, version, size, license, author, dependencySize, dependencyCount');
+				}
+			});
+
+			test('invalid --sort-by direction', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by=size:up']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid sort direction: "up". Must be: asc, desc');
+				}
+			});
+
+			test('invalid --group-by value', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid group: "invalid". Must be: scope, license, author');
+				}
+			});
+
+			test('invalid --size value', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['publish', '--size=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid size type: "invalid". Must be: raw, gzip, or brotli');
+				}
+			});
+
+			test('invalid --package-manager value', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'lodash', '--package-manager=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid package manager: "invalid". Must be: npm, pnpm, or yarn');
+				}
+			});
+		});
+
 		describe('publish', ({ test }) => {
 			test('outputs package sizes', async () => {
 				await using fixture = await createFixture({
@@ -481,23 +568,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				]);
 			}, 30_000);
-
-			test('validates package manager flag', async () => {
-				await using fixture = await createFixture({
-					'package.json': definePackageJson({
-						name: 'test-package',
-						version: '1.0.0',
-					}),
-				});
-
-				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'invalid-pm']);
-
-				expect('exitCode' in result).toBe(true);
-				if ('exitCode' in result) {
-					expect(result.exitCode).toBe(1);
-					expect(result.stderr).toContain('Invalid package manager: "invalid-pm"');
-				}
-			});
 
 			test('supports --package-manager flag with yarn', async () => {
 				await using fixture = await createFixture({
@@ -1404,8 +1474,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(json.groups).toBeDefined();
 				expect(json.groups['John Doe']).toBeDefined();
 				expect(json.groups['John Doe'].packages).toHaveLength(2);
-				expect(json.groups['Jane Smith <jane@example.com>']).toBeDefined();
-				expect(json.groups['Jane Smith <jane@example.com>'].packages).toHaveLength(1);
+				expect(json.groups['Jane Smith']).toBeDefined();
+				expect(json.groups['Jane Smith'].packages).toHaveLength(1);
 				expect(json.groups['(unknown)']).toBeDefined();
 				expect(json.groups['(unknown)'].packages).toHaveLength(1);
 			});
@@ -1472,6 +1542,224 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).not.toContain('john@example.com');
 			});
 
+			test('--group-by non-verbose: no indent for package names', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'test-pkg': {
+							'package.json': definePackageJson({
+								name: 'test-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license']);
+
+				expect('exitCode' in result).toBe(false);
+				const lines = result.stdout.split('\n');
+				// Find the line with the package name
+				const packageLine = lines.find(line => line.includes('test-pkg'));
+				expect(packageLine).toBeDefined();
+				// Package name should not be indented - no "  test-pkg" pattern
+				expect(packageLine).not.toContain('  test-pkg');
+			});
+
+			test('--group-by verbose: packages are indented under group header', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'test-pkg': {
+							'package.json': definePackageJson({
+								name: 'test-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+				const lines = result.stdout.split('\n');
+				// Find the line with the package name
+				const packageLine = lines.find(line => line.includes('test-pkg'));
+				expect(packageLine).toBeDefined();
+				// In verbose mode, package name should be indented with 2 spaces
+				// The indent appears before ANSI codes: "  \x1b[..."
+				// eslint-disable-next-line no-control-regex
+				expect(packageLine).toMatch(/\s{2}\u001B\[/);
+			});
+
+			test('--group-by default sorts groups by size descending', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						// Packages with licenses that sort differently by size vs alphabetically
+						'zebra-license': {
+							'package.json': definePackageJson({
+								name: 'zebra-license',
+								version: '1.0.0',
+								license: 'Zlib',
+							}),
+							// Largest - 1000 bytes
+							'index.js': 'x'.repeat(1000),
+						},
+						'alpha-license': {
+							'package.json': definePackageJson({
+								name: 'alpha-license',
+								version: '1.0.0',
+								license: 'Apache-2.0',
+							}),
+							// Smallest - 100 bytes
+							'index.js': 'x'.repeat(100),
+						},
+						'mit-license': {
+							'package.json': definePackageJson({
+								name: 'mit-license',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							// Medium - 500 bytes
+							'index.js': 'x'.repeat(500),
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license']);
+
+				expect('exitCode' in result).toBe(false);
+				// Default sortBy is size:desc, so groups appear by total size descending
+				// Zlib (largest), MIT (medium), Apache-2.0 (smallest)
+				const apacheIndex = result.stdout.indexOf('Apache-2.0');
+				const mitIndex = result.stdout.indexOf('MIT');
+				const zlibIndex = result.stdout.indexOf('Zlib');
+
+				expect(apacheIndex).toBeGreaterThan(-1);
+				expect(mitIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeLessThan(mitIndex);
+				expect(mitIndex).toBeLessThan(apacheIndex);
+			});
+
+			test('--group-by with --sort-by allows descending group order', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'zlib-pkg': {
+							'package.json': definePackageJson({
+								name: 'zlib-pkg',
+								version: '1.0.0',
+								license: 'Zlib',
+							}),
+							'index.js': 'content',
+						},
+						'apache-pkg': {
+							'package.json': definePackageJson({
+								name: 'apache-pkg',
+								version: '1.0.0',
+								license: 'Apache-2.0',
+							}),
+							'index.js': 'content',
+						},
+						'mit-pkg': {
+							'package.json': definePackageJson({
+								name: 'mit-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				// Explicitly sort by license descending
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--sort-by=license:desc']);
+
+				expect('exitCode' in result).toBe(false);
+				// Groups should appear in reverse alphabetical order: Zlib, MIT, Apache-2.0
+				const apacheIndex = result.stdout.indexOf('Apache-2.0');
+				const mitIndex = result.stdout.indexOf('MIT');
+				const zlibIndex = result.stdout.indexOf('Zlib');
+
+				expect(apacheIndex).toBeGreaterThan(-1);
+				expect(mitIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeLessThan(mitIndex);
+				expect(mitIndex).toBeLessThan(apacheIndex);
+			});
+
+			test('--group-by with --sort-by=size:desc sorts groups by total size', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						// Zlib has largest size (should appear first with size:desc)
+						'zlib-pkg': {
+							'package.json': definePackageJson({
+								name: 'zlib-pkg',
+								version: '1.0.0',
+								license: 'Zlib',
+							}),
+							'index.js': 'x'.repeat(1000),
+						},
+						// Apache has smallest size (should appear last with size:desc)
+						'apache-pkg': {
+							'package.json': definePackageJson({
+								name: 'apache-pkg',
+								version: '1.0.0',
+								license: 'Apache-2.0',
+							}),
+							'index.js': 'x'.repeat(100),
+						},
+						// MIT has medium size
+						'mit-pkg': {
+							'package.json': definePackageJson({
+								name: 'mit-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'x'.repeat(500),
+						},
+					},
+				});
+
+				// Sort by size:desc - groups should be sorted by total group size descending
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--sort-by=size:desc']);
+
+				expect('exitCode' in result).toBe(false);
+				// Groups should appear by total size descending: Zlib (1000), MIT (500), Apache-2.0 (100)
+				// NOT alphabetically (Apache-2.0, MIT, Zlib)
+				const apacheIndex = result.stdout.indexOf('Apache-2.0');
+				const mitIndex = result.stdout.indexOf('MIT');
+				const zlibIndex = result.stdout.indexOf('Zlib');
+
+				expect(apacheIndex).toBeGreaterThan(-1);
+				expect(mitIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeGreaterThan(-1);
+				expect(zlibIndex).toBeLessThan(mitIndex);
+				expect(mitIndex).toBeLessThan(apacheIndex);
+			});
+
 			test('includes metadata in JSON output', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
@@ -1497,7 +1785,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const json = JSON.parse(result.stdout);
 
 				expect(json.packages[0].license).toBe('MIT');
-				expect(json.packages[0].author).toBe('Test Author');
+				expect(json.packages[0].author).toEqual({ name: 'Test Author' });
 			});
 
 			/**
