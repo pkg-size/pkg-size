@@ -1,45 +1,52 @@
+import parseAuthorLib from 'parse-author';
+
 export type ParsedAuthor = {
-	name: string;
+	name?: string;
+	email?: string;
 	url?: string;
-} | null;
+};
 
-export const parseAuthor = (author: string): ParsedAuthor => {
-	// Strip email in angle brackets: "Name <email>" → "Name"
-	const name = author.replaceAll(/<[^>]+>/g, '').trim();
-
-	// Check for URL in parentheses: "Name (url)"
-	// Regex avoids backtracking by not allowing overlap between name capture and whitespace
-	const urlMatch = name.match(/^([^(]+)\(([^)]+)\)$/);
-	if (urlMatch) {
-		const [, authorName, url] = urlMatch;
-		const trimmedName = authorName.trimEnd();
-		if (!trimmedName) {
-			return null;
-		}
-		if (url.startsWith('http://') || url.startsWith('https://')) {
-			return {
-				name: trimmedName,
-				url,
-			};
-		}
-		return { name: trimmedName };
+// Strip surrounding quotes (single or double) from a string
+// parse-author doesn't handle quoted names like "'Julian Viereck'"
+const unquote = (string: string): string => {
+	if (
+		(string.startsWith('"') && string.endsWith('"'))
+		|| (string.startsWith("'") && string.endsWith("'"))
+	) {
+		return string.slice(1, -1);
 	}
+	return string;
+};
 
-	// Skip if empty
-	if (!name) {
+export const parseAuthor = (author: string): ParsedAuthor | null => {
+	const trimmed = author.trim();
+	if (!trimmed) {
 		return null;
 	}
 
-	// If name contains @, try to strip social handles like "@sokra" or "@ handle"
-	// Handles are typically: space(s) + @ + alphanumeric/hyphen/underscore
-	if (name.includes('@')) {
-		const withoutHandle = name.replaceAll(/\s+@[\w-]+/g, '').trim();
-		// If nothing remains, it was just an email or handle
-		if (!withoutHandle) {
-			return null;
-		}
-		return { name: withoutHandle };
+	const result = parseAuthorLib(trimmed) as ParsedAuthor;
+
+	// Fallback: If parse-author couldn't extract any structure (e.g. CJK names,
+	// broken brackets), treat the raw input as the name to prevent data loss
+	if (Object.keys(result).length === 0) {
+		return { name: unquote(trimmed) };
 	}
 
-	return { name };
+	// Strip surrounding quotes from name (parse-author doesn't handle this)
+	if (result.name) {
+		result.name = unquote(result.name);
+	}
+
+	return result;
+};
+
+/**
+ * Get a display string for an author, with fallback chain:
+ * name → email → url → null
+ */
+export const getAuthorDisplayName = (author: ParsedAuthor | null | undefined): string | null => {
+	if (!author) {
+		return null;
+	}
+	return author.name ?? author.email ?? author.url ?? null;
 };

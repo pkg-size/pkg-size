@@ -1404,8 +1404,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(json.groups).toBeDefined();
 				expect(json.groups['John Doe']).toBeDefined();
 				expect(json.groups['John Doe'].packages).toHaveLength(2);
-				expect(json.groups['Jane Smith <jane@example.com>']).toBeDefined();
-				expect(json.groups['Jane Smith <jane@example.com>'].packages).toHaveLength(1);
+				expect(json.groups['Jane Smith']).toBeDefined();
+				expect(json.groups['Jane Smith'].packages).toHaveLength(1);
 				expect(json.groups['(unknown)']).toBeDefined();
 				expect(json.groups['(unknown)'].packages).toHaveLength(1);
 			});
@@ -1650,7 +1650,7 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				const json = JSON.parse(result.stdout);
 
 				expect(json.packages[0].license).toBe('MIT');
-				expect(json.packages[0].author).toBe('Test Author');
+				expect(json.packages[0].author).toEqual({ name: 'Test Author' });
 			});
 
 			/**

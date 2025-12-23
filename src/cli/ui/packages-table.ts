@@ -6,7 +6,7 @@ import terminalLink from 'terminal-link';
 import type { InstalledPackage } from '../../install/types.js';
 import type { GroupBy, PackageGroup } from '../../utils/grouping.js';
 import type { SortCriteria } from '../../utils/sorting.js';
-import { parseAuthor } from '../../utils/parse-author.js';
+import { getAuthorDisplayName, type ParsedAuthor } from '../../utils/parse-author.js';
 import { orange, amberEarth } from './colors.js';
 import { formatSize } from './format.js';
 import { printRows } from './table.js';
@@ -19,15 +19,15 @@ const LINK_ICONS = {
 	funding: '♥️',
 } as const;
 
-const formatAuthor = (author: string): string | null => {
-	const parsed = parseAuthor(author);
-	if (!parsed) {
+const formatAuthor = (author: ParsedAuthor | undefined): string | null => {
+	const displayName = getAuthorDisplayName(author);
+	if (!displayName) {
 		return null;
 	}
-	if (parsed.url) {
-		return terminalLink(parsed.name, parsed.url);
+	if (author?.url) {
+		return terminalLink(displayName, author.url);
 	}
-	return parsed.name;
+	return displayName;
 };
 
 const formatEmojiLinks = (pkg: InstalledPackage): string => {
@@ -228,13 +228,10 @@ export const renderGroupedPackagesTable = (
 	});
 
 	for (const [groupKey, groupData] of sortedGroups) {
-		// Group header - format as author name when grouping by author
-		const groupLabel = groupBy === 'author'
-			? (formatAuthor(groupKey) ?? groupKey)
-			: groupKey;
+		// Group header - groupKey is already the display name (from getAuthorDisplayName for authors)
 		rows.push([
 			underline(bold(formatPercentage(groupData.totalSize, totalSize))),
-			underline(bold(groupLabel)),
+			underline(bold(groupKey)),
 		]);
 
 		// Packages are pre-sorted by caller; grouping preserves order within each group

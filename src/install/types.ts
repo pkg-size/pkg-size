@@ -1,3 +1,5 @@
+import type { ParsedAuthor } from '../utils/parse-author.js';
+
 export type PackageFile = {
 	path: string;
 	size: number;
@@ -14,7 +16,7 @@ export type InstalledPackage = {
 	size: number;
 	files: PackageFile[];
 	license?: string;
-	author?: string;
+	author?: ParsedAuthor;
 	repository?: string;
 	homepage?: string;
 	funding?: string;

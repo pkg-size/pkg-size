@@ -2,11 +2,12 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import type { PackageJson } from 'type-fest';
 import { fsExists } from '../../utils/fs-exists.js';
+import { parseAuthor, type ParsedAuthor } from '../../utils/parse-author.js';
 
 export type PackageMetadata = {
 	version: string;
 	license?: string;
-	author?: string;
+	author?: ParsedAuthor;
 	repository?: string;
 	homepage?: string;
 	funding?: string;
@@ -14,16 +15,16 @@ export type PackageMetadata = {
 
 const normalizeAuthor = (
 	author: PackageJson.Person | undefined,
-): string | undefined => {
+): ParsedAuthor | undefined => {
 	if (!author) {
 		return undefined;
 	}
 	if (typeof author === 'string') {
-		return author;
+		return parseAuthor(author) ?? undefined;
 	}
-	return author.email
-		? `${author.name} <${author.email}>`
-		: author.name;
+	// Object form has same shape as ParsedAuthor
+	const { name, email, url } = author;
+	return name || email || url ? { name, email, url } : undefined;
 };
 
 // Handle legacy license formats: object { type, url } or array of objects

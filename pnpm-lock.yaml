@@ -17,6 +17,9 @@ importers:
       '@types/npm-packlist':
         specifier: ^7.0.3
         version: 7.0.3
+      '@types/parse-author':
+        specifier: ^2.0.3
+        version: 2.0.3
       '@types/tar':
         specifier: ^6.1.13
         version: 6.1.13
@@ -68,6 +71,9 @@ importers:
       p-map:
         specifier: ^7.0.4
         version: 7.0.4
+      parse-author:
+        specifier: ^2.0.0
+        version: 2.0.0
       parse-lock-files:
         specifier: ^0.1.0
         version: 0.1.0
@@ -873,6 +879,9 @@ packages:
   '@types/pacote@11.1.8':
     resolution: {integrity: sha512-/XLR0VoTh2JEO0jJg1q/e6Rh9bxjBq9vorJuQmtT7rRrXSiWz7e7NsvXVYJQ0i8JxMlBMPPYDTnrRe7MZRFA8Q==}
 
+  '@types/parse-author@2.0.3':
+    resolution: {integrity: sha512-pgRW2K/GVQoogylrGJXDl7PBLW9A6T4OOc9Hy9MLT5f7vgufK2GQ8FcfAbjFHR5HjcN9ByzuCczAORk49REqoA==}
+
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
 
@@ -1132,6 +1141,10 @@ packages:
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
+
+  author-regex@1.0.0:
+    resolution: {integrity: sha512-KbWgR8wOYRAPekEmMXrYYdc7BRyhn2Ftk7KWfMUnQ43hFdojWEFRxhhRUm3/OFEdPa1r0KAvTTg9YQK57xTe0g==}
+    engines: {node: '>=0.8'}
 
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
@@ -2550,6 +2563,10 @@ packages:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
 
+  parse-author@2.0.0:
+    resolution: {integrity: sha512-yx5DfvkN8JsHL2xk2Os9oTia467qnvRgey4ahSm2X8epehBLx/gWLcy5KI+Y36ful5DzGbCS6RazqZGgy1gHNw==}
+    engines: {node: '>=0.10.0'}
+
   parse-lock-files@0.1.0:
     resolution: {integrity: sha512-osCGdZ9NuCnz2XIAuaCdM6RRmh7bRdrzp27ppNRXJKIXFGcm3uit7JHwuBj1TPnO+4OOrocjmcQyjmOjMHzsjA==}
 
@@ -3733,6 +3750,8 @@ snapshots:
       '@types/npmlog': 7.0.0
       '@types/ssri': 7.1.5
 
+  '@types/parse-author@2.0.3': {}
+
   '@types/resolve@1.20.2': {}
 
   '@types/ssri@7.1.5':
@@ -4015,6 +4034,8 @@ snapshots:
   async-function@1.0.0: {}
 
   asynckit@0.4.0: {}
+
+  author-regex@1.0.0: {}
 
   available-typed-arrays@1.0.7:
     dependencies:
@@ -5857,6 +5878,10 @@ snapshots:
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
+
+  parse-author@2.0.0:
+    dependencies:
+      author-regex: 1.0.0
 
   parse-lock-files@0.1.0:
     dependencies:
