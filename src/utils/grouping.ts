@@ -41,7 +41,7 @@ const getGroupKey = (
 		return getAuthorDisplayName(pkg.author) ?? '(unknown)';
 	}
 	if (groupBy === 'level') {
-		return String(pkg.level);
+		return `Level ${pkg.level}`;
 	}
 	return '(unknown)';
 };
