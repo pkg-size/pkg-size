@@ -35,6 +35,7 @@ export const defaultSortBy: SortCriteria = [
 ];
 
 export const parseSortBy = (input: string): SortCriteria => {
+	// Trim handles quoted args with spaces: --sort-by="size:desc, name:asc"
 	const parts = input.split(',').map(part => part.trim());
 	const criteria: SortCriteria = [];
 
