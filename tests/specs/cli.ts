@@ -1634,29 +1634,32 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(mitIndex).toBeLessThan(apacheIndex);
 			});
 
-			test('--group-by with unrelated --sort-by prepends group field', async () => {
+			test('--group-by with --sort-by=size:desc sorts groups by total size', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
 						name: 'test-package',
 						version: '1.0.0',
 					}),
 					node_modules: {
+						// Zlib has largest size (should appear first with size:desc)
 						'zlib-pkg': {
 							'package.json': definePackageJson({
 								name: 'zlib-pkg',
 								version: '1.0.0',
 								license: 'Zlib',
 							}),
-							'index.js': 'x'.repeat(100),
+							'index.js': 'x'.repeat(1000),
 						},
+						// Apache has smallest size (should appear last with size:desc)
 						'apache-pkg': {
 							'package.json': definePackageJson({
 								name: 'apache-pkg',
 								version: '1.0.0',
 								license: 'Apache-2.0',
 							}),
-							'index.js': 'x'.repeat(1000),
+							'index.js': 'x'.repeat(100),
 						},
+						// MIT has medium size
 						'mit-pkg': {
 							'package.json': definePackageJson({
 								name: 'mit-pkg',
@@ -1668,12 +1671,12 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				});
 
-				// Sort by size:desc but group by license - should implicitly prepend license:asc
+				// Sort by size:desc - groups should be sorted by total group size descending
 				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--sort-by=size:desc']);
 
 				expect('exitCode' in result).toBe(false);
-				// Groups should still appear alphabetically (license:asc prepended)
-				// NOT by total size (Apache > MIT > Zlib)
+				// Groups should appear by total size descending: Zlib (1000), MIT (500), Apache-2.0 (100)
+				// NOT alphabetically (Apache-2.0, MIT, Zlib)
 				const apacheIndex = result.stdout.indexOf('Apache-2.0');
 				const mitIndex = result.stdout.indexOf('MIT');
 				const zlibIndex = result.stdout.indexOf('Zlib');
@@ -1681,8 +1684,8 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(apacheIndex).toBeGreaterThan(-1);
 				expect(mitIndex).toBeGreaterThan(-1);
 				expect(zlibIndex).toBeGreaterThan(-1);
-				expect(apacheIndex).toBeLessThan(mitIndex);
-				expect(mitIndex).toBeLessThan(zlibIndex);
+				expect(zlibIndex).toBeLessThan(mitIndex);
+				expect(mitIndex).toBeLessThan(apacheIndex);
 			});
 
 			test('includes metadata in JSON output', async () => {
