@@ -27,34 +27,20 @@ Curious how big your package is when published?
 
 Analyze what will be published to npm:
 
-Analyze current directory:
 ```sh
-npx pkg-size publish
+pkg-size publish               # current directory
+pkg-size publish ./package/path # specific path
 ```
 
-Analyze specific package path:
+**Order files by name:**
 ```sh
-npx pkg-size publish ./package/path
+pkg-size publish --sort-by=name
 ```
 
-Order files by name:
+**Show compressed sizes:**
 ```sh
-npx pkg-size publish --sort-by=name
-```
-
-Show gzip sizes:
-```sh
-npx pkg-size publish --size=gzip
-```
-
-Show brotli sizes:
-```sh
-npx pkg-size publish --size=brotli
-```
-
-JSON output:
-```sh
-npx pkg-size publish --json
+pkg-size publish --size=gzip   # gzip compression
+pkg-size publish --size=brotli # brotli compression
 ```
 
 ### Measure install size
@@ -63,94 +49,35 @@ Measure the install size of npm packages including all transitive dependencies.
 
 Packages are installed in a temporary directory.
 
-Measure install size of a package:
+**Measure install size:**
 ```sh
-npx pkg-size install lodash
+pkg-size install lodash                        # single package
+pkg-size install lodash @babel/core typescript # multiple packages
 ```
 
-Measure install size of multiple packages:
+**Sort by:**
 ```sh
-npx pkg-size install lodash @babel/core typescript
+pkg-size install lodash --sort-by=name               # by name ascending
+pkg-size install lodash --sort-by=size:desc,name:asc # by size desc, then name asc
 ```
 
-Use a specific package manager:
+**Group by:**
 ```sh
-npx pkg-size install react --package-manager=pnpm
-```
-
-Sort by size descending, then name:
-```sh
-npx pkg-size install lodash --sort-by=size:desc,name:asc
-```
-
-Sort by name only:
-```sh
-npx pkg-size install lodash --sort-by=name
-```
-
-Group by scope:
-```sh
-npx pkg-size install @babel/core --group-by=scope
-```
-
-Group by license:
-```sh
-npx pkg-size install lodash react --group-by=license
-```
-
-Group by author:
-```sh
-npx pkg-size install lodash react --group-by=author
-```
-
-JSON output:
-```sh
-npx pkg-size install lodash --json
+pkg-size install @babel/core --group-by=scope   # by npm scope (@babel, @types, etc.)
+pkg-size install lodash react --group-by=license # by license type
+pkg-size install lodash react --group-by=author  # by package author
 ```
 
 ### Analyze existing node_modules
 
 Analyze an existing `node_modules` directory.
 
-Analyze current directory's node_modules:
 ```sh
-npx pkg-size analyze
+pkg-size analyze                  # current directory
+pkg-size analyze ./path/to/project # specific path
 ```
 
-Analyze specific project path:
-```sh
-npx pkg-size analyze ./path/to/project
-```
-
-Sort by name:
-```sh
-npx pkg-size analyze --sort-by=name
-```
-
-Sort by multiple properties:
-```sh
-npx pkg-size analyze --sort-by=size:desc,name:asc
-```
-
-Group by scope:
-```sh
-npx pkg-size analyze --group-by=scope
-```
-
-Group by license:
-```sh
-npx pkg-size analyze --group-by=license
-```
-
-Group by author:
-```sh
-npx pkg-size analyze --group-by=author
-```
-
-JSON output:
-```sh
-npx pkg-size analyze --json
-```
+Supports the same `--sort-by` and `--group-by` options as the `install` command.
 
 ## ⚙️ CLI Options
 
