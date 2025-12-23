@@ -88,6 +88,93 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 			});
 		});
 
+		describe('Error handling', ({ test }) => {
+			test('invalid --sort-by property', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid sort property: "invalid". Must be: name, version, size, license, author, dependencySize, dependencyCount');
+				}
+			});
+
+			test('invalid --sort-by direction', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--sort-by=size:up']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid sort direction: "up". Must be: asc, desc');
+				}
+			});
+
+			test('invalid --group-by value', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid group: "invalid". Must be: scope, license, author');
+				}
+			});
+
+			test('invalid --size value', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['publish', '--size=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid size type: "invalid". Must be: raw, gzip, or brotli');
+				}
+			});
+
+			test('invalid --package-manager value', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['install', 'lodash', '--package-manager=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid package manager: "invalid". Must be: npm, pnpm, or yarn');
+				}
+			});
+		});
+
 		describe('publish', ({ test }) => {
 			test('outputs package sizes', async () => {
 				await using fixture = await createFixture({
@@ -481,23 +568,6 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 					},
 				]);
 			}, 30_000);
-
-			test('validates package manager flag', async () => {
-				await using fixture = await createFixture({
-					'package.json': definePackageJson({
-						name: 'test-package',
-						version: '1.0.0',
-					}),
-				});
-
-				const result = await pkgSizeCli(fixture.path, ['install', 'is-odd', '--package-manager', 'invalid-pm']);
-
-				expect('exitCode' in result).toBe(true);
-				if ('exitCode' in result) {
-					expect(result.exitCode).toBe(1);
-					expect(result.stderr).toContain('Invalid package manager: "invalid-pm"');
-				}
-			});
 
 			test('supports --package-manager flag with yarn', async () => {
 				await using fixture = await createFixture({
