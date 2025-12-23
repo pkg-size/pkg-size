@@ -1,15 +1,6 @@
 import type { InstalledPackage } from '../install/types.js';
 
-export type SortDirection = 'asc' | 'desc';
-
-export type SortCriterion = {
-	property: keyof InstalledPackage;
-	direction: SortDirection;
-};
-
-export type SortCriteria = SortCriterion[];
-
-export const sortableProperties = [
+const sortableProperties = [
 	'name',
 	'version',
 	'size',
@@ -19,15 +10,16 @@ export const sortableProperties = [
 	'dependencyCount',
 ] as const;
 
-export type SortableProperty = typeof sortableProperties[number];
+type SortableProperty = typeof sortableProperties[number];
 
-const isValidProperty = (value: string): value is SortableProperty => (
-	sortableProperties.includes(value as SortableProperty)
-);
+type SortDirection = 'asc' | 'desc';
 
-const isValidDirection = (value: string): value is SortDirection => (
-	value === 'asc' || value === 'desc'
-);
+type SortCriterion = {
+	property: SortableProperty;
+	direction: SortDirection;
+};
+
+export type SortCriteria = SortCriterion[];
 
 export const defaultSortBy: SortCriteria = [
 	{ property: 'size', direction: 'desc' },
@@ -42,16 +34,16 @@ export const SortByType = (input: string): SortCriteria => {
 	for (const part of parts) {
 		const [property, direction = 'asc'] = part.split(':').map(s => s.trim());
 
-		if (!isValidProperty(property)) {
+		if (!sortableProperties.includes(property as SortableProperty)) {
 			throw new Error(`Invalid sort property: "${property}". Must be: ${sortableProperties.join(', ')}`);
 		}
 
-		if (!isValidDirection(direction)) {
+		if (direction !== 'asc' && direction !== 'desc') {
 			throw new Error(`Invalid sort direction: "${direction}". Must be: asc, desc`);
 		}
 
 		criteria.push({
-			property,
+			property: property as SortableProperty,
 			direction,
 		});
 	}
