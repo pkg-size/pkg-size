@@ -236,7 +236,7 @@ export const renderGroupedPackagesTable = (
 
 		// Packages are pre-sorted by caller; grouping preserves order within each group
 
-		const indent = '  ';
+		const indent = options.verbose ? '  ' : '';
 		for (let i = 0; i < groupData.packages.length; i += 1) {
 			const pkg = groupData.packages[i];
 

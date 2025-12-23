@@ -24,7 +24,13 @@ const normalizeAuthor = (
 	}
 	// Object form has same shape as ParsedAuthor
 	const { name, email, url } = author;
-	return name || email || url ? { name, email, url } : undefined;
+	return name || email || url
+		? {
+			name,
+			email,
+			url,
+		}
+		: undefined;
 };
 
 // Handle legacy license formats: object { type, url } or array of objects

@@ -1472,6 +1472,66 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				expect(result.stdout).not.toContain('john@example.com');
 			});
 
+			test('--group-by non-verbose: no indent for package names', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'test-pkg': {
+							'package.json': definePackageJson({
+								name: 'test-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license']);
+
+				expect('exitCode' in result).toBe(false);
+				const lines = result.stdout.split('\n');
+				// Find the line with the package name
+				const packageLine = lines.find(line => line.includes('test-pkg'));
+				expect(packageLine).toBeDefined();
+				// Package name should not be indented - no "  test-pkg" pattern
+				expect(packageLine).not.toContain('  test-pkg');
+			});
+
+			test('--group-by verbose: packages are indented under group header', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'test-pkg': {
+							'package.json': definePackageJson({
+								name: 'test-pkg',
+								version: '1.0.0',
+								license: 'MIT',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['analyze', '--group-by=license', '--verbose']);
+
+				expect('exitCode' in result).toBe(false);
+				const lines = result.stdout.split('\n');
+				// Find the line with the package name
+				const packageLine = lines.find(line => line.includes('test-pkg'));
+				expect(packageLine).toBeDefined();
+				// In verbose mode, package name should be indented with 2 spaces
+				// The indent appears before ANSI codes: "  \x1b[..."
+				// eslint-disable-next-line no-control-regex
+				expect(packageLine).toMatch(/\s{2}\u001B\[/);
+			});
+
 			test('--group-by implicitly sorts groups by group field ascending', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
