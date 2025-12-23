@@ -29,7 +29,10 @@ const isValidDirection = (value: string): value is SortDirection => (
 	value === 'asc' || value === 'desc'
 );
 
-export const defaultSortBy = 'size:desc,name:asc';
+export const defaultSortBy: SortCriteria = [
+	{ property: 'size', direction: 'desc' },
+	{ property: 'name', direction: 'asc' },
+];
 
 export const parseSortBy = (input: string): SortCriteria => {
 	const parts = input.split(',').map(part => part.trim());
@@ -55,12 +58,8 @@ export const parseSortBy = (input: string): SortCriteria => {
 	return criteria;
 };
 
-// CLI type validator - validates input and returns the string (parsing happens later)
-export const SortByType = (value: string): string => {
-	// Validate by parsing (will throw if invalid)
-	parseSortBy(value);
-	return value;
-};
+// CLI type validator - parses and returns SortCriteria
+export const SortByType = (value: string): SortCriteria => parseSortBy(value);
 
 const compareValues = (
 	a: unknown,

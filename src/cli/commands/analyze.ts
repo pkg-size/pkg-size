@@ -4,7 +4,6 @@ import { GroupByType, groupPackages } from '../../utils/grouping.js';
 import {
 	SortByType,
 	defaultSortBy,
-	parseSortBy,
 	comparePackages,
 } from '../../utils/sorting.js';
 import {
@@ -58,8 +57,7 @@ export const analyzeCommand = command({
 
 	const data = await analyzeNodeModules(projectPath, undefined, verbose);
 
-	const sortCriteria = parseSortBy(sortBy);
-	data.packages.sort(comparePackages(sortCriteria));
+	data.packages.sort(comparePackages(sortBy));
 
 	if (groupBy) {
 		const groups = groupPackages(data.packages, groupBy);

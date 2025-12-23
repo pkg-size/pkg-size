@@ -6,7 +6,6 @@ import { GroupByType, groupPackages } from '../../utils/grouping.js';
 import {
 	SortByType,
 	defaultSortBy,
-	parseSortBy,
 	comparePackages,
 } from '../../utils/sorting.js';
 import {
@@ -93,8 +92,7 @@ export const installCommand = command({
 		verbose,
 	});
 
-	const sortCriteria = parseSortBy(sortBy);
-	data.packages.sort(comparePackages(sortCriteria));
+	data.packages.sort(comparePackages(sortBy));
 
 	const statusMessage = `Completed in ${formatTime(data.installTime)}`;
 
