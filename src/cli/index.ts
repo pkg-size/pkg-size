@@ -8,6 +8,7 @@ try {
 	const argv = cli({
 		name: packageJson.name,
 		version: packageJson.version,
+		strictFlags: true,
 		commands: [
 			publishCommand,
 			installCommand,
