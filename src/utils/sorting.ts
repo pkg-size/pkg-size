@@ -93,15 +93,17 @@ const compareValues = (
 	return direction === 'desc' ? -result : result;
 };
 
-export const comparePackages = (criteria: SortCriteria) => (
-	a: InstalledPackage,
-	b: InstalledPackage,
-): number => {
-	for (const { property, direction } of criteria) {
-		const result = compareValues(a[property], b[property], direction, property);
-		if (result !== 0) {
-			return result;
+export const comparePackages = (criteria: SortCriteria) => {
+	// Append defaultSortBy as fallback for ties
+	const fullCriteria = [...criteria, ...defaultSortBy];
+
+	return (a: InstalledPackage, b: InstalledPackage): number => {
+		for (const { property, direction } of fullCriteria) {
+			const result = compareValues(a[property], b[property], direction, property);
+			if (result !== 0) {
+				return result;
+			}
 		}
-	}
-	return 0;
+		return 0;
+	};
 };

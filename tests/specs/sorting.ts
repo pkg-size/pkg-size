@@ -425,6 +425,89 @@ export default testSuite(({ describe }) => {
 				// All same size, so by dependencyCount asc, then name asc
 				expect(packages.map(p => p.name)).toEqual(['d', 'a', 'b', 'c']);
 			});
+
+			test('falls back to size:desc,name:asc for ties', () => {
+				const packages = [
+					createPackage({
+						name: 'small-z',
+						size: 1000,
+						license: 'MIT',
+					}),
+					createPackage({
+						name: 'large-a',
+						size: 3000,
+						license: 'MIT',
+					}),
+					createPackage({
+						name: 'medium-m',
+						size: 2000,
+						license: 'MIT',
+					}),
+				];
+
+				// Sort by license only - all same, so fallback to size:desc,name:asc
+				packages.sort(comparePackages([{
+					property: 'license',
+					direction: 'asc',
+				}]));
+
+				// All same license, fallback sorts by size desc
+				expect(packages.map(p => p.name)).toEqual(['large-a', 'medium-m', 'small-z']);
+			});
+
+			test('falls back to name:asc when size ties after custom sort', () => {
+				const packages = [
+					createPackage({
+						name: 'charlie',
+						size: 1000,
+						license: 'MIT',
+					}),
+					createPackage({
+						name: 'alpha',
+						size: 1000,
+						license: 'MIT',
+					}),
+					createPackage({
+						name: 'bravo',
+						size: 1000,
+						license: 'MIT',
+					}),
+				];
+
+				// Sort by license only - all same license and size, so fallback to name:asc
+				packages.sort(comparePackages([{
+					property: 'license',
+					direction: 'asc',
+				}]));
+
+				// All same license and size, fallback sorts by name asc
+				expect(packages.map(p => p.name)).toEqual(['alpha', 'bravo', 'charlie']);
+			});
+
+			test('user criteria takes precedence over fallback', () => {
+				const packages = [
+					createPackage({
+						name: 'small',
+						size: 1000,
+					}),
+					createPackage({
+						name: 'large',
+						size: 3000,
+					}),
+					createPackage({
+						name: 'medium',
+						size: 2000,
+					}),
+				];
+
+				// User specifies size:asc, should override fallback size:desc
+				packages.sort(comparePackages([{
+					property: 'size',
+					direction: 'asc',
+				}]));
+
+				expect(packages.map(p => p.name)).toEqual(['small', 'medium', 'large']);
+			});
 		});
 	});
 });
