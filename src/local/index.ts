@@ -42,42 +42,53 @@ const getFileSizes = async ({ sizes, packagePath, filePath }: {
 		sizeBrotli: 0,
 	};
 
-	if (sizes.length > 0) {
-		const fullFilePath = path.join(packagePath, filePath);
-		const fileStream = fs.createReadStream(fullFilePath);
-		const calculateSizes = [];
-
-		if (sizes.includes('size')) {
-			calculateSizes.push(new Promise<void>((resolve, reject) => {
-				let totalSize = 0;
-				fileStream
-					.on('error', reject)
-					.on('data', (chunk) => {
-						totalSize += chunk.length;
-					})
-					.on('end', () => {
-						result.size = totalSize;
-						resolve();
-					});
-			}));
-		}
-
-		if (sizes.includes('gzip')) {
-			calculateSizes.push((async () => {
-				const { getGzipSize } = await import('./compressions/gzip.js');
-				result.sizeGzip = await getGzipSize(fileStream);
-			})());
-		}
-
-		if (sizes.includes('brotli')) {
-			calculateSizes.push((async () => {
-				const { getBrotliSize } = await import('./compressions/brotli.js');
-				result.sizeBrotli = await getBrotliSize(fileStream);
-			})());
-		}
-
-		await Promise.all(calculateSizes);
+	if (sizes.length === 0) {
+		return result;
 	}
+
+	const fullFilePath = path.join(packagePath, filePath);
+	const needsStream = sizes.includes('gzip') || sizes.includes('brotli');
+
+	if (sizes.includes('size') && !needsStream) {
+		// Single syscall — no file I/O needed
+		const stats = await fsp.stat(fullFilePath);
+		result.size = stats.size;
+		return result;
+	}
+
+	const fileStream = fs.createReadStream(fullFilePath);
+	const calculateSizes = [];
+
+	if (sizes.includes('size')) {
+		calculateSizes.push(new Promise<void>((resolve, reject) => {
+			let totalSize = 0;
+			fileStream
+				.on('error', reject)
+				.on('data', (chunk) => {
+					totalSize += chunk.length;
+				})
+				.on('end', () => {
+					result.size = totalSize;
+					resolve();
+				});
+		}));
+	}
+
+	if (sizes.includes('gzip')) {
+		calculateSizes.push((async () => {
+			const { getGzipSize } = await import('./compressions/gzip.js');
+			result.sizeGzip = await getGzipSize(fileStream);
+		})());
+	}
+
+	if (sizes.includes('brotli')) {
+		calculateSizes.push((async () => {
+			const { getBrotliSize } = await import('./compressions/brotli.js');
+			result.sizeBrotli = await getBrotliSize(fileStream);
+		})());
+	}
+
+	await Promise.all(calculateSizes);
 
 	return result;
 };
