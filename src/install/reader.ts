@@ -11,19 +11,22 @@ type DependencyStats = {
 	count: number;
 };
 
+const packageKey = (name: string, version: string) => `${name}@${version}`;
+
 // Calculate dependency sizes and counts for all packages using path data
 const calculateDependencySizes = (packages: InstalledPackage[]): void => {
-	// Build children map: parent name -> child packages
+	// Build children map: parent name@version -> child packages
 	const childrenMap = new Map<string, InstalledPackage[]>();
 
 	for (const pkg of packages) {
 		if (pkg.installedBy.length > 0) {
 			// Immediate parent is the last element in installedBy
-			const parent = pkg.installedBy.at(-1)!.name;
-			if (!childrenMap.has(parent)) {
-				childrenMap.set(parent, []);
+			const parent = pkg.installedBy.at(-1)!;
+			const key = packageKey(parent.name, parent.version);
+			if (!childrenMap.has(key)) {
+				childrenMap.set(key, []);
 			}
-			childrenMap.get(parent)!.push(pkg);
+			childrenMap.get(key)!.push(pkg);
 		}
 	}
 
@@ -32,31 +35,31 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 
 	// Recursively calculate dependency size and count with memoization
 	const calculateStats = (
-		packageName: string,
+		key: string,
 		visited: Set<string>,
 	): DependencyStats => {
 		// Check memo first
-		const cached = memo.get(packageName);
+		const cached = memo.get(key);
 		if (cached) {
 			return cached;
 		}
 
 		// Prevent cycles
-		if (visited.has(packageName)) {
+		if (visited.has(key)) {
 			return {
 				size: 0,
 				count: 0,
 			};
 		}
-		visited.add(packageName);
+		visited.add(key);
 
-		const children = childrenMap.get(packageName);
+		const children = childrenMap.get(key);
 		if (!children || children.length === 0) {
 			const result = {
 				size: 0,
 				count: 0,
 			};
-			memo.set(packageName, result);
+			memo.set(key, result);
 			return result;
 		}
 
@@ -65,7 +68,8 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 		for (const child of children) {
 			totalSize += child.size;
 			totalCount += 1;
-			const childStats = calculateStats(child.name, visited);
+			const childKey = packageKey(child.name, child.version);
+			const childStats = calculateStats(childKey, visited);
 			totalSize += childStats.size;
 			totalCount += childStats.count;
 		}
@@ -74,13 +78,14 @@ const calculateDependencySizes = (packages: InstalledPackage[]): void => {
 			size: totalSize,
 			count: totalCount,
 		};
-		memo.set(packageName, result);
+		memo.set(key, result);
 		return result;
 	};
 
 	// Set dependencySize and dependencyCount for each package
 	for (const pkg of packages) {
-		const stats = calculateStats(pkg.name, new Set());
+		const key = packageKey(pkg.name, pkg.version);
+		const stats = calculateStats(key, new Set());
 		pkg.dependencySize = stats.size;
 		pkg.dependencyCount = stats.count;
 	}

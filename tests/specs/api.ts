@@ -879,6 +879,83 @@ export default testSuite(({ describe }) => {
 				// Child should include the large file (~10,000 bytes)
 				expect(childPkg!.size).toBeGreaterThan(9000);
 			});
+
+			test('computes dependency stats per version, not merged by name', async () => {
+				// Two versions of shared-dep with different children
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-project',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'parent-a': {
+							'package.json': definePackageJson({
+								name: 'parent-a',
+								version: '1.0.0',
+							}),
+							'index.js': 'a',
+							node_modules: {
+								'shared-dep': {
+									'package.json': definePackageJson({
+										name: 'shared-dep',
+										version: '1.0.0',
+									}),
+									'index.js': 'x'.repeat(100),
+									node_modules: {
+										'child-small': {
+											'package.json': definePackageJson({
+												name: 'child-small',
+												version: '1.0.0',
+											}),
+											'index.js': 'x'.repeat(50),
+										},
+									},
+								},
+							},
+						},
+						'parent-b': {
+							'package.json': definePackageJson({
+								name: 'parent-b',
+								version: '1.0.0',
+							}),
+							'index.js': 'b',
+							node_modules: {
+								'shared-dep': {
+									'package.json': definePackageJson({
+										name: 'shared-dep',
+										version: '2.0.0',
+									}),
+									'index.js': 'x'.repeat(200),
+									node_modules: {
+										'child-large': {
+											'package.json': definePackageJson({
+												name: 'child-large',
+												version: '1.0.0',
+											}),
+											'index.js': 'x'.repeat(5000),
+										},
+									},
+								},
+							},
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const sharedDeps = result.packages.filter(p => p.name === 'shared-dep');
+
+				expect(sharedDeps).toHaveLength(2);
+
+				const v1 = sharedDeps.find(d => d.version === '1.0.0')!;
+				const v2 = sharedDeps.find(d => d.version === '2.0.0')!;
+
+				// Each version should only count its own children
+				expect(v1.dependencyCount).toBe(1);
+				expect(v2.dependencyCount).toBe(1);
+
+				// v1's child is small (~50 bytes), v2's child is large (~5000 bytes)
+				expect(v1.dependencySize).toBeLessThan(v2.dependencySize);
+			});
 		});
 	});
 });
