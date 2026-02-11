@@ -23,6 +23,17 @@ const sizeTypeToProperty: Record<SizeType, keyof FileEntry> = {
 	brotli: 'sizeBrotli',
 };
 
+const sortByOptions = ['name', 'size'] as const;
+
+type SortByOption = typeof sortByOptions[number];
+
+const SortByValidator = (value: string): SortByOption => {
+	if (!sortByOptions.includes(value as SortByOption)) {
+		throw new Error(`Invalid sort property: "${value}". Must be: ${sortByOptions.join(', ')}`);
+	}
+	return value as SortByOption;
+};
+
 const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) => {
 	const aValue = a[sortBy];
 	const bValue = b[sortBy];
@@ -39,7 +50,7 @@ const compareFiles = (sortBy: keyof FileEntry) => (a: FileEntry, b: FileEntry) =
 };
 
 const getSortProperty = (
-	sortBy: string,
+	sortBy: SortByOption,
 	sizeType: SizeType,
 ): keyof FileEntry => {
 	if (sortBy === 'size') {
@@ -58,7 +69,7 @@ export const publishCommand = command({
 			default: 'raw',
 		},
 		sortBy: {
-			type: String,
+			type: SortByValidator,
 			alias: 's',
 			description: 'Sort list by (name, size)',
 			default: 'size',

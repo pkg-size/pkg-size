@@ -185,6 +185,23 @@ export default testSuite(({ describe }, pkgSizeCli: PkgSizeCli) => {
 				}
 			});
 
+			test('invalid --sort-by value for publish', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+				});
+
+				const result = await pkgSizeCli(fixture.path, ['publish', '--sort-by=invalid']);
+
+				expect('exitCode' in result).toBe(true);
+				if ('exitCode' in result) {
+					expect(result.exitCode).toBe(1);
+					expect(result.stderr).toBe('Error: Invalid sort property: "invalid". Must be: name, size');
+				}
+			});
+
 			test('invalid --package-manager value', async () => {
 				await using fixture = await createFixture({
 					'package.json': definePackageJson({
