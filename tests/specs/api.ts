@@ -679,6 +679,29 @@ export default testSuite(({ describe }) => {
 				expect(pkg?.author).toBeUndefined();
 			});
 
+			test('normalizes repository shorthand with dots', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'dotted-repo': {
+							'package.json': JSON.stringify({
+								name: 'dotted-repo',
+								version: '1.0.0',
+								repository: 'socket.io/socket.io',
+							}),
+							'index.js': 'content',
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const pkg = result.packages.find(p => p.name === 'dotted-repo');
+				expect(pkg?.repository).toBe('https://github.com/socket.io/socket.io');
+			});
+
 			test('builds path array from nested node_modules (auto-detected)', async () => {
 				// Creates nested node_modules structure - auto-detection finds it
 				await using fixture = await createFixture({

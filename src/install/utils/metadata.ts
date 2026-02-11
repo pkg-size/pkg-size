@@ -77,7 +77,7 @@ const normalizeRepository = (
 			return `https://bitbucket.org/${repository.slice(10)}`;
 		}
 		// Plain "user/repo" format typically means GitHub
-		if (/^[\w-]+\/[\w-]+$/.test(repository)) {
+		if (/^[\w.-]+\/[\w.-]+$/.test(repository)) {
 			return `https://github.com/${repository}`;
 		}
 		return repository;
