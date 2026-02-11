@@ -12,7 +12,7 @@ export const getDirectorySizeExcludingNodeModules = async (
 ): Promise<SizeResult> => {
 	const filePaths = await new Fdir()
 		.withRelativePaths()
-		.exclude((_directoryName, directoryPath) => directoryPath.includes('node_modules'))
+		.exclude(directoryName => directoryName === 'node_modules')
 		.crawl(directory)
 		.withPromise();
 

@@ -880,6 +880,50 @@ export default testSuite(({ describe }) => {
 				expect(childPkg!.size).toBeGreaterThan(9000);
 			});
 
+			test('includes subdirectory files in package size (npm-nested)', async () => {
+				// Package has files in lib/ subdirectory — these must be counted
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					node_modules: {
+						'has-subdirs': {
+							'package.json': definePackageJson({
+								name: 'has-subdirs',
+								version: '1.0.0',
+							}),
+							'index.js': 'x',
+							lib: {
+								'utils.js': 'x'.repeat(1000),
+								'helpers.js': 'x'.repeat(500),
+							},
+							node_modules: {
+								'child-pkg': {
+									'package.json': definePackageJson({
+										name: 'child-pkg',
+										version: '1.0.0',
+									}),
+									'index.js': 'x',
+								},
+							},
+						},
+					},
+				});
+
+				const result = await analyzeNodeModules(fixture.path);
+				const pkg = result.packages.find(p => p.name === 'has-subdirs');
+
+				// lib/utils.js (1000 bytes) + lib/helpers.js (500 bytes) must be counted
+				expect(pkg!.size).toBeGreaterThan(1500);
+
+				// Files list must include subdirectory files
+				const utilsFile = pkg!.files.find(f => f.path === 'lib/utils.js');
+				const helpersFile = pkg!.files.find(f => f.path === 'lib/helpers.js');
+				expect(utilsFile).toBeDefined();
+				expect(helpersFile).toBeDefined();
+			});
+
 			test('computes dependency stats per version, not merged by name', async () => {
 				// Two versions of shared-dep with different children
 				await using fixture = await createFixture({
