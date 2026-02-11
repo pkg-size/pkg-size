@@ -230,8 +230,15 @@ type InstalledPackage = {
     size: number
     files: PackageFile[]
     license?: string
-    author?: { name?: string; email?: string; url?: string }
-    installedBy: { name: string; version: string }[]
+    author?: {
+        name?: string
+        email?: string
+        url?: string
+    }
+    installedBy: {
+        name: string
+        version: string
+    }[]
     level: number // 0 = direct dependency, 1+ = transitive
     path: string
     dependencySize: number
@@ -285,8 +292,15 @@ type InstalledPackage = {
     size: number
     files: PackageFile[]
     license?: string
-    author?: { name?: string; email?: string; url?: string }
-    installedBy: { name: string; version: string }[]
+    author?: {
+        name?: string
+        email?: string
+        url?: string
+    }
+    installedBy: {
+        name: string
+        version: string
+    }[]
     level: number // 0 = direct dependency, 1+ = transitive
     path: string
     dependencySize: number
