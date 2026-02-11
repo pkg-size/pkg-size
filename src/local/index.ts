@@ -12,13 +12,16 @@ import type { FileEntry, PackageSizeResult, PackageSizeOptions } from './types.j
 const getTarballSize = (
 	packagePath: string,
 	entries: string[],
-) => new Promise<number>((resolve) => {
+) => new Promise<number>((resolve, reject) => {
 	let totalSize = 0;
-	tarFs.pack(packagePath, {
+	const packStream = tarFs.pack(packagePath, {
 		// clone array because tar-fs mutates it
 		entries: entries.slice(),
-	})
+	});
+	packStream.on('error', reject);
+	packStream
 		.pipe(zlib.createGzip())
+		.on('error', reject)
 		.on('data', (chunk: Buffer) => {
 			totalSize += chunk.length;
 		})
@@ -45,9 +48,10 @@ const getFileSizes = async ({ sizes, packagePath, filePath }: {
 		const calculateSizes = [];
 
 		if (sizes.includes('size')) {
-			calculateSizes.push(new Promise<void>((resolve) => {
+			calculateSizes.push(new Promise<void>((resolve, reject) => {
 				let totalSize = 0;
 				fileStream
+					.on('error', reject)
 					.on('data', (chunk) => {
 						totalSize += chunk.length;
 					})

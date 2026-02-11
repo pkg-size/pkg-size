@@ -1,3 +1,5 @@
+import fsp from 'node:fs/promises';
+import path from 'node:path';
 import { testSuite, expect } from 'manten';
 import { createFixture } from 'fs-fixture';
 import { getPackageSize, getInstallSize, analyzeNodeModules } from '../../src/index.js';
@@ -47,6 +49,28 @@ export default testSuite(({ describe }) => {
 				expect(dataFile!.size).toBe(1000);
 				expect(dataFile!.sizeGzip).toBeLessThan(dataFile!.size);
 				expect(dataFile!.sizeBrotli).toBeLessThan(dataFile!.size);
+			});
+
+			test('throws on unreadable file instead of hanging', async () => {
+				await using fixture = await createFixture({
+					'package.json': definePackageJson({
+						name: 'test-package',
+						version: '1.0.0',
+					}),
+					'readable.js': 'good content',
+					'unreadable.js': 'secret content',
+				});
+
+				const unreadablePath = path.join(fixture.path, 'unreadable.js');
+				await fsp.chmod(unreadablePath, 0o000);
+
+				try {
+					await expect(
+						getPackageSize(fixture.path, { sizes: ['size'] }),
+					).rejects.toThrow();
+				} finally {
+					await fsp.chmod(unreadablePath, 0o644);
+				}
 			});
 
 			test('respects .npmignore', async () => {
